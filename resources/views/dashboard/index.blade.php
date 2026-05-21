@@ -4,7 +4,7 @@
 
 @section('content')
     <div class="eos-stat-grid">
-        <div class="eos-stat">
+        <div class="eos-stat s-blue">
             <div class="eos-stat-top">
                 <div class="eos-stat-label">Clients</div>
                 <div class="eos-stat-icon blue"><i class="ti ti-users"></i></div>
@@ -12,7 +12,7 @@
             <div class="eos-stat-num">{{ $totalClients }}</div>
             <div class="eos-stat-meta">total clients</div>
         </div>
-        <div class="eos-stat">
+        <div class="eos-stat s-purple">
             <div class="eos-stat-top">
                 <div class="eos-stat-label">Active Projects</div>
                 <div class="eos-stat-icon purple"><i class="ti ti-briefcase"></i></div>
@@ -20,7 +20,7 @@
             <div class="eos-stat-num">{{ $activeProjects }}</div>
             <div class="eos-stat-meta">not yet completed</div>
         </div>
-        <div class="eos-stat">
+        <div class="eos-stat s-amber">
             <div class="eos-stat-top">
                 <div class="eos-stat-label">Pending Invoices</div>
                 <div class="eos-stat-icon amber"><i class="ti ti-file-invoice"></i></div>
@@ -28,7 +28,7 @@
             <div class="eos-stat-num">{{ $pendingInvoices }}</div>
             <div class="eos-stat-meta"><span class="warn">unpaid</span> invoices</div>
         </div>
-        <div class="eos-stat">
+        <div class="eos-stat s-red">
             <div class="eos-stat-top">
                 <div class="eos-stat-label">Expiring 30d</div>
                 <div class="eos-stat-icon red"><i class="ti ti-credit-card"></i></div>
