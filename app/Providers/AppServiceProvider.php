@@ -25,7 +25,8 @@ class AppServiceProvider extends ServiceProvider
         // Behind Bunny's CDN, TLS is terminated at the edge and the container
         // receives plain HTTP — without this, asset URLs render as http:// on
         // an https:// page and the browser blocks them as mixed content.
-        if ($this->app->environment('production')) {
+        // Forced for every environment except local development.
+        if ($this->app->environment() !== 'local') {
             URL::forceScheme('https');
         }
 
