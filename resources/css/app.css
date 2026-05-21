@@ -56,7 +56,7 @@ html, body { min-height: 100%; background: var(--bg-base); font-family: 'Syne', 
 .eos-nav-item {
   display: flex; align-items: center; gap: 9px;
   padding: 8px 10px; border-radius: 7px;
-  font-size: 12.5px; color: var(--text-muted);
+  font-size: 12.5px; font-weight: 700; color: var(--text-muted);
   cursor: pointer; margin-bottom: 2px;
   transition: background .15s, color .15s; text-decoration: none;
 }
@@ -217,15 +217,59 @@ html, body { min-height: 100%; background: var(--bg-base); font-family: 'Syne', 
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #1e2535; border-radius: 4px; }
 
+/* ── PAGE TABS (settings, etc.) ── */
+.eos-tabs {
+  display: flex; gap: 2px; margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.eos-tabs::-webkit-scrollbar { height: 0; }
+.eos-tab {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 14px; background: none; border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted); font-size: 12.5px; font-weight: 700;
+  font-family: 'Syne', sans-serif; cursor: pointer; white-space: nowrap;
+  transition: color .15s, border-color .15s;
+}
+.eos-tab .ti { font-size: 16px; }
+.eos-tab:hover { color: var(--text-secondary); }
+.eos-tab.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); }
+
+/* Mobile sidebar backdrop */
+.eos-backdrop {
+  display: none; position: fixed; inset: 0;
+  background: rgba(5,6,10,.6); z-index: 35;
+}
+
 @media (max-width: 980px) {
   .eos-sidebar { transform: translateX(-100%); box-shadow: 0 0 40px rgba(0,0,0,.6); }
   .eos-sidebar.open { transform: translateX(0); }
   .eos-main { margin-left: 0; }
   .eos-burger { display: inline-flex; align-items: center; justify-content: center; }
+  .eos-backdrop { display: block; }
   .eos-stat-grid { grid-template-columns: repeat(2, 1fr); }
   .eos-row, .eos-form-grid { grid-template-columns: 1fr; }
   .eos-search { display: none; }
   .eos-notif { width: 280px; }
+
+  /* Sticky top bar so navigation is always reachable, app-style. */
+  .eos-topbar {
+    position: sticky; top: 0; z-index: 30;
+    background: var(--bg-base);
+    padding: 12px 14px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .eos-page-title { font-size: 17px; }
+  .eos-content { padding: 14px; }
+  .eos-notif { position: fixed; top: 56px; right: 12px; left: 12px; width: auto; }
+}
+
+@media (max-width: 560px) {
+  .eos-stat-grid { grid-template-columns: 1fr; }
+  .eos-topbar-actions { gap: 6px; }
+  .eos-icon-btn { padding: 0 9px; font-size: 11.5px; }
+  .eos-table { display: block; overflow-x: auto; white-space: nowrap; }
 }
 
 /* Notification bell */

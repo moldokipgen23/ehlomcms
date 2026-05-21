@@ -79,6 +79,8 @@
         </div>
     </aside>
 
+    <div class="eos-backdrop" x-show="open" @click="open = false" x-cloak></div>
+
     <main class="eos-main">
         <div class="eos-topbar">
             <div style="display:flex;align-items:center;gap:12px;">
