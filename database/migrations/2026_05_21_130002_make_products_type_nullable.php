@@ -8,10 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // The legacy free-text "type" column is no longer used by the app.
+        // Making it nullable is an instant operation (no table rebuild).
         Schema::table('products', function (Blueprint $table) {
             $table->string('type')->nullable()->change();
-            // Widen from enum so 'one_time' billing is allowed.
-            $table->string('billing_cycle')->default('yearly')->change();
         });
     }
 
@@ -19,7 +19,6 @@ return new class extends Migration
     {
         Schema::table('products', function (Blueprint $table) {
             $table->string('type')->nullable(false)->change();
-            $table->enum('billing_cycle', ['monthly', 'quarterly', 'yearly'])->default('monthly')->change();
         });
     }
 };

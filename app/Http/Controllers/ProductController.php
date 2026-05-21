@@ -62,7 +62,7 @@ class ProductController extends Controller
             'name' => 'required|string|max:255',
             'category' => 'required|in:' . implode(',', array_keys(Product::CATEGORIES)),
             'price' => 'required|numeric|min:0',
-            'billing_cycle' => 'required|in:monthly,quarterly,yearly,one_time',
+            'billing_cycle' => 'required|in:monthly,quarterly,yearly',
             'description' => 'nullable|string',
             'status' => 'required|in:active,inactive',
         ]);

@@ -27,7 +27,7 @@
         <div class="eos-field">
             <label class="eos-label">Billing Cycle *</label>
             <select name="billing_cycle" class="eos-select">
-                @foreach (['monthly' => 'Monthly', 'quarterly' => 'Quarterly', 'yearly' => 'Yearly', 'one_time' => 'One-time'] as $val => $label)
+                @foreach (['monthly' => 'Monthly', 'quarterly' => 'Quarterly', 'yearly' => 'Yearly'] as $val => $label)
                     <option value="{{ $val }}" @selected(old('billing_cycle', $product->billing_cycle ?? 'yearly') === $val)>{{ $label }}</option>
                 @endforeach
             </select>

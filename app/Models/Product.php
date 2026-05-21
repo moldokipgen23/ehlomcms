@@ -17,7 +17,6 @@ class Product extends Model
         'monthly' => 'Monthly',
         'quarterly' => 'Quarterly',
         'yearly' => 'Yearly',
-        'one_time' => 'One-time',
     ];
 
     protected $fillable = [
