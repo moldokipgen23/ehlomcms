@@ -28,6 +28,7 @@ echo "[entrypoint] Database is up."
 
 # Schema + storage symlink.
 php artisan migrate --force
+php artisan db:seed --class=Database\\Seeders\\AdminUserSeeder --force
 php artisan storage:link 2>/dev/null || true
 
 # Production caches.

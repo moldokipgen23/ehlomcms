@@ -203,6 +203,25 @@
             @yield('content')
         </div>
     </main>
+
+    <nav class="eos-bottom-nav">
+        @php
+            $bottomLinks = [
+                ['dashboard', 'Dashboard', 'ti-layout-dashboard'],
+                ['clients.index', 'Clients', 'ti-users'],
+                ['projects.index', 'Projects', 'ti-briefcase'],
+                ['invoices.index', 'Invoices', 'ti-file-invoice'],
+            ];
+        @endphp
+        @foreach ($bottomLinks as [$route, $label, $icon])
+            @php $base = explode('.', $route)[0]; @endphp
+            <a href="{{ Route::has($route) ? route($route) : '#' }}"
+               class="{{ request()->routeIs($base) || request()->routeIs($base.'.*') ? 'active' : '' }}">
+                <i class="ti {{ $icon }}"></i> {{ $label }}
+            </a>
+        @endforeach
+        <button type="button" @click="open = true"><i class="ti ti-menu-2"></i> Menu</button>
+    </nav>
 </div>
 </body>
 </html>
