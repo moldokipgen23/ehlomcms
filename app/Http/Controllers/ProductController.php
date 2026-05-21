@@ -18,6 +18,8 @@ class ProductController extends Controller
         $products = Product::query()
             ->when($request->search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%"))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
+            ->when($request->category, fn ($q, $c) => $q->where('category', $c))
+            ->orderBy('category')
             ->latest()
             ->paginate(15)
             ->withQueryString();
@@ -60,6 +62,7 @@ class ProductController extends Controller
     {
         return $request->validate([
             'name' => 'required|string|max:255',
+            'category' => 'required|in:' . implode(',', array_keys(Product::CATEGORIES)),
             'type' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
             'billing_cycle' => 'required|in:monthly,quarterly,yearly',

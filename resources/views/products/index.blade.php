@@ -10,6 +10,12 @@
 @section('content')
     <form method="GET" class="eos-filters">
         <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by name…" class="eos-input">
+        <select name="category" class="eos-select">
+            <option value="">All categories</option>
+            @foreach (\App\Models\Product::CATEGORIES as $val => $label)
+                <option value="{{ $val }}" @selected(request('category') === $val)>{{ $label }}</option>
+            @endforeach
+        </select>
         <select name="status" class="eos-select">
             <option value="">All statuses</option>
             @foreach (['active', 'inactive'] as $s)
@@ -17,7 +23,7 @@
             @endforeach
         </select>
         <button class="eos-btn eos-btn-secondary">Filter</button>
-        @if (request('search') || request('status'))
+        @if (request('search') || request('status') || request('category'))
             <a href="{{ route('products.index') }}" class="eos-btn eos-btn-secondary">Clear</a>
         @endif
     </form>
@@ -25,12 +31,13 @@
     <div class="eos-card" style="padding:0;">
         <table class="eos-table">
             <thead>
-                <tr><th>Name</th><th>Type</th><th>Price</th><th>Billing Cycle</th><th>Status</th><th style="text-align:right;">Actions</th></tr>
+                <tr><th>Name</th><th>Category</th><th>Type</th><th>Price</th><th>Billing Cycle</th><th>Status</th><th style="text-align:right;">Actions</th></tr>
             </thead>
             <tbody>
                 @forelse ($products as $product)
                     <tr>
                         <td>{{ $product->name }}</td>
+                        <td><span class="eos-badge">{{ \App\Models\Product::CATEGORIES[$product->category] ?? ucfirst($product->category) }}</span></td>
                         <td>{{ $product->type }}</td>
                         <td>₹{{ number_format($product->price, 2) }}</td>
                         <td>{{ ucfirst($product->billing_cycle) }}</td>
@@ -46,7 +53,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="6"><div class="eos-empty">No products found.</div></td></tr>
+                    <tr><td colspan="7"><div class="eos-empty">No products found.</div></td></tr>
                 @endforelse
             </tbody>
         </table>

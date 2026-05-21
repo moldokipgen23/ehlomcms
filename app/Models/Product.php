@@ -7,8 +7,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
+    public const CATEGORIES = [
+        'domain' => 'Domain',
+        'hosting' => 'Hosting',
+        'custom' => 'Custom',
+    ];
+
     protected $fillable = [
-        'name', 'type', 'price', 'billing_cycle', 'description', 'status',
+        'name', 'category', 'type', 'price', 'billing_cycle', 'description', 'status',
     ];
 
     protected $casts = [
