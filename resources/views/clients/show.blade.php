@@ -19,7 +19,7 @@
     </div>
 
     <div class="eos-tabs">
-        @foreach (['details' => 'Details', 'activity' => 'Activity', 'whatsapp' => 'WhatsApp', 'subscriptions' => 'Subscriptions', 'projects' => 'Projects', 'invoices' => 'Invoices', 'domains' => 'Domains & Hosting', 'agreements' => 'Agreements', 'notes' => 'Notes'] as $key => $label)
+        @foreach (['details' => 'Details', 'activity' => 'Activity', 'whatsapp' => 'WhatsApp', 'products' => 'Products', 'subscriptions' => 'Subscriptions', 'projects' => 'Projects', 'invoices' => 'Invoices', 'domains' => 'Domains & Hosting', 'agreements' => 'Agreements', 'notes' => 'Notes'] as $key => $label)
             <div class="eos-tab" :class="{ 'active': tab === '{{ $key }}' }" @click="tab = '{{ $key }}'">{{ $label }}</div>
         @endforeach
     </div>
@@ -187,6 +187,36 @@
         @endif
     </div>
 
+    {{-- Assigned Products --}}
+    <div x-show="tab === 'products'" x-cloak>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+            <a href="{{ route('clients.edit', $client) }}" class="eos-icon-btn primary"><i class="ti ti-pencil"></i> Manage Products</a>
+        </div>
+        <div class="eos-card" style="padding:0;">
+            <table class="eos-table">
+                <thead><tr><th>Product / Service</th><th>Category</th><th>Catalog Price</th><th>Client Price</th></tr></thead>
+                <tbody>
+                    @forelse ($client->products as $product)
+                        <tr>
+                            <td style="font-weight:600;color:var(--text-primary);">{{ $product->name }}</td>
+                            <td><span class="eos-badge">{{ \App\Models\Product::CATEGORIES[$product->category] ?? ucfirst($product->category) }}</span></td>
+                            <td>₹{{ number_format($product->price, 2) }}</td>
+                            <td>
+                                @if ($product->pivot->custom_price !== null)
+                                    ₹{{ number_format($product->pivot->custom_price, 2) }}
+                                @else
+                                    <span style="color:var(--text-dim);">Catalog price</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="4"><div class="eos-empty">No products assigned. Use “Manage Products” to add some.</div></td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     {{-- Subscriptions --}}
     <div x-show="tab === 'subscriptions'" x-cloak class="eos-card" style="padding:0;">
         <table class="eos-table">
@@ -210,17 +240,24 @@
     {{-- Projects --}}
     <div x-show="tab === 'projects'" x-cloak class="eos-card" style="padding:0;">
         <table class="eos-table">
-            <thead><tr><th>Title</th><th>Start</th><th>Delivery</th><th>Status</th></tr></thead>
+            <thead><tr><th>Title</th><th>Products</th><th>Delivery</th><th>Invoice</th><th>Status</th></tr></thead>
             <tbody>
                 @forelse ($client->projects as $project)
                     <tr>
-                        <td>{{ $project->title }}</td>
-                        <td>{{ $project->start_date?->format('M j, Y') ?: '—' }}</td>
+                        <td><a href="{{ route('projects.show', $project) }}" style="font-weight:600;color:var(--text-primary);">{{ $project->title }}</a></td>
+                        <td>{{ $project->products->count() }} item{{ $project->products->count() === 1 ? '' : 's' }}</td>
                         <td>{{ $project->delivery_date?->format('M j, Y') ?: '—' }}</td>
+                        <td>
+                            @if ($project->invoice)
+                                <a href="{{ route('invoices.show', $project->invoice) }}">{{ $project->invoice->invoice_number }}</a>
+                            @else
+                                <span style="color:var(--text-dim);">—</span>
+                            @endif
+                        </td>
                         <td><span class="eos-badge badge-{{ $project->status }}">{{ strtoupper(str_replace('_', ' ', $project->status)) }}</span></td>
                     </tr>
                 @empty
-                    <tr><td colspan="4"><div class="eos-empty">No projects.</div></td></tr>
+                    <tr><td colspan="5"><div class="eos-empty">No projects.</div></td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -233,7 +270,7 @@
             <tbody>
                 @forelse ($client->invoices as $invoice)
                     <tr>
-                        <td>{{ $invoice->invoice_number }}</td>
+                        <td><a href="{{ route('invoices.show', $invoice) }}" style="font-weight:600;color:var(--text-primary);">{{ $invoice->invoice_number }}</a></td>
                         <td>₹{{ number_format($invoice->total, 0) }}</td>
                         <td>{{ $invoice->due_date?->format('M j, Y') ?: '—' }}</td>
                         <td><span class="eos-badge badge-{{ $invoice->status }}">{{ strtoupper($invoice->status) }}</span></td>

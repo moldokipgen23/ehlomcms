@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
@@ -30,5 +31,19 @@ class Product extends Model
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    public function clients(): BelongsToMany
+    {
+        return $this->belongsToMany(Client::class)
+            ->withPivot('custom_price')
+            ->withTimestamps();
+    }
+
+    public function projects(): BelongsToMany
+    {
+        return $this->belongsToMany(Project::class, 'project_product')
+            ->withPivot('quantity', 'unit_price')
+            ->withTimestamps();
     }
 }

@@ -24,7 +24,8 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 Route::middleware('auth')->group(function () {
     Route::resource('clients', ClientController::class);
     Route::resource('products', ProductController::class)->except('show');
-    Route::resource('projects', ProjectController::class)->except('show');
+    Route::resource('projects', ProjectController::class);
+    Route::post('projects/{project}/generate-invoice', [ProjectController::class, 'generateInvoice'])->name('projects.generateInvoice');
     Route::resource('subscriptions', SubscriptionController::class)->except('show');
     Route::get('domains-hosting', [InfrastructureController::class, 'index'])->name('infrastructure.index');
     Route::resource('domains', DomainController::class)->except(['show', 'index']);

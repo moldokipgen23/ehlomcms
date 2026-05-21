@@ -29,13 +29,14 @@
             <tbody>
                 @forelse ($projects as $project)
                     <tr>
-                        <td>{{ $project->title }}</td>
+                        <td><a href="{{ route('projects.show', $project) }}" style="font-weight:600;color:var(--text-primary);">{{ $project->title }}</a></td>
                         <td>{{ $project->client->name ?? '—' }}</td>
                         <td>{{ $project->start_date?->format('M j, Y') ?: '—' }}</td>
                         <td>{{ $project->delivery_date?->format('M j, Y') ?: '—' }}</td>
                         <td><span class="eos-badge badge-{{ $project->status }}">{{ strtoupper(str_replace('_', ' ', $project->status)) }}</span></td>
                         <td>
                             <div class="eos-actions" style="justify-content:flex-end;">
+                                <a href="{{ route('projects.show', $project) }}" class="eos-icon-action" title="View"><i class="ti ti-eye"></i></a>
                                 <a href="{{ route('projects.edit', $project) }}" class="eos-icon-action edit" title="Edit"><i class="ti ti-pencil"></i></a>
                                 <form method="POST" action="{{ route('projects.destroy', $project) }}" onsubmit="return confirm('Delete this project?');">
                                     @csrf @method('DELETE')

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\Product;
 use Illuminate\Http\Request;
 
 class ClientController extends Controller
@@ -26,7 +27,10 @@ class ClientController extends Controller
 
     public function create()
     {
-        return view('clients.create', ['client' => new Client]);
+        return view('clients.create', [
+            'client' => new Client,
+            'products' => Product::orderBy('category')->orderBy('name')->get(),
+        ]);
     }
 
     public function store(Request $request)
@@ -35,6 +39,7 @@ class ClientController extends Controller
         $data['status'] = $data['status'] ?? 'active';
 
         $client = Client::create($data);
+        $client->products()->sync($this->productPivot($request));
 
         return redirect()
             ->route('clients.index')
@@ -44,19 +49,28 @@ class ClientController extends Controller
 
     public function show(Client $client)
     {
-        $client->load(['subscriptions.product', 'projects', 'invoices', 'domains', 'activities', 'agreements']);
+        $client->load([
+            'products', 'subscriptions.product', 'projects.products', 'projects.invoice',
+            'invoices', 'domains', 'activities', 'agreements',
+        ]);
 
         return view('clients.show', compact('client'));
     }
 
     public function edit(Client $client)
     {
-        return view('clients.edit', compact('client'));
+        $client->load('products');
+
+        return view('clients.edit', [
+            'client' => $client,
+            'products' => Product::orderBy('category')->orderBy('name')->get(),
+        ]);
     }
 
     public function update(Request $request, Client $client)
     {
         $client->update($this->validated($request));
+        $client->products()->sync($this->productPivot($request));
 
         return redirect()->route('clients.show', $client)->with('success', 'Client updated.');
     }
@@ -79,6 +93,30 @@ class ClientController extends Controller
             'address' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'status' => 'nullable|in:active,inactive,suspended',
+            'products' => 'nullable|array',
+            'products.*.product_id' => 'nullable|exists:products,id',
+            'products.*.custom_price' => 'nullable|numeric|min:0',
         ]);
+    }
+
+    /**
+     * Build the sync payload [product_id => [custom_price]] from the
+     * repeatable assigned-products form rows.
+     */
+    private function productPivot(Request $request): array
+    {
+        $pivot = [];
+
+        foreach ($request->input('products', []) as $row) {
+            if (empty($row['product_id'])) {
+                continue;
+            }
+            $price = $row['custom_price'] ?? '';
+            $pivot[$row['product_id']] = [
+                'custom_price' => $price === '' || $price === null ? null : (float) $price,
+            ];
+        }
+
+        return $pivot;
     }
 }

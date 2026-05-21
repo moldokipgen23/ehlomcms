@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Client extends Model
@@ -30,6 +31,13 @@ class Client extends Model
     public function domains(): HasMany
     {
         return $this->hasMany(Domain::class);
+    }
+
+    public function products(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class)
+            ->withPivot('custom_price')
+            ->withTimestamps();
     }
 
     public function activities(): HasMany
