@@ -1,4 +1,4 @@
-name: Build & publish container image
+name: Build & deploy
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -31,3 +31,14 @@ jobs:
           tags: |
             ghcr.io/moldokipgen23/ehlomcms:latest
             ghcr.io/moldokipgen23/ehlomcms:${{ github.sha }}
+
+      # Tells Bunny Magic Containers to deploy the freshly built image.
+      # Uses the unique commit SHA as the tag so Bunny always pulls a new
+      # image — no stale cache, nothing to change manually on any deploy.
+      - name: Deploy to Bunny Magic Containers
+        uses: BunnyWay/actions/container-update-image@main
+        with:
+          app_id: ${{ secrets.BUNNY_APP_ID }}
+          api_key: ${{ secrets.BUNNY_API_KEY }}
+          container: app
+          image_tag: ${{ github.sha }}
