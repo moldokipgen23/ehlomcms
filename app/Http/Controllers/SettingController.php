@@ -42,6 +42,7 @@ class SettingController extends Controller
                 'smtp_from_name' => Setting::get('smtp_from_name', 'Ehlom Digital'),
             ],
             'smtp_password_set' => (bool) Setting::get('smtp_password'),
+            'brevo_api_key_set' => (bool) Setting::get('brevo_api_key'),
         ]);
     }
 
@@ -60,6 +61,7 @@ class SettingController extends Controller
             'smtp_port' => 'nullable|integer|min:1|max:65535',
             'smtp_username' => 'nullable|string|max:255',
             'smtp_password' => 'nullable|string|max:255',
+            'brevo_api_key' => 'nullable|string|max:255',
             'smtp_encryption' => 'nullable|in:tls,ssl,none',
             'smtp_from_address' => 'nullable|email|max:255',
             'smtp_from_name' => 'nullable|string|max:255',
@@ -69,9 +71,12 @@ class SettingController extends Controller
             Setting::put($key, $request->input($key));
         }
 
-        // Password: only overwrite when a new value is supplied (form never echoes it back).
+        // Secrets: only overwrite when a new value is supplied (form never echoes them back).
         if (filled($request->input('smtp_password'))) {
             Setting::put('smtp_password', $request->input('smtp_password'));
+        }
+        if (filled($request->input('brevo_api_key'))) {
+            Setting::put('brevo_api_key', $request->input('brevo_api_key'));
         }
 
         foreach (['logo' => 'company_logo', 'signature' => 'company_signature'] as $field => $key) {
@@ -109,7 +114,7 @@ class SettingController extends Controller
         }
 
         if (! MailConfigService::configured()) {
-            return back()->with('error', 'SMTP is not configured. Fill in the host and from-address, then save.');
+            return back()->with('error', 'Email is not configured. Add a Brevo API key (or SMTP host) and a from-address, then save.');
         }
 
         try {

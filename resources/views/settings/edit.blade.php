@@ -5,7 +5,7 @@
 
 @section('content')
     @php
-        $smtpKeys = ['smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'smtp_encryption', 'smtp_from_address', 'smtp_from_name'];
+        $smtpKeys = ['brevo_api_key', 'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'smtp_encryption', 'smtp_from_address', 'smtp_from_name'];
         $tplKeys = ['email_invoice_subject', 'email_invoice_body', 'email_renewal_subject', 'email_renewal_body', 'email_payment_subject', 'email_payment_body'];
         $activeTab = $errors->hasAny($smtpKeys) ? 'smtp' : ($errors->hasAny($tplKeys) ? 'templates' : 'branding');
     @endphp
@@ -70,10 +70,25 @@
             {{-- ── SMTP ── --}}
             <div x-show="tab === 'smtp'" x-cloak>
                 <div class="eos-card" style="margin-bottom:14px;">
-                    <div class="eos-card-header"><div class="eos-card-title">SMTP / Email Sending</div></div>
+                    <div class="eos-card-header"><div class="eos-card-title">Brevo API <span style="color:var(--accent-teal);font-weight:700;">— Recommended</span></div></div>
+                    <p style="font-size:11.5px;color:var(--text-dim);margin-bottom:14px;line-height:1.7;">
+                        Sends mail through Brevo's HTTPS API instead of SMTP. This is the reliable option on this
+                        server — the host blocks outbound SMTP ports, so plain SMTP times out. Get the key from
+                        Brevo → <strong>SMTP &amp; API → API keys &amp; MCP</strong>. When an API key is set, it is
+                        used and the SMTP fields below are ignored. A <strong>From Address</strong> (below) is still required.
+                    </p>
+                    <div class="eos-field">
+                        <label class="eos-label">Brevo API Key {{ $brevo_api_key_set ? '(saved — leave blank to keep)' : '' }}</label>
+                        <input type="password" name="brevo_api_key" value="" class="eos-input" autocomplete="new-password" placeholder="{{ $brevo_api_key_set ? '••••••••' : 'xkeysib-…' }}">
+                        @error('brevo_api_key') <div class="eos-error">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+
+                <div class="eos-card" style="margin-bottom:14px;">
+                    <div class="eos-card-header"><div class="eos-card-title">SMTP / Email Sending <span style="color:var(--text-dim);">— fallback</span></div></div>
                     <p style="font-size:11.5px;color:var(--text-dim);margin-bottom:14px;">
-                        Outgoing mail server used to email invoices and renewal reminders. Get these from
-                        your email provider (e.g. Gmail App Password, Zoho, Mailgun, Brevo).
+                        Classic SMTP. Used only when no Brevo API key is set above. May not work on this host
+                        because outbound SMTP ports are commonly blocked.
                     </p>
                     <div class="eos-form-grid">
                         <div class="eos-field">

@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Mail\Transport\BrevoApiTransport;
 use App\Services\NotificationService;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -29,6 +31,10 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment() !== 'local') {
             URL::forceScheme('https');
         }
+
+        Mail::extend('brevo-api', function (array $config) {
+            return new BrevoApiTransport((string) ($config['key'] ?? ''));
+        });
 
         View::composer('layouts.app', function ($view) {
             $view->with('notifications', app(NotificationService::class)->alerts());
