@@ -60,21 +60,21 @@ class NotificationService
                 $overdue = abs($days);
                 $urgent[] = [
                     'label' => $domain->domain_name . ' — expired ' . $overdue . ' day' . ($overdue === 1 ? '' : 's') . ' ago',
-                    'url' => route('domains.index'),
+                    'url' => route('infrastructure.index', ['tab' => 'registered']),
                     'icon' => 'ti-world',
                     'level' => 'critical',
                 ];
             } elseif ($days >= 0 && $days <= 7) {
                 $urgent[] = [
                     'label' => $domain->domain_name . ' — ' . $this->daysLabel($days),
-                    'url' => route('domains.index'),
+                    'url' => route('infrastructure.index', ['tab' => 'registered']),
                     'icon' => 'ti-world',
                     'level' => 'urgent',
                 ];
             } elseif ($days > 7 && $days <= 30) {
                 $upcoming[] = [
                     'label' => $domain->domain_name . ' — ' . $this->daysLabel($days),
-                    'url' => route('domains.index'),
+                    'url' => route('infrastructure.index', ['tab' => 'registered']),
                     'icon' => 'ti-world',
                     'level' => 'warning',
                 ];

@@ -13,6 +13,13 @@ class Product extends Model
         'custom' => 'Custom',
     ];
 
+    public const BILLING_LABELS = [
+        'monthly' => 'Monthly',
+        'quarterly' => 'Quarterly',
+        'yearly' => 'Yearly',
+        'one_time' => 'One-time',
+    ];
+
     protected $fillable = [
         'name', 'category', 'type', 'price', 'billing_cycle', 'description', 'status',
     ];

@@ -8,21 +8,6 @@ use Illuminate\Http\Request;
 
 class DomainController extends Controller
 {
-    public function index(Request $request)
-    {
-        $filter = $request->filter;
-
-        $domains = Domain::with('client')
-            ->when($filter === 'expired', fn ($q) => $q->whereDate('expiry_date', '<', now()))
-            ->when($filter === 'expiring', fn ($q) => $q->whereDate('expiry_date', '>=', now())
-                ->whereDate('expiry_date', '<=', now()->addDays(30)))
-            ->orderBy('expiry_date')
-            ->paginate(20)
-            ->withQueryString();
-
-        return view('domains.index', compact('domains', 'filter'));
-    }
-
     public function create(Request $request)
     {
         return view('domains.create', [
@@ -35,7 +20,7 @@ class DomainController extends Controller
     {
         Domain::create($this->validated($request));
 
-        return redirect()->route('domains.index')->with('success', 'Domain added.');
+        return redirect()->route('infrastructure.index', ['tab' => 'registered'])->with('success', 'Domain added.');
     }
 
     public function edit(Domain $domain)
@@ -50,7 +35,7 @@ class DomainController extends Controller
     {
         $domain->update($this->validated($request));
 
-        return redirect()->route('domains.index')->with('success', 'Domain updated.');
+        return redirect()->route('infrastructure.index', ['tab' => 'registered'])->with('success', 'Domain updated.');
     }
 
     public function destroy(Domain $domain)

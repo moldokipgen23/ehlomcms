@@ -4,6 +4,7 @@ use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\AgreementController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DomainController;
+use App\Http\Controllers\InfrastructureController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SettingController;
@@ -25,7 +26,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('products', ProductController::class)->except('show');
     Route::resource('projects', ProjectController::class)->except('show');
     Route::resource('subscriptions', SubscriptionController::class)->except('show');
-    Route::resource('domains', DomainController::class)->except('show');
+    Route::get('domains-hosting', [InfrastructureController::class, 'index'])->name('infrastructure.index');
+    Route::resource('domains', DomainController::class)->except(['show', 'index']);
     Route::post('clients/{client}/activities', [ActivityController::class, 'store'])->name('activities.store');
     Route::delete('activities/{activity}', [ActivityController::class, 'destroy'])->name('activities.destroy');
     Route::resource('invoices', InvoiceController::class);

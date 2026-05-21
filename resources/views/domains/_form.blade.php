@@ -72,6 +72,6 @@
     </div>
     <div class="eos-actions" style="margin-top:6px;">
         <button class="eos-btn eos-btn-primary"><i class="ti ti-check"></i> {{ $submit }}</button>
-        <a href="{{ route('domains.index') }}" class="eos-btn eos-btn-secondary">Cancel</a>
+        <a href="{{ route('infrastructure.index', ['tab' => 'registered']) }}" class="eos-btn eos-btn-secondary">Cancel</a>
     </div>
 </div>

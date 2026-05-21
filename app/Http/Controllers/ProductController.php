@@ -7,19 +7,12 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public const TYPES = [
-        'Website Hosting', 'Website Maintenance', 'AI Chatbot',
-        'WhatsApp Automation', 'Domain Registration', 'Custom Website',
-        'E-commerce Website', 'Other',
-    ];
-
     public function index(Request $request)
     {
         $products = Product::query()
+            ->where('category', 'custom')
             ->when($request->search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%"))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
-            ->when($request->category, fn ($q, $c) => $q->where('category', $c))
-            ->orderBy('category')
             ->latest()
             ->paginate(15)
             ->withQueryString();
@@ -27,16 +20,20 @@ class ProductController extends Controller
         return view('products.index', compact('products'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        return view('products.create', ['product' => new Product]);
+        $category = array_key_exists($request->category, Product::CATEGORIES)
+            ? $request->category
+            : 'custom';
+
+        return view('products.create', ['product' => new Product(['category' => $category])]);
     }
 
     public function store(Request $request)
     {
-        Product::create($this->validated($request));
+        $product = Product::create($this->validated($request));
 
-        return redirect()->route('products.index')->with('success', 'Product created.');
+        return $this->redirectFor($product)->with('success', $this->label($product) . ' created.');
     }
 
     public function edit(Product $product)
@@ -48,14 +45,15 @@ class ProductController extends Controller
     {
         $product->update($this->validated($request));
 
-        return redirect()->route('products.index')->with('success', 'Product updated.');
+        return $this->redirectFor($product)->with('success', $this->label($product) . ' updated.');
     }
 
     public function destroy(Product $product)
     {
+        $redirect = $this->redirectFor($product);
         $product->delete();
 
-        return redirect()->route('products.index')->with('success', 'Product deleted.');
+        return $redirect->with('success', $this->label($product) . ' deleted.');
     }
 
     private function validated(Request $request): array
@@ -63,11 +61,30 @@ class ProductController extends Controller
         return $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|in:' . implode(',', array_keys(Product::CATEGORIES)),
-            'type' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
-            'billing_cycle' => 'required|in:monthly,quarterly,yearly',
+            'billing_cycle' => 'required|in:monthly,quarterly,yearly,one_time',
             'description' => 'nullable|string',
             'status' => 'required|in:active,inactive',
         ]);
+    }
+
+    /**
+     * Custom products live under Products & Services; hosting and domain
+     * catalog items live under the Domains & Hosting hub.
+     */
+    private function redirectFor(Product $product)
+    {
+        return $product->category === 'custom'
+            ? redirect()->route('products.index')
+            : redirect()->route('infrastructure.index', ['tab' => $product->category]);
+    }
+
+    private function label(Product $product): string
+    {
+        return match ($product->category) {
+            'hosting' => 'Hosting plan',
+            'domain' => 'Domain price',
+            default => 'Product',
+        };
     }
 }

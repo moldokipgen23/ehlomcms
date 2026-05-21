@@ -1,21 +1,20 @@
 @extends('layouts.app')
 
 @section('title', 'Products & Services')
-@section('subtitle', $products->total() . ' items')
+@section('subtitle', $products->total() . ' custom ' . \Illuminate\Support\Str::plural('product', $products->total()))
 
 @section('topbar-action')
     <a href="{{ route('products.create') }}" class="eos-icon-btn primary"><i class="ti ti-plus"></i> New Product</a>
 @endsection
 
 @section('content')
+    <p style="font-size:11.5px;color:var(--text-dim);margin-bottom:12px;">
+        Your own custom add-on products &amp; services — Web Design, Mobile App, and the like.
+        Hosting plans and domain pricing live under <a href="{{ route('infrastructure.index') }}">Domains &amp; Hosting</a>.
+    </p>
+
     <form method="GET" class="eos-filters">
         <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by name…" class="eos-input">
-        <select name="category" class="eos-select">
-            <option value="">All categories</option>
-            @foreach (\App\Models\Product::CATEGORIES as $val => $label)
-                <option value="{{ $val }}" @selected(request('category') === $val)>{{ $label }}</option>
-            @endforeach
-        </select>
         <select name="status" class="eos-select">
             <option value="">All statuses</option>
             @foreach (['active', 'inactive'] as $s)
@@ -23,7 +22,7 @@
             @endforeach
         </select>
         <button class="eos-btn eos-btn-secondary">Filter</button>
-        @if (request('search') || request('status') || request('category'))
+        @if (request('search') || request('status'))
             <a href="{{ route('products.index') }}" class="eos-btn eos-btn-secondary">Clear</a>
         @endif
     </form>
@@ -31,16 +30,14 @@
     <div class="eos-card" style="padding:0;">
         <table class="eos-table">
             <thead>
-                <tr><th>Name</th><th>Category</th><th>Type</th><th>Price</th><th>Billing Cycle</th><th>Status</th><th style="text-align:right;">Actions</th></tr>
+                <tr><th>Name</th><th>Price</th><th>Billing</th><th>Status</th><th style="text-align:right;">Actions</th></tr>
             </thead>
             <tbody>
                 @forelse ($products as $product)
                     <tr>
-                        <td>{{ $product->name }}</td>
-                        <td><span class="eos-badge">{{ \App\Models\Product::CATEGORIES[$product->category] ?? ucfirst($product->category) }}</span></td>
-                        <td>{{ $product->type }}</td>
+                        <td style="font-weight:600;color:var(--text-primary);">{{ $product->name }}</td>
                         <td>₹{{ number_format($product->price, 2) }}</td>
-                        <td>{{ ucfirst($product->billing_cycle) }}</td>
+                        <td>{{ \App\Models\Product::BILLING_LABELS[$product->billing_cycle] ?? ucfirst($product->billing_cycle) }}</td>
                         <td><span class="eos-badge badge-{{ $product->status }}">{{ strtoupper($product->status) }}</span></td>
                         <td>
                             <div class="eos-actions" style="justify-content:flex-end;">
@@ -53,7 +50,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7"><div class="eos-empty">No products found.</div></td></tr>
+                    <tr><td colspan="5"><div class="eos-empty">No custom products yet.</div></td></tr>
                 @endforelse
             </tbody>
         </table>

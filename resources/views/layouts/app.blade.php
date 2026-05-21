@@ -43,7 +43,7 @@
                         ['agreements.index', 'Agreements', 'ti-file-text', \App\Models\Agreement::where('status', 'draft')->count() ?: null],
                     ],
                     'Infrastructure' => [
-                        ['domains.index', 'Domains & Hosting', 'ti-world', \App\Models\Domain::whereDate('expiry_date', '<=', now()->addDays(30))->count() ?: null],
+                        ['infrastructure.index', 'Domains & Hosting', 'ti-world', \App\Models\Domain::whereDate('expiry_date', '<=', now()->addDays(30))->count() ?: null],
                     ],
                     'System' => [
                         ['settings.edit', 'Settings', 'ti-settings', null],
