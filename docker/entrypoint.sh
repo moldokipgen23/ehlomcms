@@ -3,9 +3,24 @@ set -e
 
 cd /var/www/html
 
+# Ensure a .env file exists. It's gitignored so the production image ships
+# without one; on Bunny we rely on injected environment variables for real
+# config, but several artisan commands (notably key:generate, config:cache)
+# refuse to run without a writable .env present. Bunny's env vars override
+# anything in this file, so the contents only act as a placeholder.
+if [ ! -f .env ]; then
+    echo "[entrypoint] No .env present — bootstrapping a minimal one from .env.example."
+    if [ -f .env.example ]; then
+        cp .env.example .env
+    else
+        touch .env
+    fi
+    chown www-data:www-data .env
+fi
+
 # Generate APP_KEY only if one was not supplied via env.
 if [ -z "$APP_KEY" ]; then
-    echo "[entrypoint] No APP_KEY set — generating one (set APP_KEY in Bunny env to keep it stable)."
+    echo "[entrypoint] No APP_KEY set — generating one (set APP_KEY in Bunny env to keep it stable across redeploys)."
     php artisan key:generate --force
 fi
 
