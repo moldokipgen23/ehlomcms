@@ -159,16 +159,84 @@ class ProjectController extends Controller
                 ->store('project-deliverables', 'public');
         }
 
+        $justCompleted = false;
+
         if ($request->boolean('mark_complete')) {
             $update['status'] = 'completed';
             $update['completed_at'] = $project->completed_at ?? now();
+            $justCompleted = $project->status !== 'completed';
         }
 
         $project->update($update);
 
-        return back()->with('success', $request->boolean('mark_complete')
+        // On the first transition to completed, auto-create subscriptions for
+        // any domain/hosting product included in this project. We deliberately
+        // skip "custom" products (those are one-off project work, not
+        // recurring) and skip products where a subscription for this project
+        // already exists, so re-saving completion is idempotent and safe.
+        $created = 0;
+        if ($justCompleted) {
+            $created = $this->autoCreateRecurringSubscriptions($project);
+        }
+
+        $message = $request->boolean('mark_complete')
             ? 'Project marked complete. You can now download the summary PDF or email it to the client.'
-            : 'Completion details saved.');
+            : 'Completion details saved.';
+
+        if ($created > 0) {
+            $message .= ' Auto-created ' . $created . ' renewal subscription' . ($created === 1 ? '' : 's') . ' for the project\'s hosting/domain items.';
+        }
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * For each domain/hosting product on the project that isn't already on a
+     * subscription tied to this project, create one starting today with an
+     * expiry derived from the product's billing_cycle (monthly/quarterly/
+     * yearly, defaulting to yearly when unset). Returns the count created so
+     * the caller can surface it in the flash message.
+     */
+    private function autoCreateRecurringSubscriptions(Project $project): int
+    {
+        $project->loadMissing('products', 'subscriptions');
+
+        $alreadyLinked = $project->subscriptions->pluck('product_id')->all();
+        $recurringCategories = ['domain', 'hosting'];
+
+        $created = 0;
+
+        foreach ($project->products as $product) {
+            if (! in_array($product->category, $recurringCategories, true)) {
+                continue;
+            }
+            if (in_array($product->id, $alreadyLinked, true)) {
+                continue;
+            }
+
+            $start = ($project->completed_at ?? now())->copy()->startOfDay();
+            $expiry = match ($product->billing_cycle) {
+                'monthly' => $start->copy()->addMonth(),
+                'quarterly' => $start->copy()->addMonths(3),
+                default => $start->copy()->addYear(),
+            };
+
+            \App\Models\Subscription::create([
+                'client_id' => $project->client_id,
+                'project_id' => $project->id,
+                'product_id' => $product->id,
+                'start_date' => $start->toDateString(),
+                'expiry_date' => $expiry->toDateString(),
+                'renewal_amount' => (float) $product->pivot->unit_price,
+                'status' => 'active',
+                'auto_invoice' => true,
+                'notes' => 'Auto-created on project completion (' . $project->title . ').',
+            ]);
+
+            $created++;
+        }
+
+        return $created;
     }
 
     /**
