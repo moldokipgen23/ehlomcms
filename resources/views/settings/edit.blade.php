@@ -6,7 +6,7 @@
 @section('content')
     @php
         $smtpKeys = ['brevo_api_key', 'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'smtp_encryption', 'smtp_from_address', 'smtp_from_name'];
-        $tplKeys = ['email_invoice_subject', 'email_invoice_body', 'email_renewal_subject', 'email_renewal_body', 'email_payment_subject', 'email_payment_body'];
+        $tplKeys = ['email_invoice_subject', 'email_invoice_body', 'email_renewal_subject', 'email_renewal_body', 'email_payment_subject', 'email_payment_body', 'email_completion_subject', 'email_completion_body'];
         $activeTab = $errors->hasAny($smtpKeys) ? 'smtp' : ($errors->hasAny($tplKeys) ? 'templates' : 'branding');
     @endphp
 
@@ -192,12 +192,25 @@
                         @error('email_payment_body') <div class="eos-error">{{ $message }}</div> @enderror
                     </div>
 
+                    <div style="font-size:12px;color:var(--text-secondary);font-weight:600;margin:14px 0 8px;">Project Completion Email</div>
+                    <div class="eos-field">
+                        <label class="eos-label">Subject</label>
+                        <input type="text" name="email_completion_subject" value="{{ old('email_completion_subject', $templates['email_completion_subject']) }}" class="eos-input">
+                        @error('email_completion_subject') <div class="eos-error">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="eos-field">
+                        <label class="eos-label">Body</label>
+                        <textarea name="email_completion_body" rows="7" class="eos-textarea">{{ old('email_completion_body', $templates['email_completion_body']) }}</textarea>
+                        @error('email_completion_body') <div class="eos-error">{{ $message }}</div> @enderror
+                    </div>
+
                     <div style="font-size:11.5px;color:var(--text-dim);margin-top:6px;line-height:1.7;">
                         <i class="ti ti-info-circle"></i> Available placeholders:
                         <code>{client_name}</code> <code>{invoice_number}</code> <code>{amount}</code>
                         <code>{due_date}</code> <code>{items}</code> <code>{payment_date}</code>
-                        <code>{product_name}</code> <code>{expiry_date}</code> <code>{renewal_amount}</code><br>
-                        <code>{items}</code> lists the invoice line items &amp; charges. <code>{payment_date}</code> is used in the payment confirmation.
+                        <code>{product_name}</code> <code>{expiry_date}</code> <code>{renewal_amount}</code>
+                        <code>{project_title}</code> <code>{completed_at}</code><br>
+                        <code>{items}</code> lists the invoice line items &amp; charges. <code>{payment_date}</code> is for the payment confirmation. <code>{project_title}</code> &amp; <code>{completed_at}</code> are for the project completion email.
                     </div>
                 </div>
             </div>

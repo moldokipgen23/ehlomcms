@@ -16,6 +16,7 @@ class SettingController extends Controller
         'email_invoice_subject', 'email_invoice_body',
         'email_renewal_subject', 'email_renewal_body',
         'email_payment_subject', 'email_payment_body',
+        'email_completion_subject', 'email_completion_body',
         'smtp_host', 'smtp_port', 'smtp_username',
         'smtp_encryption', 'smtp_from_address', 'smtp_from_name',
     ];
@@ -32,6 +33,8 @@ class SettingController extends Controller
                 'email_renewal_body' => Setting::template('email_renewal_body'),
                 'email_payment_subject' => Setting::template('email_payment_subject'),
                 'email_payment_body' => Setting::template('email_payment_body'),
+                'email_completion_subject' => Setting::template('email_completion_subject'),
+                'email_completion_body' => Setting::template('email_completion_body'),
             ],
             'smtp' => [
                 'smtp_host' => Setting::get('smtp_host'),
@@ -59,6 +62,8 @@ class SettingController extends Controller
             'email_renewal_body' => 'nullable|string|max:5000',
             'email_payment_subject' => 'nullable|string|max:255',
             'email_payment_body' => 'nullable|string|max:5000',
+            'email_completion_subject' => 'nullable|string|max:255',
+            'email_completion_body' => 'nullable|string|max:5000',
             'smtp_host' => 'nullable|string|max:255',
             'smtp_port' => 'nullable|integer|min:1|max:65535',
             'smtp_username' => 'nullable|string|max:255',
