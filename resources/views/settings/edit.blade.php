@@ -80,6 +80,19 @@
                     <div class="eos-field">
                         <label class="eos-label">Brevo API Key {{ $brevo_api_key_set ? '(saved — leave blank to keep)' : '' }}</label>
                         <input type="password" name="brevo_api_key" value="" class="eos-input" autocomplete="new-password" placeholder="{{ $brevo_api_key_set ? '••••••••' : 'xkeysib-…' }}">
+                        @if ($brevo_api_key_preview)
+                            @php $looksWrong = ! str_starts_with($brevo_api_key_preview, 'xkeysi'); @endphp
+                            <div style="font-size:11px;margin-top:6px;color:{{ $looksWrong ? 'var(--accent-red, #ef4444)' : 'var(--accent-teal, #10b981)' }};font-family:ui-monospace,monospace;">
+                                {{ $looksWrong ? '✕' : '✓' }} Stored in DB: <strong>{{ $brevo_api_key_preview }}</strong>
+                                @if ($looksWrong)
+                                    <div style="color:var(--accent-red, #ef4444);margin-top:4px;">
+                                        This doesn't start with <code>xkeysib-</code>. You likely pasted the <strong>MCP key</strong> instead of the <strong>v3 API key</strong>. Brevo will reject it with <code>401 Key not found</code>.
+                                    </div>
+                                @endif
+                            </div>
+                        @else
+                            <div style="font-size:11px;margin-top:6px;color:var(--text-dim);">Not saved in DB yet.</div>
+                        @endif
                         @error('brevo_api_key') <div class="eos-error">{{ $message }}</div> @enderror
                     </div>
                 </div>

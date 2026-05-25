@@ -43,6 +43,8 @@ class SettingController extends Controller
             ],
             'smtp_password_set' => (bool) Setting::get('smtp_password'),
             'brevo_api_key_set' => (bool) Setting::get('brevo_api_key'),
+            'brevo_api_key_preview' => self::maskSecret(Setting::get('brevo_api_key')),
+            'smtp_password_preview' => self::maskSecret(Setting::get('smtp_password')),
         ]);
     }
 
@@ -72,11 +74,12 @@ class SettingController extends Controller
         }
 
         // Secrets: only overwrite when a new value is supplied (form never echoes them back).
+        // Trim whitespace/newlines that often sneak in when copy-pasting keys.
         if (filled($request->input('smtp_password'))) {
-            Setting::put('smtp_password', $request->input('smtp_password'));
+            Setting::put('smtp_password', trim((string) $request->input('smtp_password')));
         }
         if (filled($request->input('brevo_api_key'))) {
-            Setting::put('brevo_api_key', $request->input('brevo_api_key'));
+            Setting::put('brevo_api_key', trim((string) $request->input('brevo_api_key')));
         }
 
         foreach (['logo' => 'company_logo', 'signature' => 'company_signature'] as $field => $key) {
@@ -127,5 +130,25 @@ class SettingController extends Controller
         }
 
         return back()->with('success', 'Test email sent to ' . $to . '. Check the inbox.');
+    }
+
+    /**
+     * Mask a stored secret for the settings UI so the admin can confirm what
+     * the database actually holds without exposing the full value. Returns
+     * null when nothing is stored.
+     */
+    private static function maskSecret(?string $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $len = strlen($value);
+        $head = substr($value, 0, 6);
+        $tail = $len > 10 ? substr($value, -4) : '';
+
+        return $tail
+            ? sprintf('%s…%s  (%d chars)', $head, $tail, $len)
+            : sprintf('%s…  (%d chars)', $head, $len);
     }
 }
