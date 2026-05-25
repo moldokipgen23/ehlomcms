@@ -19,6 +19,16 @@
             @error('client_id') <div class="eos-error">{{ $message }}</div> @enderror
         </div>
         <div class="eos-field">
+            <label class="eos-label">Project (optional)</label>
+            <select name="project_id" class="eos-select">
+                <option value="">— None —</option>
+                @foreach ($projects as $pr)
+                    <option value="{{ $pr->id }}" @selected(old('project_id', $subscription->project_id) == $pr->id)>{{ $pr->title }}</option>
+                @endforeach
+            </select>
+            @error('project_id') <div class="eos-error">{{ $message }}</div> @enderror
+        </div>
+        <div class="eos-field">
             <label class="eos-label">Product *</label>
             <select name="product_id" class="eos-select" x-on:change="productChanged($event.target.value)">
                 <option value="">— Select product —</option>

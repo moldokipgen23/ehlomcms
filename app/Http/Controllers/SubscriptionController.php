@@ -6,6 +6,7 @@ use App\Mail\RenewalReminderMail;
 use App\Models\Activity;
 use App\Models\Client;
 use App\Models\Product;
+use App\Models\Project;
 use App\Models\Subscription;
 use App\Services\MailConfigService;
 use Illuminate\Http\Request;
@@ -25,12 +26,18 @@ class SubscriptionController extends Controller
         return view('subscriptions.index', compact('subscriptions'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        // Allow pre-filling from a project's "Add subscription" link.
+        $subscription = new Subscription;
+        $subscription->client_id = (int) $request->query('client_id') ?: null;
+        $subscription->project_id = (int) $request->query('project_id') ?: null;
+
         return view('subscriptions.create', [
-            'subscription' => new Subscription,
+            'subscription' => $subscription,
             'clients' => Client::orderBy('name')->get(),
             'products' => Product::orderBy('name')->get(),
+            'projects' => Project::orderBy('title')->get(['id', 'title', 'client_id']),
         ]);
     }
 
@@ -47,6 +54,7 @@ class SubscriptionController extends Controller
             'subscription' => $subscription,
             'clients' => Client::orderBy('name')->get(),
             'products' => Product::orderBy('name')->get(),
+            'projects' => Project::orderBy('title')->get(['id', 'title', 'client_id']),
         ]);
     }
 
@@ -99,6 +107,7 @@ class SubscriptionController extends Controller
     {
         return $request->validate([
             'client_id' => 'required|exists:clients,id',
+            'project_id' => 'nullable|exists:projects,id',
             'product_id' => 'required|exists:products,id',
             'start_date' => 'required|date',
             'expiry_date' => 'required|date|after_or_equal:start_date',

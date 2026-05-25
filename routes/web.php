@@ -26,6 +26,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('products', ProductController::class)->except('show');
     Route::resource('projects', ProjectController::class);
     Route::post('projects/{project}/generate-invoice', [ProjectController::class, 'generateInvoice'])->name('projects.generateInvoice');
+    Route::post('projects/{project}/completion', [ProjectController::class, 'saveCompletion'])->name('projects.saveCompletion');
+    Route::get('projects/{project}/summary-pdf', [ProjectController::class, 'summaryPdf'])->name('projects.summaryPdf');
+    Route::post('projects/{project}/send-completion-email', [ProjectController::class, 'sendCompletionEmail'])->name('projects.sendCompletionEmail');
     Route::resource('subscriptions', SubscriptionController::class)->except('show');
     Route::get('domains-hosting', [InfrastructureController::class, 'index'])->name('infrastructure.index');
     Route::resource('domains', DomainController::class)->except(['show', 'index']);

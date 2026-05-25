@@ -6,9 +6,14 @@ use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\Project;
+use App\Services\MailConfigService;
 use App\Services\InvoiceService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
@@ -42,7 +47,7 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
-        $project->load('client', 'products', 'invoice');
+        $project->load('client', 'products', 'invoice', 'subscriptions.product');
 
         return view('projects.show', compact('project'));
     }
@@ -118,6 +123,96 @@ class ProjectController extends Controller
 
         return redirect()->route('invoices.edit', $invoice)
             ->with('success', 'Draft invoice generated from project. Review the items, then set the status to send it.');
+    }
+
+    /**
+     * Save the completion-summary, upsell notes, and optional deliverable PDF.
+     * If "mark complete" is checked, flips status to completed and stamps
+     * completed_at. Otherwise just persists the fields so the admin can draft
+     * the wrap-up in stages before declaring the project done.
+     */
+    public function saveCompletion(Request $request, Project $project)
+    {
+        $data = $request->validate([
+            'completion_summary' => 'nullable|string|max:10000',
+            'upsell_notes' => 'nullable|string|max:10000',
+            'deliverable_pdf' => 'nullable|file|mimes:pdf|max:10240',
+            'remove_deliverable_pdf' => 'nullable|boolean',
+            'mark_complete' => 'nullable|boolean',
+        ]);
+
+        $update = [
+            'completion_summary' => $data['completion_summary'] ?? null,
+            'upsell_notes' => $data['upsell_notes'] ?? null,
+        ];
+
+        if ($request->boolean('remove_deliverable_pdf') && $project->deliverable_pdf) {
+            Storage::disk('public')->delete($project->deliverable_pdf);
+            $update['deliverable_pdf'] = null;
+        }
+
+        if ($request->hasFile('deliverable_pdf')) {
+            if ($project->deliverable_pdf) {
+                Storage::disk('public')->delete($project->deliverable_pdf);
+            }
+            $update['deliverable_pdf'] = $request->file('deliverable_pdf')
+                ->store('project-deliverables', 'public');
+        }
+
+        if ($request->boolean('mark_complete')) {
+            $update['status'] = 'completed';
+            $update['completed_at'] = $project->completed_at ?? now();
+        }
+
+        $project->update($update);
+
+        return back()->with('success', $request->boolean('mark_complete')
+            ? 'Project marked complete. You can now download the summary PDF or email it to the client.'
+            : 'Completion details saved.');
+    }
+
+    /**
+     * Stream the auto-generated project summary PDF (overview, summary,
+     * delivered items, subscriptions, upsell). No client signature line.
+     */
+    public function summaryPdf(Project $project)
+    {
+        $project->load('client', 'products', 'invoice', 'subscriptions.product');
+
+        $pdf = Pdf::loadView('pdf.project-summary', ['project' => $project]);
+        $slug = preg_replace('/[^A-Za-z0-9]+/', '-', strtolower($project->title)) ?: 'project';
+
+        return $pdf->download('project-summary-' . trim($slug, '-') . '.pdf');
+    }
+
+    /**
+     * Send the completion email to the client. Attaches the auto-generated
+     * summary PDF plus any uploaded deliverable PDF. Manual trigger only —
+     * this is never sent automatically.
+     */
+    public function sendCompletionEmail(Project $project)
+    {
+        $project->load('client');
+
+        $to = $project->client?->email;
+        if (! $to) {
+            return back()->with('error', 'This project\'s client has no email address on file.');
+        }
+
+        if (! MailConfigService::configured()) {
+            return back()->with('error', 'Email is not configured. Set the Brevo API key in Settings first.');
+        }
+
+        try {
+            MailConfigService::apply();
+            Mail::to($to)->send(new \App\Mail\ProjectCompletionMail($project));
+        } catch (\Throwable $e) {
+            Log::error('Project completion email failed', ['project_id' => $project->id, 'error' => $e->getMessage()]);
+
+            return back()->with('error', 'Email failed: ' . $e->getMessage());
+        }
+
+        return back()->with('success', 'Completion email sent to ' . $to . '.');
     }
 
     private function validated(Request $request): array

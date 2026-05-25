@@ -34,6 +34,8 @@ class Setting extends Model
         'email_renewal_body' => "Dear {client_name},\n\nYour {product_name} is due for renewal on {expiry_date}.\n\nRenewal Amount: ₹{renewal_amount}\n\nPlease contact us to proceed.\n\nEhlom Digital",
         'email_payment_subject' => 'Payment Received — Invoice {invoice_number}',
         'email_payment_body' => "Dear {client_name},\n\nWe have received your payment for invoice {invoice_number}. Your account is now settled.\n\nAmount Paid: ₹{amount}\nPayment Date: {payment_date}\n\nThank you for your business.\n\nEhlom Digital",
+        'email_completion_subject' => 'Project Completed — {project_title}',
+        'email_completion_body' => "Dear {client_name},\n\nYour project {project_title} has been completed and is ready for handover. A full summary is attached as a PDF, including:\n\n- What was delivered\n- Ongoing services and renewal dates\n- Recommended next steps\n\nIt has been a pleasure working with you. Please reach out if anything needs adjustment.\n\nEhlom Digital",
     ];
 
     /**

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Subscription extends Model
 {
     protected $fillable = [
-        'client_id', 'product_id', 'start_date', 'expiry_date',
+        'client_id', 'project_id', 'product_id', 'start_date', 'expiry_date',
         'renewal_amount', 'notes', 'status', 'auto_invoice',
         'last_invoiced_at', 'last_reminder_sent_at',
     ];
@@ -62,6 +62,11 @@ class Subscription extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
     }
 
     public function getDaysRemainingAttribute(): int
