@@ -18,8 +18,15 @@ if [ ! -f .env ]; then
     chown www-data:www-data .env
 fi
 
-# Generate APP_KEY only if one was not supplied via env.
+# Generate APP_KEY only if one was not supplied via env. key:generate edits
+# .env in place and refuses to run if it can't find an APP_KEY= line, so we
+# add a blank one defensively in case the .env.example we copied didn't
+# include it.
 if [ -z "$APP_KEY" ]; then
+    if ! grep -q '^APP_KEY=' .env; then
+        echo '' >> .env
+        echo 'APP_KEY=' >> .env
+    fi
     echo "[entrypoint] No APP_KEY set — generating one (set APP_KEY in Bunny env to keep it stable across redeploys)."
     php artisan key:generate --force
 fi
