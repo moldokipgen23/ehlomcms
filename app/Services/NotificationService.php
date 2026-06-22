@@ -6,6 +6,7 @@ use App\Models\Domain;
 use App\Models\Invoice;
 use App\Models\Lead;
 use App\Models\Subscription;
+use Illuminate\Support\Facades\Schema;
 
 class NotificationService
 {
@@ -115,15 +116,15 @@ class NotificationService
         }
 
         // New leads that haven't been contacted yet.
-        foreach (
-            Lead::where('status', 'new')->latest()->get() as $lead
-        ) {
-            $urgent[] = [
-                'label' => $lead->name . ' — new ' . ($lead->project_type ? \App\Models\Lead::PROJECT_TYPES[$lead->project_type] ?? $lead->project_type : 'lead') . ' inquiry',
-                'url' => route('leads.show', $lead),
-                'icon' => 'ti-user-star',
-                'level' => 'urgent',
-            ];
+        if (Schema::hasTable('leads')) {
+            foreach (Lead::where('status', 'new')->latest()->get() as $lead) {
+                $urgent[] = [
+                    'label' => $lead->name . ' — new ' . ($lead->project_type ? \App\Models\Lead::PROJECT_TYPES[$lead->project_type] ?? $lead->project_type : 'lead') . ' inquiry',
+                    'url' => route('leads.show', $lead),
+                    'icon' => 'ti-user-star',
+                    'level' => 'urgent',
+                ];
+            }
         }
 
         return $this->cache = [

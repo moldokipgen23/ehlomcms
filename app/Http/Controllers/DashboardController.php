@@ -8,6 +8,7 @@ use App\Models\Lead;
 use App\Models\Project;
 use App\Models\Subscription;
 use App\Services\NotificationService;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardController extends Controller
 {
@@ -17,7 +18,7 @@ class DashboardController extends Controller
         $activeProjects = Project::where('status', '!=', 'completed')->count();
         $pendingInvoices = Invoice::where('status', 'unpaid')->count();
         $expiringSubscriptions = Subscription::whereBetween('expiry_date', [now(), now()->addDays(30)])->count();
-        $newLeads = Lead::where('status', 'new')->count();
+        $newLeads = Schema::hasTable('leads') ? Lead::where('status', 'new')->count() : 0;
 
         $recentInvoices = Invoice::with('client')->latest()->take(5)->get();
 

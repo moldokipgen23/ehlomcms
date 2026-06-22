@@ -31,7 +31,7 @@
                 $links = [
                     'Main' => [
                         ['dashboard', 'Dashboard', 'ti-layout-dashboard', null],
-                        ['leads.index', 'Leads', 'ti-user-star', \App\Models\Lead::where('status', 'new')->count() ?: null],
+                        ['leads.index', 'Leads', 'ti-user-star', \Illuminate\Support\Facades\Schema::hasTable('leads') ? \App\Models\Lead::where('status', 'new')->count() : null],
                         ['clients.index', 'Clients', 'ti-users', \App\Models\Client::count()],
                     ],
                     'Finance' => [
