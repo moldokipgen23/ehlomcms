@@ -49,7 +49,11 @@ done
 echo "[entrypoint] Database is up."
 
 # Schema + storage symlink.
+echo "[entrypoint] Migration files:"
+find database/migrations -name '*.php' | sort
+echo "[entrypoint] Running migrations..."
 php artisan migrate --force
+echo "[entrypoint] Done migrating."
 php artisan db:seed --class=Database\\Seeders\\AdminUserSeeder --force
 php artisan storage:link 2>/dev/null || true
 

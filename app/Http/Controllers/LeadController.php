@@ -8,23 +8,17 @@ use Illuminate\Http\Request;
 
 class LeadController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth')->except(['create', 'store', 'thankyou']);
-    }
-
     public function index(Request $request)
     {
-        try {
-            $leads = Lead::query()
-                ->when($request->search, function ($q, $search) {
-                $q->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%")
-                      ->orWhere('phone', 'like', "%{$search}%")
-                      ->orWhere('business_name', 'like', "%{$search}%");
-                });
-            })
+        $leads = Lead::query()
+            ->when($request->search, function ($q, $search) {
+            $q->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('business_name', 'like', "%{$search}%");
+            });
+        })
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->project_type, fn ($q, $t) => $q->where('project_type', $t))
             ->latest()
@@ -32,10 +26,6 @@ class LeadController extends Controller
             ->withQueryString();
 
         return view('leads.index', compact('leads'));
-        } catch (\Throwable $e) {
-            error_log('[LEADS ERROR] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-            throw $e;
-        }
     }
 
     public function create()
@@ -70,12 +60,7 @@ class LeadController extends Controller
 
     public function show(Lead $lead)
     {
-        try {
-            return view('leads.show', compact('lead'));
-        } catch (\Throwable $e) {
-            error_log('[LEADS ERROR] show: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-            throw $e;
-        }
+        return view('leads.show', compact('lead'));
     }
 
     public function edit(Lead $lead)
