@@ -15,8 +15,9 @@ class LeadController extends Controller
 
     public function index(Request $request)
     {
-        $leads = Lead::query()
-            ->when($request->search, function ($q, $search) {
+        try {
+            $leads = Lead::query()
+                ->when($request->search, function ($q, $search) {
                 $q->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
                       ->orWhere('email', 'like', "%{$search}%")
@@ -31,6 +32,10 @@ class LeadController extends Controller
             ->withQueryString();
 
         return view('leads.index', compact('leads'));
+        } catch (\Throwable $e) {
+            error_log('[LEADS ERROR] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            throw $e;
+        }
     }
 
     public function create()
@@ -65,7 +70,12 @@ class LeadController extends Controller
 
     public function show(Lead $lead)
     {
-        return view('leads.show', compact('lead'));
+        try {
+            return view('leads.show', compact('lead'));
+        } catch (\Throwable $e) {
+            error_log('[LEADS ERROR] show: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            throw $e;
+        }
     }
 
     public function edit(Lead $lead)
