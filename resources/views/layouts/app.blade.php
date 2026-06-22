@@ -31,6 +31,7 @@
                 $links = [
                     'Main' => [
                         ['dashboard', 'Dashboard', 'ti-layout-dashboard', null],
+                        ['leads.index', 'Leads', 'ti-user-star', \App\Models\Lead::where('status', 'new')->count() ?: null],
                         ['clients.index', 'Clients', 'ti-users', \App\Models\Client::count()],
                     ],
                     'Finance' => [
@@ -208,6 +209,7 @@
         @php
             $bottomLinks = [
                 ['dashboard', 'Dashboard', 'ti-layout-dashboard'],
+                ['leads.index', 'Leads', 'ti-user-star'],
                 ['clients.index', 'Clients', 'ti-users'],
                 ['projects.index', 'Projects', 'ti-briefcase'],
                 ['invoices.index', 'Invoices', 'ti-file-invoice'],

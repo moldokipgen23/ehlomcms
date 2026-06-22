@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\Invoice;
+use App\Models\Lead;
 use App\Models\Project;
 use App\Models\Subscription;
 use App\Services\NotificationService;
@@ -16,6 +17,7 @@ class DashboardController extends Controller
         $activeProjects = Project::where('status', '!=', 'completed')->count();
         $pendingInvoices = Invoice::where('status', 'unpaid')->count();
         $expiringSubscriptions = Subscription::whereBetween('expiry_date', [now(), now()->addDays(30)])->count();
+        $newLeads = Lead::where('status', 'new')->count();
 
         $recentInvoices = Invoice::with('client')->latest()->take(5)->get();
 
@@ -23,7 +25,7 @@ class DashboardController extends Controller
 
         return view('dashboard.index', compact(
             'totalClients', 'activeProjects', 'pendingInvoices',
-            'expiringSubscriptions', 'recentInvoices', 'alerts'
+            'expiringSubscriptions', 'newLeads', 'recentInvoices', 'alerts'
         ));
     }
 }

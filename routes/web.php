@@ -5,6 +5,7 @@ use App\Http\Controllers\AgreementController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\InfrastructureController;
+use App\Http\Controllers\LeadController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SettingController;
@@ -17,6 +18,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
+
+Route::get('/get-quote', [LeadController::class, 'create'])->name('leads.create');
+Route::post('/get-quote', [LeadController::class, 'store'])->name('leads.store');
+Route::get('/thank-you', [LeadController::class, 'thankyou'])->name('leads.thankyou');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])->name('dashboard');
@@ -41,6 +46,13 @@ Route::middleware('auth')->group(function () {
     Route::post('subscriptions/{subscription}/send-reminder', [SubscriptionController::class, 'sendReminder'])->name('subscriptions.sendReminder');
     Route::get('agreements/{agreement}/pdf', [AgreementController::class, 'downloadPdf'])->name('agreements.pdf');
     Route::resource('agreements', AgreementController::class);
+
+    Route::get('leads', [LeadController::class, 'index'])->name('leads.index');
+    Route::get('leads/{lead}', [LeadController::class, 'show'])->name('leads.show');
+    Route::get('leads/{lead}/edit', [LeadController::class, 'edit'])->name('leads.edit');
+    Route::put('leads/{lead}', [LeadController::class, 'update'])->name('leads.update');
+    Route::delete('leads/{lead}', [LeadController::class, 'destroy'])->name('leads.destroy');
+    Route::post('leads/{lead}/convert', [LeadController::class, 'convert'])->name('leads.convert');
 
     Route::get('settings', [SettingController::class, 'edit'])->name('settings.edit');
     Route::post('settings', [SettingController::class, 'update'])->name('settings.update');

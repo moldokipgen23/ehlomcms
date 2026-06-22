@@ -7,9 +7,12 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'DejaVu Sans', sans-serif; color: #1f2937; font-size: 11.5px; line-height: 1.55; }
 
-    /* Each .sheet renders as its own page. The last one drops the break. */
-    .sheet { padding: 44px 48px 90px; position: relative; page-break-after: always; min-height: 100vh; }
-    .sheet:last-child { page-break-after: auto; }
+    /* A .sheet is a logical page group; only the first inside a block sets
+       the page break so short sections share a page. */
+    .sheet { padding: 44px 48px 80px; position: relative; }
+    .sheet + .sheet { page-break-before: always; }
+    .section { margin-top: 30px; }
+    .section.tight { margin-top: 22px; }
 
     /* Brand bar on every page */
     .topbar { display: table; width: 100%; padding-bottom: 18px; border-bottom: 2px solid #10b981; margin-bottom: 26px; }
@@ -50,25 +53,26 @@
 </head>
 <body>
 
-@php $logo = \App\Models\Setting::imageData('company_logo'); @endphp
+@php
+    $logo = \App\Models\Setting::imageData('company_logo');
+@endphp
 
-{{-- ───── PAGE 1 · COVER + OVERVIEW ───── --}}
+@php
+    $renderTopbar = function ($logo, $tag) {
+        return '<div class="topbar">'
+            . '<div class="l">'
+            . ($logo ? '<img src="' . $logo . '" alt="Ehlom Digital" style="max-height:42px;max-width:180px;">' : '<div class="brand-name">Ehlom Digital</div>')
+            . '</div>'
+            . '<div class="r"><div class="doc-tag">' . $tag . '</div></div>'
+            . '</div>';
+    };
+@endphp
+
+{{-- ───── PAGE 1 · COVER + OVERVIEW + COMPLETION SUMMARY ───── --}}
 <div class="sheet">
     <div class="watermark">COMPLETED</div>
 
-    <div class="topbar">
-        <div class="l">
-            @if ($logo)
-                <img src="{{ $logo }}" alt="Ehlom Digital" style="max-height:48px;max-width:200px;">
-            @else
-                <div class="brand-name">Ehlom Digital</div>
-                <div class="brand-tag">Web Design · Hosting · Digital Solutions</div>
-            @endif
-        </div>
-        <div class="r">
-            <div class="doc-tag">Project Summary</div>
-        </div>
-    </div>
+    {!! $renderTopbar($logo, 'Project Summary') !!}
 
     <h1 class="page-title">{{ $project->title }}</h1>
     <div class="page-sub">Completion report for {{ $project->client->name ?? '—' }}</div>
@@ -88,6 +92,8 @@
             <td style="width:50%;text-align:right;">
                 <div class="lbl">Status</div>
                 <div style="margin-top:4px;"><span class="pill">Completed</span></div>
+                <div class="lbl" style="margin-top:14px;">Completed On</div>
+                <div class="v">{{ ($project->completed_at ?? now())->format('F j, Y') }}</div>
             </td>
         </tr>
         <tr>
@@ -100,222 +106,131 @@
                 <div class="v">{{ $project->delivery_date?->format('F j, Y') ?? '—' }}</div>
             </td>
         </tr>
-        <tr>
-            <td>
-                <div class="lbl">Completed On</div>
-                <div class="v">{{ ($project->completed_at ?? now())->format('F j, Y') }}</div>
-            </td>
-            <td style="text-align:right;">
-                <div class="lbl">Report Generated</div>
-                <div class="v">{{ now()->format('F j, Y') }}</div>
-            </td>
-        </tr>
     </table>
 
     @if ($project->description)
-        <div style="margin-top:8px;">
+        <div class="section tight">
             <div class="lbl" style="margin-bottom:8px;">Project Overview</div>
             <div class="prose">{{ $project->description }}</div>
         </div>
     @endif
 
-    <div class="footer">
-        Ehlom Digital · Project Summary
-        <span class="pageno">Page 1</span>
-    </div>
+    @if ($project->completion_summary)
+        <div class="section">
+            <div class="lbl" style="margin-bottom:8px;">Completion Summary</div>
+            <div class="prose">{{ $project->completion_summary }}</div>
+        </div>
+    @endif
+
+    <div class="footer">Ehlom Digital · Project Summary <span class="pageno">Page 1</span></div>
 </div>
 
-{{-- ───── PAGE 2 · COMPLETION SUMMARY ───── --}}
-@if ($project->completion_summary)
+{{-- ───── PAGE 2 · DELIVERABLES + ONGOING SERVICES ───── --}}
+@if ($project->products->isNotEmpty() || $project->subscriptions->isNotEmpty())
 <div class="sheet">
-    <div class="topbar">
-        <div class="l">
-            @if ($logo)
-                <img src="{{ $logo }}" alt="Ehlom Digital" style="max-height:36px;max-width:160px;">
-            @else
-                <div style="font-size:14px;font-weight:bold;color:#0f172a;">Ehlom Digital</div>
-            @endif
-        </div>
-        <div class="r"><div class="doc-tag">Completion Summary</div></div>
-    </div>
+    {!! $renderTopbar($logo, 'Deliverables &amp; Services') !!}
 
-    <h1 class="page-title">What We Delivered</h1>
-    <div class="page-sub">A summary of work completed on {{ $project->title }}.</div>
+    @if ($project->products->isNotEmpty())
+        <h1 class="page-title">Delivered Products &amp; Services</h1>
+        <div class="page-sub">Itemised breakdown of everything included in this project.</div>
 
-    <div class="prose">{{ $project->completion_summary }}</div>
-
-    <div class="footer">
-        Ehlom Digital · Project Summary
-        <span class="pageno">Page 2</span>
-    </div>
-</div>
-@endif
-
-{{-- ───── PAGE 3 · DELIVERED PRODUCTS & SERVICES ───── --}}
-@if ($project->products->isNotEmpty())
-<div class="sheet">
-    <div class="topbar">
-        <div class="l">
-            @if ($logo)
-                <img src="{{ $logo }}" alt="Ehlom Digital" style="max-height:36px;max-width:160px;">
-            @else
-                <div style="font-size:14px;font-weight:bold;color:#0f172a;">Ehlom Digital</div>
-            @endif
-        </div>
-        <div class="r"><div class="doc-tag">Deliverables</div></div>
-    </div>
-
-    <h1 class="page-title">Delivered Products &amp; Services</h1>
-    <div class="page-sub">Itemised breakdown of everything included in this project.</div>
-
-    @php $total = 0; @endphp
-    <table class="data">
-        <thead>
-            <tr><th>Item</th><th>Qty</th><th class="r">Unit Price</th><th class="r">Line Total</th></tr>
-        </thead>
-        <tbody>
-            @foreach ($project->products as $p)
-                @php
-                    $qty = (float) $p->pivot->quantity;
-                    $unit = (float) $p->pivot->unit_price;
-                    $line = $qty * $unit;
-                    $total += $line;
-                @endphp
+        @php $total = 0; @endphp
+        <table class="data">
+            <thead>
+                <tr><th>Item</th><th>Qty</th><th class="r">Unit Price</th><th class="r">Line Total</th></tr>
+            </thead>
+            <tbody>
+                @foreach ($project->products as $p)
+                    @php
+                        $qty = (float) $p->pivot->quantity;
+                        $unit = (float) $p->pivot->unit_price;
+                        $line = $qty * $unit;
+                        $total += $line;
+                    @endphp
+                    <tr>
+                        <td style="font-weight:600;">{{ $p->name }}</td>
+                        <td>{{ rtrim(rtrim(number_format($qty, 2), '0'), '.') }}</td>
+                        <td class="r">₹{{ number_format($unit, 2) }}</td>
+                        <td class="r">₹{{ number_format($line, 2) }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
                 <tr>
-                    <td style="font-weight:600;">{{ $p->name }}</td>
-                    <td>{{ rtrim(rtrim(number_format($qty, 2), '0'), '.') }}</td>
-                    <td class="r">₹{{ number_format($unit, 2) }}</td>
-                    <td class="r">₹{{ number_format($line, 2) }}</td>
+                    <td colspan="3" class="r">Project Total</td>
+                    <td class="r">₹{{ number_format($total, 2) }}</td>
                 </tr>
-            @endforeach
-        </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="3" class="r">Project Total</td>
-                <td class="r">₹{{ number_format($total, 2) }}</td>
-            </tr>
-        </tfoot>
-    </table>
+            </tfoot>
+        </table>
 
-    @if ($project->invoice)
-        <div style="margin-top:32px;padding:14px 16px;background:#f8fafc;border-left:3px solid #10b981;">
-            <div class="lbl">Invoice Reference</div>
-            <div style="font-size:13px;color:#0f172a;margin-top:6px;">
-                <strong>{{ $project->invoice->invoice_number }}</strong> · {{ strtoupper($project->invoice->status) }} · ₹{{ number_format((float) $project->invoice->total, 2) }}
+        @if ($project->invoice)
+            <div style="margin-top:20px;padding:12px 14px;background:#f8fafc;border-left:3px solid #10b981;">
+                <div class="lbl">Invoice Reference</div>
+                <div style="font-size:12.5px;color:#0f172a;margin-top:5px;">
+                    <strong>{{ $project->invoice->invoice_number }}</strong> · {{ strtoupper($project->invoice->status) }} · ₹{{ number_format((float) $project->invoice->total, 2) }}
+                </div>
+            </div>
+        @endif
+    @endif
+
+    @if ($project->subscriptions->isNotEmpty())
+        <div class="section">
+            <h1 class="page-title" style="font-size:18px;">Ongoing Services &amp; Renewals</h1>
+            <div class="page-sub">Subscriptions tied to this project and their renewal schedule.</div>
+
+            <table class="data">
+                <thead>
+                    <tr><th>Service</th><th>Renews On</th><th class="r">Amount</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    @foreach ($project->subscriptions as $s)
+                        <tr>
+                            <td style="font-weight:600;">{{ $s->product->name ?? '—' }}</td>
+                            <td>{{ $s->expiry_date?->format('F j, Y') ?? '—' }}</td>
+                            <td class="r">₹{{ number_format((float) $s->renewal_amount, 2) }}</td>
+                            <td>{{ ucfirst($s->status) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+
+            <div style="margin-top:14px;font-size:10.5px;color:#64748b;line-height:1.7;">
+                You'll receive a renewal reminder approximately 30 days before each expiry date.
             </div>
         </div>
     @endif
 
-    <div class="footer">
-        Ehlom Digital · Project Summary
-        <span class="pageno">Page {{ ($project->completion_summary ? 3 : 2) }}</span>
-    </div>
+    <div class="footer">Ehlom Digital · Project Summary <span class="pageno">Page 2</span></div>
 </div>
 @endif
 
-{{-- ───── PAGE 4 · ONGOING SERVICES ───── --}}
-@if ($project->subscriptions->isNotEmpty())
+{{-- ───── PAGE 3 · NEXT STEPS + THANK YOU CLOSING ───── --}}
 <div class="sheet">
-    <div class="topbar">
-        <div class="l">
-            @if ($logo)
-                <img src="{{ $logo }}" alt="Ehlom Digital" style="max-height:36px;max-width:160px;">
-            @else
-                <div style="font-size:14px;font-weight:bold;color:#0f172a;">Ehlom Digital</div>
-            @endif
-        </div>
-        <div class="r"><div class="doc-tag">Recurring Services</div></div>
-    </div>
+    {!! $renderTopbar($logo, 'Looking Ahead') !!}
 
-    <h1 class="page-title">Ongoing Services &amp; Renewals</h1>
-    <div class="page-sub">Subscriptions tied to this project and their renewal schedule.</div>
+    @if ($project->upsell_notes)
+        <h1 class="page-title">Recommended Next Steps</h1>
+        <div class="page-sub">Suggested future phases and enhancements for {{ $project->title }}.</div>
+        <div class="prose">{{ $project->upsell_notes }}</div>
+    @endif
 
-    <table class="data">
-        <thead>
-            <tr><th>Service</th><th>Renews On</th><th class="r">Amount</th><th>Status</th></tr>
-        </thead>
-        <tbody>
-            @foreach ($project->subscriptions as $s)
-                <tr>
-                    <td style="font-weight:600;">{{ $s->product->name ?? '—' }}</td>
-                    <td>{{ $s->expiry_date?->format('F j, Y') ?? '—' }}</td>
-                    <td class="r">₹{{ number_format((float) $s->renewal_amount, 2) }}</td>
-                    <td>{{ ucfirst($s->status) }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-
-    <div style="margin-top:24px;font-size:11px;color:#64748b;line-height:1.7;">
-        You'll receive a renewal reminder approximately 30 days before each expiry date. Please contact us if you'd like to make changes to any of these services.
-    </div>
-
-    <div class="footer">
-        Ehlom Digital · Project Summary
-        <span class="pageno">Recurring Services</span>
-    </div>
-</div>
-@endif
-
-{{-- ───── PAGE 5 · RECOMMENDED NEXT STEPS ───── --}}
-@if ($project->upsell_notes)
-<div class="sheet">
-    <div class="topbar">
-        <div class="l">
-            @if ($logo)
-                <img src="{{ $logo }}" alt="Ehlom Digital" style="max-height:36px;max-width:160px;">
-            @else
-                <div style="font-size:14px;font-weight:bold;color:#0f172a;">Ehlom Digital</div>
-            @endif
-        </div>
-        <div class="r"><div class="doc-tag">Looking Ahead</div></div>
-    </div>
-
-    <h1 class="page-title">Recommended Next Steps</h1>
-    <div class="page-sub">Suggested future phases and enhancements for {{ $project->title }}.</div>
-
-    <div class="prose">{{ $project->upsell_notes }}</div>
-
-    <div class="footer">
-        Ehlom Digital · Project Summary
-        <span class="pageno">Next Steps</span>
-    </div>
-</div>
-@endif
-
-{{-- ───── FINAL PAGE · CLOSING ───── --}}
-<div class="sheet">
-    <div class="topbar">
-        <div class="l">
-            @if ($logo)
-                <img src="{{ $logo }}" alt="Ehlom Digital" style="max-height:36px;max-width:160px;">
-            @else
-                <div style="font-size:14px;font-weight:bold;color:#0f172a;">Ehlom Digital</div>
-            @endif
-        </div>
-        <div class="r"><div class="doc-tag">Thank You</div></div>
-    </div>
-
-    <div style="margin-top:120px;text-align:center;">
-        <div style="font-size:32px;font-weight:bold;color:#0f172a;letter-spacing:-.5px;">Thank You</div>
-        <div style="font-size:14px;color:#475569;margin-top:14px;line-height:1.7;max-width:420px;margin-left:auto;margin-right:auto;">
+    <div style="margin-top:{{ $project->upsell_notes ? '60px' : '120px' }};text-align:center;">
+        <div style="font-size:28px;font-weight:bold;color:#0f172a;letter-spacing:-.5px;">Thank You</div>
+        <div style="font-size:13px;color:#475569;margin-top:12px;line-height:1.7;max-width:420px;margin-left:auto;margin-right:auto;">
             It has been a pleasure delivering <strong>{{ $project->title }}</strong> for {{ $project->client->name ?? 'you' }}.
             We look forward to supporting your continued growth.
         </div>
-        <div style="margin-top:36px;">
-            <div style="display:inline-block;padding:10px 24px;background:#0f172a;color:#fff;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;">
+        <div style="margin-top:26px;">
+            <span style="display:inline-block;padding:9px 22px;background:#0f172a;color:#fff;font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;">
                 Project Officially Closed
-            </div>
+            </span>
         </div>
-        <div style="margin-top:30px;font-size:11px;color:#94a3b8;">
+        <div style="margin-top:22px;font-size:10.5px;color:#94a3b8;">
             Completed on {{ ($project->completed_at ?? now())->format('F j, Y') }}
         </div>
     </div>
 
-    <div class="footer">
-        This is a project completion record. No signature required.
-        <span class="pageno">Ehlom Digital</span>
-    </div>
+    <div class="footer">This is a project completion record. No signature required. <span class="pageno">Ehlom Digital</span></div>
 </div>
 
 </body>

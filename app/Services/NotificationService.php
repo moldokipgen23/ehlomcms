@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Domain;
 use App\Models\Invoice;
+use App\Models\Lead;
 use App\Models\Subscription;
 
 class NotificationService
@@ -110,6 +111,18 @@ class NotificationService
                 'url' => route('invoices.show', $invoice),
                 'icon' => 'ti-file-invoice',
                 'level' => 'info',
+            ];
+        }
+
+        // New leads that haven't been contacted yet.
+        foreach (
+            Lead::where('status', 'new')->latest()->get() as $lead
+        ) {
+            $urgent[] = [
+                'label' => $lead->name . ' — new ' . ($lead->project_type ? \App\Models\Lead::PROJECT_TYPES[$lead->project_type] ?? $lead->project_type : 'lead') . ' inquiry',
+                'url' => route('leads.show', $lead),
+                'icon' => 'ti-user-star',
+                'level' => 'urgent',
             ];
         }
 

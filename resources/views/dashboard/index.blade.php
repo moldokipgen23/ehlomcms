@@ -30,11 +30,11 @@
         </div>
         <div class="eos-stat s-red">
             <div class="eos-stat-top">
-                <div class="eos-stat-label">Expiring 30d</div>
-                <div class="eos-stat-icon red"><i class="ti ti-credit-card"></i></div>
+                <div class="eos-stat-label">New Leads</div>
+                <div class="eos-stat-icon red"><i class="ti ti-user-star"></i></div>
             </div>
-            <div class="eos-stat-num">{{ $expiringSubscriptions }}</div>
-            <div class="eos-stat-meta"><span class="bad">subscriptions</span> expiring soon</div>
+            <div class="eos-stat-num">{{ $newLeads }}</div>
+            <div class="eos-stat-meta"><span class="bad">new</span> inquiries awaiting contact</div>
         </div>
     </div>
 
