@@ -17,7 +17,6 @@
 //   and access tenant subdomains directly.
 
 use App\Http\Controllers\Tenant\Auth\TenantLoginController;
-use App\Http\Controllers\Tenant\Auth\TenantRegisteredUserController;
 use App\Http\Controllers\Tenant\TenantCatalogController;
 use App\Http\Controllers\Tenant\TenantContentController;
 use App\Http\Controllers\Tenant\TenantDashboardController;
@@ -43,12 +42,14 @@ Route::middleware('tenant')->group(function () {
 
 Route::middleware('tenant')->prefix('dashboard')->group(function () {
 
-    // Guest routes (login, register)
+    // Guest routes. No public registration - a tenant's owner account is
+    // created by the agency (AdminTenantController::store) at the same time
+    // the tenant itself is created, not via self-signup. Leaving a public
+    // register route on every subdomain would let any visitor create a
+    // dashboard login for someone else's shop.
     Route::middleware('guest')->group(function () {
         Route::get('login', [TenantLoginController::class, 'create'])->name('tenant.login');
         Route::post('login', [TenantLoginController::class, 'store']);
-        Route::get('register', [TenantRegisteredUserController::class, 'create'])->name('tenant.register');
-        Route::post('register', [TenantRegisteredUserController::class, 'store']);
     });
 
     // Authenticated tenant routes

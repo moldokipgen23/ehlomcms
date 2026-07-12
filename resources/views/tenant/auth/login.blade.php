@@ -54,7 +54,6 @@
                 <button type="submit" class="eos-btn eos-btn-primary auth-submit">
                     <i class="ti ti-login-2"></i> Log In
                 </button>
-                <a href="{{ route('tenant.register') }}" class="auth-link">No account? Register</a>
             </form>
         </div>
         <div class="auth-foot">Ehlom Digital &middot; Client Portal</div>

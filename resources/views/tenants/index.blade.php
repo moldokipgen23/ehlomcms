@@ -5,6 +5,27 @@
 @section('subtitle', 'All client tenant sites')
 
 @section('content')
+
+@if (session('generated_login'))
+    @php $gl = session('generated_login'); @endphp
+    <div class="eos-card" style="margin-bottom:16px;border-color:var(--accent-teal);">
+        <div style="padding:16px;">
+            <div style="font-weight:700;color:var(--accent-teal);margin-bottom:8px;">
+                <i class="ti ti-key"></i> Owner login created — shown once, save it now
+            </div>
+            <div style="font-size:13px;color:var(--text-secondary);line-height:1.8;">
+                Site: <strong>{{ $gl['subdomain'] }}.{{ config('app.tenant_domain', 'ehlom.com') }}/dashboard/login</strong><br>
+                Email: <strong>{{ $gl['email'] }}</strong><br>
+                Password: <strong>{{ $gl['password'] }}</strong>
+            </div>
+            <div class="eos-page-sub" style="margin-top:8px;">
+                Pass these to the client yourself. This won't be shown again — the
+                password is hashed in the database, not stored in plaintext anywhere.
+            </div>
+        </div>
+    </div>
+@endif
+
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
     <div class="eos-page-title" style="font-size:16px;font-weight:700;color:var(--text-primary);">
         {{ $tenants->count() }} Tenant{{ $tenants->count() !== 1 ? 's' : '' }}

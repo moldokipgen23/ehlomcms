@@ -62,6 +62,32 @@
 
         <div class="eos-card" style="margin-bottom:14px;">
             <div class="eos-card-header">
+                <div class="eos-card-title">Owner Login</div>
+            </div>
+            <div style="padding:16px;">
+                <div class="eos-page-sub" style="margin-bottom:12px;">
+                    Creates the client's first dashboard login. There is no public
+                    self-registration - a login is only ever created here by you.
+                    The generated password is shown once after creation; pass it
+                    to the client yourself (WhatsApp/email).
+                </div>
+                <div class="eos-form-grid">
+                    <div class="eos-field">
+                        <label class="eos-label">Owner Name *</label>
+                        <input type="text" name="owner_name" value="{{ old('owner_name') }}" class="eos-input" required>
+                        @error('owner_name') <div class="eos-error">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="eos-field">
+                        <label class="eos-label">Owner Email *</label>
+                        <input type="email" name="owner_email" value="{{ old('owner_email') }}" class="eos-input" required>
+                        @error('owner_email') <div class="eos-error">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="eos-card" style="margin-bottom:14px;">
+            <div class="eos-card-header">
                 <div class="eos-card-title">Link to Client</div>
             </div>
             <div style="padding:16px;">
