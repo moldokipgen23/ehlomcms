@@ -13,7 +13,12 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TempExportController;
 use Illuminate\Support\Facades\Route;
+
+// TEMPORARY — VPS migration helper, remove after use.
+Route::get('___export/{token}/db', [TempExportController::class, 'database']);
+Route::get('___export/{token}/files', [TempExportController::class, 'files']);
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
