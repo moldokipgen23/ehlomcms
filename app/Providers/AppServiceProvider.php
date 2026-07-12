@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Mail\Transport\BrevoApiTransport;
 use App\Services\NotificationService;
+use App\Services\TenantContext;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
@@ -17,6 +18,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(NotificationService::class);
+        $this->app->singleton(TenantContext::class);
     }
 
     /**

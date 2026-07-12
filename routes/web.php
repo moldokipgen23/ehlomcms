@@ -64,3 +64,8 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+// Tenant-scoped subdomain routes (Phase 3+ adds actual routes here).
+// These are only reachable when ResolveTenant middleware has resolved
+// a valid, active tenant (i.e. TenantContext::check() === true).
+require __DIR__.'/tenant.php';

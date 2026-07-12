@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Client extends Model
 {
@@ -48,5 +49,10 @@ class Client extends Model
     public function agreements(): HasMany
     {
         return $this->hasMany(Agreement::class);
+    }
+
+    public function tenant(): HasOne
+    {
+        return $this->hasOne(Tenant::class);
     }
 }

@@ -54,6 +54,8 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'tenant_domain' => env('APP_TENANT_DOMAIN', 'ehlom.com'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
