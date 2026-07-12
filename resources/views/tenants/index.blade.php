@@ -31,7 +31,7 @@
         @forelse ($tenants as $tenant)
             <tr class="{{ $tenant->status === 'suspended' ? 'eos-tr-warn' : '' }}">
                 <td>
-                    <a href="{{ route('tenant.home', [], false) }}" target="_blank" rel="noopener" style="font-family:'DM Mono',monospace;font-size:11px;">
+                    <a href="{{ request()->getScheme() }}://{{ $tenant->subdomain }}.{{ config('app.tenant_domain', 'ehlom.com') }}/" target="_blank" rel="noopener" style="font-size:11px;">
                         {{ $tenant->subdomain }}
                     </a>
                 </td>
