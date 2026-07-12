@@ -8,13 +8,19 @@ use App\Services\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class TenantCatalogController extends Controller
 {
+    private function requireShoppingSite(): void
+    {
+        $tenant = app(TenantContext::class)->get();
+        abort_if($tenant->site_type !== 'shopping', 404);
+    }
+
     public function index(): View
     {
+        $this->requireShoppingSite();
         $tenant = app(TenantContext::class)->get();
         $products = TenantProduct::where('tenant_id', $tenant->id)
             ->orderBy('name')
@@ -25,6 +31,7 @@ class TenantCatalogController extends Controller
 
     public function create(): View
     {
+        $this->requireShoppingSite();
         $tenant = app(TenantContext::class)->get();
 
         return view('tenant.catalog.form', compact('tenant'));
@@ -32,6 +39,7 @@ class TenantCatalogController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $this->requireShoppingSite();
         $tenant = app(TenantContext::class)->get();
 
         $data = $request->validate([
@@ -55,6 +63,7 @@ class TenantCatalogController extends Controller
 
     public function edit(int $id): View
     {
+        $this->requireShoppingSite();
         $tenant = app(TenantContext::class)->get();
         $product = TenantProduct::where('tenant_id', $tenant->id)->findOrFail($id);
 
@@ -63,6 +72,7 @@ class TenantCatalogController extends Controller
 
     public function update(Request $request, int $id): RedirectResponse
     {
+        $this->requireShoppingSite();
         $tenant = app(TenantContext::class)->get();
         $product = TenantProduct::where('tenant_id', $tenant->id)->findOrFail($id);
 
@@ -88,6 +98,7 @@ class TenantCatalogController extends Controller
 
     public function destroy(int $id): RedirectResponse
     {
+        $this->requireShoppingSite();
         $tenant = app(TenantContext::class)->get();
         $product = TenantProduct::where('tenant_id', $tenant->id)->findOrFail($id);
 

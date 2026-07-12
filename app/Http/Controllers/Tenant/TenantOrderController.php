@@ -12,6 +12,7 @@ class TenantOrderController extends Controller
     public function index(): View
     {
         $tenant = app(TenantContext::class)->get();
+        abort_if($tenant->action_type !== 'razorpay', 404);
 
         $orders = TenantOrder::where('tenant_id', $tenant->id)
             ->with('product')

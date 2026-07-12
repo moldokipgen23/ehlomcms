@@ -11,8 +11,15 @@ use Illuminate\View\View;
 
 class TenantPaymentSettingsController extends Controller
 {
+    private function requireRazorpay(): void
+    {
+        $tenant = app(TenantContext::class)->get();
+        abort_if($tenant->action_type !== 'razorpay', 404);
+    }
+
     public function edit(): View
     {
+        $this->requireRazorpay();
         $tenant = app(TenantContext::class)->get();
         $paymentSetting = PaymentSetting::where('tenant_id', $tenant->id)->first();
 
@@ -21,6 +28,7 @@ class TenantPaymentSettingsController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
+        $this->requireRazorpay();
         $tenant = app(TenantContext::class)->get();
 
         $data = $request->validate([

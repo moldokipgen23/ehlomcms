@@ -37,7 +37,7 @@ Route::middleware('tenant')->prefix('dashboard')->group(function () {
     });
 
     // Authenticated tenant routes
-    Route::middleware('auth')->group(function () {
+    Route::middleware('tenant.auth')->group(function () {
         Route::get('/', [TenantDashboardController::class, 'index'])->name('tenant.dashboard');
 
         Route::get('settings', [TenantSettingsController::class, 'edit'])->name('tenant.settings');

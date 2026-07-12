@@ -31,7 +31,7 @@ class TenantWebhookController extends Controller
 
         $expectedSignature = hash_hmac('sha256', $payload, $paymentSetting->api_secret);
 
-        if ($signature !== $expectedSignature) {
+        if (!hash_equals($expectedSignature, $signature)) {
             Log::warning('Razorpay webhook: invalid signature', ['tenant_id' => $tenant->id]);
             return response('Invalid signature', 400);
         }
