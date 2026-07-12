@@ -218,6 +218,27 @@ GUARDRAILS:
   (TenantContext::get()) — never accept a tenant ID from the URL/query string for
   rendering the public page.
 
+DESIGN REFINEMENT (apply this everywhere in this phase, AND retrofit it onto the
+existing tenant dashboard views from Phase 3-4 and the agency admin layout — all three
+surfaces must match):
+- Replace DM Mono as the general UI/body font. Monospace fonts read as "developer tool,"
+  not "small business dashboard" — the actual users here are shop owners, church admins,
+  school staff, not developers. Switch body text, labels, nav items, and form fields to
+  a humanist sans-serif (Inter or Manrope, loaded the same way as the existing Google
+  Fonts link in the layout head). Keep Syne for the big brand headline/logo text only —
+  its distinctive character works there.
+- Tone down or remove the starfield/constellation decorative background on auth pages
+  (login/register). It reads as a generic tech-startup template rather than a trustworthy
+  business tool for this audience. Replace with a subtle solid dark gradient or remove
+  the decorative background entirely, keeping the rest of the layout (card, logo, form)
+  unchanged.
+- Do not change the color palette, sidebar structure, or overall dark theme — those are
+  fine. This is a targeted typography + background fix, not a redesign.
+- Apply consistently: `resources/views/layouts/app.blade.php` (agency admin),
+  `resources/views/tenant/layouts/dashboard.blade.php` and
+  `resources/views/tenant/auth/*.blade.php` (tenant dashboard + auth), and the new public
+  storefront templates being built in this phase.
+
 TASK:
 1. Create `resources/views/tenant-templates/shop/` — a public storefront Blade template:
    banner image, business name, catalog grid (TenantProduct list with photo/price and the
@@ -233,11 +254,15 @@ TASK:
    either, default to 'info'.
 4. Add a `template_id` dropdown selector to the dashboard Settings page (Phase 3),
    restricted to 'shop' or 'info' only.
+5. Apply the design refinement above to the new templates AND go back and update the
+   existing admin/tenant layout files listed above so all three surfaces are visually
+   consistent.
 
 Verify: visiting a seeded 'shopping' tenant's subdomain root URL renders the shop template
 with their own catalog items and correct Buy button behavior; visiting a seeded 'info'
 tenant renders the info template with their own content, no catalog grid, correct
-Donate button behavior.
+Donate button behavior. Confirm the font/background changes appear on the public
+templates, the tenant dashboard, and the agency admin panel — all three, not just one.
 ```
 
 ---

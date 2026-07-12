@@ -27,17 +27,17 @@ class DatabaseSeeder extends Seeder
         // Seed tenants
         $shop1 = Tenant::updateOrCreate(
             ['subdomain' => 'testshop1'],
-            ['name' => 'E-Shop Electronics', 'site_type' => 'shopping', 'action_type' => 'razorpay', 'status' => 'active'],
+            ['name' => 'E-Shop Electronics', 'site_type' => 'shopping', 'action_type' => 'razorpay', 'template_id' => 'shop', 'status' => 'active'],
         );
 
         $shop2 = Tenant::updateOrCreate(
             ['subdomain' => 'testshop2'],
-            ['name' => 'Fashion Hub Store', 'site_type' => 'shopping', 'action_type' => 'whatsapp', 'status' => 'active'],
+            ['name' => 'Fashion Hub Store', 'site_type' => 'shopping', 'action_type' => 'whatsapp', 'template_id' => 'shop', 'status' => 'active'],
         );
 
         $info1 = Tenant::updateOrCreate(
             ['subdomain' => 'testinfo1'],
-            ['name' => 'Green Valley Info', 'site_type' => 'info', 'status' => 'active'],
+            ['name' => 'Green Valley Info', 'site_type' => 'info', 'action_type' => 'whatsapp', 'template_id' => 'info', 'whatsapp_number' => '919876543210', 'contact_phone' => '+91 98765 43210', 'contact_email' => 'hello@greenvalley.info', 'contact_address' => '123 Green Road, Bangalore', 'contact_hours' => 'Mon–Fri, 9 AM – 6 PM', 'status' => 'active'],
         );
 
         // Tenant users (for testing login on each subdomain)

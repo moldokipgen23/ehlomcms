@@ -7,6 +7,7 @@ use App\Services\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class TenantSettingsController extends Controller
@@ -24,6 +25,7 @@ class TenantSettingsController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'template_id' => ['nullable', 'string', Rule::in(['shop', 'info'])],
             'whatsapp_number' => ['nullable', 'string', 'max:255'],
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_phone' => ['nullable', 'string', 'max:255'],

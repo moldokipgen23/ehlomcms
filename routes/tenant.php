@@ -21,10 +21,25 @@ use App\Http\Controllers\Tenant\Auth\TenantRegisteredUserController;
 use App\Http\Controllers\Tenant\TenantCatalogController;
 use App\Http\Controllers\Tenant\TenantContentController;
 use App\Http\Controllers\Tenant\TenantDashboardController;
+use App\Http\Controllers\Tenant\TenantHomeController;
 use App\Http\Controllers\Tenant\TenantOrderController;
 use App\Http\Controllers\Tenant\TenantPaymentSettingsController;
 use App\Http\Controllers\Tenant\TenantSettingsController;
 use Illuminate\Support\Facades\Route;
+
+// Domain-scoped to genuine tenant subdomains only. Without this, these routes
+// share literal URIs ('/', '/dashboard') with agency-only routes in web.php,
+// and Laravel's route collection would evict whichever was registered second
+// for a given method+uri — this domain constraint gives tenant routes a
+// distinct collection key AND stops them from ever matching portal.ehlom.com,
+// www.ehlom.com, or the bare domain, regardless of registration order.
+Route::domain('{subdomain}.' . config('app.tenant_domain', 'ehlom.com'))
+    ->where(['subdomain' => '(?!portal$|www$)[a-z0-9-]+'])
+    ->group(function () {
+
+Route::middleware('tenant')->group(function () {
+    Route::get('/', [TenantHomeController::class, 'index'])->name('tenant.home');
+});
 
 Route::middleware('tenant')->prefix('dashboard')->group(function () {
 
@@ -70,3 +85,5 @@ Route::middleware('tenant')->prefix('dashboard')->group(function () {
     // Logout (POST, no auth middleware since session is still valid)
     Route::post('logout', [TenantLoginController::class, 'destroy'])->name('tenant.logout');
 });
+
+}); // end Route::domain('{subdomain}.'.config('app.tenant_domain'))

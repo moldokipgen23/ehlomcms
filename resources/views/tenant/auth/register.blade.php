@@ -8,13 +8,12 @@
     <title>Register — {{ config('app.name', 'Ehlom OS') }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="antialiased">
-    <canvas id="auth-bg"></canvas>
+<body class="antialiased" style="background: linear-gradient(160deg, #0d0f17 0%, #12141d 50%, #181c2b 100%);">
 
     <div class="auth-shell">
         <div class="auth-card">
@@ -67,9 +66,5 @@
         </div>
         <div class="auth-foot">Ehlom Digital &middot; Client Portal</div>
     </div>
-
-    <script>
-    (function(){const c=document.getElementById('auth-bg'),ctx=c.getContext('2d');let particles=[],w,h,mouse={x:null,y:null,radius:120};function resize(){w=c.width=window.innerWidth;h=c.height=window.innerHeight}window.addEventListener('resize',resize);resize();class Particle{constructor(){this.reset()}reset(){this.x=Math.random()*w;this.y=Math.random()*h;this.size=Math.random()*2+0.5;this.speedX=Math.random()*0.4-0.2;this.speedY=Math.random()*0.4-0.2;this.opacity=Math.random()*0.4+0.1}update(){this.x+=this.speedX;this.y+=this.speedY;if(this.x<0||this.x>w||this.y<0||this.y>h)this.reset();const dx=mouse.x-this.x,dy=mouse.y-this.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<mouse.radius){const force=(mouse.radius-dist)/mouse.radius;this.x-=dx*force*0.02;this.y-=dy*force*0.02}}}for(let i=0;i<280;i++)particles.push(new Particle);function animate(){ctx.clearRect(0,0,w,h);particles.forEach(p=>{p.update();ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fillStyle='rgba(79,142,247,'+p.opacity+')';ctx.fill();});particles.forEach((a,i)=>{for(let j=i+1;j<particles.length;j++){const b=particles[j],dx=a.x-b.x,dy=a.y-b.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<120){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle='rgba(79,142,247,'+(0.08*(1-dist/120))+')';ctx.lineWidth=0.5;ctx.stroke()}}});requestAnimationFrame(animate)}animate();c.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY});c.addEventListener('mouseleave',()=>{mouse.x=null;mouse.y=null});c.addEventListener('click',e=>{for(let i=0;i<20;i++){const p=new Particle;p.x=e.clientX;p.y=e.clientY;p.speedX=(Math.random()-0.5)*3;p.speedY=(Math.random()-0.5)*3;particles.push(p)}setTimeout(()=>particles.splice(0,20),2000)})})();
-    </script>
 </body>
 </html>

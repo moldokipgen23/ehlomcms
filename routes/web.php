@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\AdminTenantController;
 use App\Http\Controllers\AgreementController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DomainController;
@@ -15,16 +16,28 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return redirect()->route('dashboard');
+// These two routes share a literal URI ('/' and '/dashboard') with tenant routes
+// registered in routes/tenant.php. Without a domain constraint, Laravel's route
+// collection collapses same-method+same-uri routes to whichever was registered
+// last, silently evicting one of them. Explicitly scoping these to the
+// agency-only hosts (matching ResolveTenant's own bypass list) fixes the
+// collision and ensures these never match a tenant subdomain request.
+$portalHosts = 'portal\.' . preg_quote(config('app.tenant_domain', 'ehlom.com'), '/')
+    . '|www\.' . preg_quote(config('app.tenant_domain', 'ehlom.com'), '/')
+    . '|' . preg_quote(config('app.tenant_domain', 'ehlom.com'), '/');
+
+Route::domain('{portalHost}')->where(['portalHost' => $portalHosts])->group(function () {
+    Route::get('/', function () {
+        return redirect()->route('dashboard');
+    });
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->middleware(['auth', 'verified'])->name('dashboard');
 });
 
 Route::get('/get-quote', [LeadController::class, 'create'])->name('leads.create');
 Route::post('/get-quote', [LeadController::class, 'store'])->name('leads.store');
 Route::get('/thank-you', [LeadController::class, 'thankyou'])->name('leads.thankyou');
-
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::resource('clients', ClientController::class);
@@ -53,6 +66,11 @@ Route::middleware('auth')->group(function () {
     Route::put('leads/{lead}', [LeadController::class, 'update'])->name('leads.update');
     Route::delete('leads/{lead}', [LeadController::class, 'destroy'])->name('leads.destroy');
     Route::post('leads/{lead}/convert', [LeadController::class, 'convert'])->name('leads.convert');
+
+    Route::get('tenants', [AdminTenantController::class, 'index'])->name('tenants.index');
+    Route::get('tenants/create', [AdminTenantController::class, 'create'])->name('tenants.create');
+    Route::post('tenants', [AdminTenantController::class, 'store'])->name('tenants.store');
+    Route::post('tenants/{tenant}/toggle-status', [AdminTenantController::class, 'toggleStatus'])->name('tenants.toggle-status');
 
     Route::get('settings', [SettingController::class, 'edit'])->name('settings.edit');
     Route::post('settings', [SettingController::class, 'update'])->name('settings.update');

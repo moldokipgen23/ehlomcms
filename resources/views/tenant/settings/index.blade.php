@@ -16,6 +16,14 @@
                 <input type="text" name="name" value="{{ old('name', $tenant->name) }}" class="eos-input" required>
             </div>
             <div class="eos-field">
+                <label class="eos-label">Template</label>
+                <select name="template_id" class="eos-select">
+                    <option value="info" @selected(old('template_id', $tenant->template_id) === 'info')>Info Page</option>
+                    <option value="shop" @selected(old('template_id', $tenant->template_id) === 'shop')>Shop / Storefront</option>
+                </select>
+                <div class="eos-row-type" style="margin-top:4px;">Controls how your public page looks.</div>
+            </div>
+            <div class="eos-field">
                 <label class="eos-label">WhatsApp Number</label>
                 <input type="text" name="whatsapp_number" value="{{ old('whatsapp_number', $tenant->whatsapp_number) }}" class="eos-input" placeholder="e.g. 919876543210">
             </div>

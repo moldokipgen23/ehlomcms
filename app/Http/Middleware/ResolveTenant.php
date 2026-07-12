@@ -6,6 +6,7 @@ use App\Models\Tenant;
 use App\Services\TenantContext;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use Symfony\Component\HttpFoundation\Response;
 
 class ResolveTenant
@@ -20,6 +21,14 @@ class ResolveTenant
         // production bare domain, portal subdomain — passes through.
         $suffix = '.' . $baseDomain;
         if (!str_ends_with($host, $suffix)) {
+            // Covers the bare domain itself (host === $baseDomain) and any
+            // non-matching host (e.g. localhost during local testing).
+            // web.php's agency-only routes are domain-scoped to a
+            // {portalHost} parameter — fill it in here so every
+            // route('dashboard')-style call elsewhere in the app doesn't
+            // need to pass it explicitly.
+            URL::defaults(['portalHost' => $host]);
+
             return $next($request);
         }
 
@@ -27,8 +36,14 @@ class ResolveTenant
 
         // Skip tenant resolution for the agency CRM hosts.
         if (in_array($subdomain, ['portal', 'www', ''], true)) {
+            URL::defaults(['portalHost' => $host]);
+
             return $next($request);
         }
+
+        // Tenant routes are domain-scoped to a {subdomain} parameter — same
+        // reasoning as above, for every route('tenant.xxx') call.
+        URL::defaults(['subdomain' => $subdomain]);
 
         $tenant = Tenant::where('subdomain', $subdomain)->first();
 
