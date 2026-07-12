@@ -16,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
 
         $middleware->prepend(\App\Http\Middleware\ResolveTenant::class);
+
+        $middleware->alias([
+            'tenant' => \App\Http\Middleware\EnsureTenantResolved::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

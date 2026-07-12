@@ -20,7 +20,24 @@ class Tenant extends Model
         'template_id',
         'status',
         'plan',
+        'logo',
+        'banner_image',
+        'whatsapp_number',
+        'contact_email',
+        'contact_phone',
+        'about_text',
+        'contact_address',
+        'contact_hours',
+        'action_type',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'logo' => 'string',
+            'banner_image' => 'string',
+        ];
+    }
 
     public function client(): BelongsTo
     {
@@ -30,5 +47,25 @@ class Tenant extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    public function galleryImages(): HasMany
+    {
+        return $this->hasMany(TenantGalleryImage::class)->orderBy('sort_order');
+    }
+
+    public function products(): HasMany
+    {
+        return $this->hasMany(TenantProduct::class);
+    }
+
+    public function paymentSetting(): HasOne
+    {
+        return $this->hasOne(PaymentSetting::class);
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(TenantOrder::class);
     }
 }

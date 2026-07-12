@@ -65,7 +65,12 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
-// Tenant-scoped subdomain routes (Phase 3+ adds actual routes here).
-// These are only reachable when ResolveTenant middleware has resolved
+// Razorpay webhook (no auth — signature-verified).
+use App\Http\Controllers\Tenant\TenantWebhookController;
+Route::post('webhook/razorpay/{subdomain}', [TenantWebhookController::class, 'handleRazorpay'])
+    ->withoutMiddleware([\App\Http\Middleware\ResolveTenant::class]);
+
+// Tenant-scoped subdomain routes.
+// Only reachable when ResolveTenant middleware has resolved
 // a valid, active tenant (i.e. TenantContext::check() === true).
 require __DIR__.'/tenant.php';
