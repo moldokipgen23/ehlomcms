@@ -3,6 +3,13 @@
 Consolidated from every requirement discussed. For each item: what was asked for,
 what actually exists in the code right now, and what's missing.
 
+> **Status as of 2026-07-14: everything in this file's "Build order for today" list
+> is done** — verified against git log (`b8c6456`, `397614a`, `fe2b9c8`, `a6d2c0b`).
+> Keeping this file as the historical record of *why* those decisions were made
+> (especially item 3's "admin-confirmed manual activation" reasoning, which still
+> governs how add-ons work). For current gaps and the forward roadmap, see
+> `PATH_TO_100_PERCENT.md`.
+
 ---
 
 ## 1. Template system

@@ -591,3 +591,78 @@ TASK:
 Verify: toggling an add-on on/off correctly updates tenant_addons scoped to the current
 tenant. The agency admin tenants list shows each tenant's active add-ons.
 ```
+
+---
+
+## Architecture note (2026-07-14, reconfirmed)
+
+Docker-per-tenant + database-per-tenant was proposed externally and evaluated. Rejected
+for this business shape (many small SMB clients, not a handful of large enterprise
+tenants) — see `PATH_TO_100_PERCENT.md` architecture section for the full reasoning.
+The shared-app / `tenant_id`-scoped model below is the one to keep building on.
+
+## Phase 15 — Restaurant module (second business vertical)
+
+```
+This is the ehlom-os Laravel app. Shopping is the only working business vertical today
+(site_type = 'shopping' or 'info'). This phase adds Restaurant as a genuine second
+vertical, reusing the existing module/catalog/order pattern instead of building parallel
+infrastructure - the whole point of this phase is proving the module system generalizes.
+
+GUARDRAILS:
+- Do not create a new "restaurant_products" table - reuse TenantProduct (rename in UI to
+  "Menu Item" only where it's tenant-facing copy, not the underlying model/table).
+- Reuse the existing TenantOrder/TenantOrderItem fulfillment lifecycle for food orders -
+  do not build a second order system.
+- Reservations ARE genuinely new (no existing table fits) - this is the one real new
+  table this phase needs.
+- Add 'restaurant' as a third valid site_type value (currently 'shopping'|'info') -
+  update every Rule::in(['shopping', 'info']) validation call site, not just one.
+- Follow the existing module-visibility pattern (config/modules.php + Tenant.modules
+  json) - a restaurant tenant's dashboard should show Menu (Catalog relabeled),
+  Reservations, Orders, Content, Settings - NOT Payments unless action_type=razorpay is
+  also set, same as Shopping today.
+
+TASK:
+1. Migration: reservations table (tenant_id, customer_name, phone, party_size, date,
+   time, status [pending/confirmed/cancelled], notes, timestamps). Tenant-scoped like
+   every other tenant model.
+2. Add 'restaurant' to the site_type validation in AdminTenantController::store and
+   anywhere else site_type is validated or branched on.
+3. Add a 'reservations' module entry to config/modules.php (label "Reservations", route
+   tenant.reservations) alongside the existing content/catalog/payments/orders entries.
+4. Build TenantReservationController: dashboard CRUD for viewing/updating reservation
+   status (pending -> confirmed -> cancelled), tenant-scoped, following the same
+   controller shape as TenantOrderController.
+5. Add a public reservation request form on the restaurant storefront (name, phone,
+   party size, date, time) - creates a 'pending' reservation, no login required, same
+   guest pattern as the existing order/checkout flow.
+6. Build one storefront template set under resources/views/tenant-templates/restaurant/
+   (menu grid instead of product grid - same underlying TenantProduct data, relabeled;
+   plus a reservation request section) - follow the exact pattern of the existing shop/
+   and info/ template folders so it's auto-discovered by AdminThemeController's disk scan.
+7. In AdminTenantController::create, when site_type=restaurant is selected, default
+   modules to ['content', 'catalog', 'reservations', 'orders'] (no payments unless the
+   admin explicitly also sets action_type=razorpay).
+
+Verify: create a test tenant with site_type=restaurant. Confirm the dashboard sidebar
+shows Menu/Reservations/Orders/Content/Settings only (no stray Shopping-only nav items).
+Confirm a public reservation submitted on the storefront appears in the dashboard as
+'pending' and can be moved to 'confirmed'. Confirm a Shopping tenant's dashboard is
+completely unaffected - zero new nav items, zero behavior change.
+```
+
+## Phases 16-20 — index only, full prompts written when each phase starts
+
+Detailed rationale and scope for each lives in `PATH_TO_100_PERCENT.md` under "Forward
+roadmap." Writing the literal paste-to-Claude-Code prompt for each only when that phase
+is actually starting, same discipline as every phase before this - not drafting five
+phases of prompts in advance against a codebase that will have changed by the time we
+get there.
+
+- **Phase 16** — Make one add-on real (wire `tenantHasFeature()` into actual behavior)
+- **Phase 17** — Portfolio/Business module (third vertical)
+- **Phase 18** — Lightweight Client portal tier (old-style `Client` login, invoice/plan
+  visibility only)
+- **Phase 19** — Roles & permissions
+- **Phase 20** — School module (fourth vertical, depends on Phase 19)
