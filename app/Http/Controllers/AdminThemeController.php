@@ -51,19 +51,69 @@ class AdminThemeController extends Controller
     {
         return view('themes.form', [
             'baseTemplates' => $this->availableBaseTemplates(),
+            'tokenDocs' => $this->tokenDocs(),
+            'customHtmlPlaceholder' => $this->customHtmlPlaceholder(),
         ]);
+    }
+
+    /**
+     * Built as plain PHP strings, not inline in the Blade file - nested
+     * literal {{ }} tokens inside a .blade.php file's own {{ }} echo syntax
+     * confuses Blade's compiler (it isn't brace-depth-aware), even inside
+     * @php blocks. Keeping this text in the controller sidesteps that
+     * entirely.
+     */
+    private function tokenDocs(): array
+    {
+        $t = fn (string $s) => '{{' . $s . '}}';
+
+        return [
+            'tenant' => [$t('tenant.name'), $t('tenant.logo'), $t('tenant.banner'), $t('tenant.about'),
+                $t('tenant.contact_email'), $t('tenant.contact_phone'), $t('tenant.contact_address'), $t('tenant.whatsapp_number')],
+            'productsOpen' => $t('#products'),
+            'productsClose' => $t('/products'),
+            'item' => [$t('item.name'), $t('item.price'), $t('item.photo'), $t('item.description'), $t('item.buy_button')],
+            'buyButton' => $t('item.buy_button'),
+        ];
+    }
+
+    private function customHtmlPlaceholder(): string
+    {
+        $t = fn (string $s) => '{{' . $s . '}}';
+
+        return "<!DOCTYPE html>\n<html>\n<head><title>" . $t('tenant.name') . "</title></head>\n<body>\n"
+            . '  <h1>' . $t('tenant.name') . "</h1>\n"
+            . '  <img src="' . $t('tenant.banner') . "\">\n"
+            . '  <p>' . $t('tenant.about') . "</p>\n\n"
+            . '  ' . $t('#products') . "\n"
+            . "  <div class=\"product\">\n"
+            . '    <img src="' . $t('item.photo') . "\">\n"
+            . '    <h3>' . $t('item.name') . "</h3>\n"
+            . '    <p>Rs. ' . $t('item.price') . "</p>\n"
+            . '    ' . $t('item.buy_button') . "\n"
+            . "  </div>\n"
+            . '  ' . $t('/products') . "\n</body>\n</html>";
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $data = $request->validate([
+        $mode = $request->input('mode', 'base_template');
+
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'base_template' => ['required', Rule::in(array_keys($this->availableBaseTemplates()))],
             'industries' => ['nullable', 'array'],
             'industries.*' => ['string', Rule::in(['shopping', 'info'])],
             'public' => ['nullable', 'boolean'],
-        ]);
+        ];
+
+        if ($mode === 'custom_html') {
+            $rules['custom_html'] = ['required', 'string', 'max:200000'];
+        } else {
+            $rules['base_template'] = ['required', Rule::in(array_keys($this->availableBaseTemplates()))];
+        }
+
+        $data = $request->validate($rules);
 
         $data['key'] = $this->uniqueKey($data['name']);
         $data['public'] = (bool) ($data['public'] ?? false);

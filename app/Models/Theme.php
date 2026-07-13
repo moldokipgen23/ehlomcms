@@ -13,6 +13,7 @@ class Theme extends Model
         'description',
         'thumbnail',
         'base_template',
+        'custom_html',
         'default_settings',
         'industries',
         'public',

@@ -4,15 +4,34 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
 use App\Models\Theme;
+use App\Services\CustomThemeRenderer;
 use App\Services\TenantContext;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\View as ViewFacade;
 use Illuminate\View\View;
 
 class TenantHomeController extends Controller
 {
-    public function index(): View
+    public function index(CustomThemeRenderer $renderer): View|Response
     {
         $tenant = app(TenantContext::class)->get();
+
+        $theme = Theme::where('key', $tenant->template_id)->first();
+
+        // Pass the catalog whenever the tenant has the catalog module
+        // enabled, regardless of which layout renders it.
+        $products = $tenant->hasModule('catalog')
+            ? $tenant->products()->orderBy('name')->get()
+            : collect();
+
+        $tenant->load('galleryImages');
+
+        // A theme built by pasting raw HTML (see CustomThemeRenderer) takes
+        // priority over any Blade base_template - this is the non-technical
+        // path, no Blade folder involved at all.
+        if ($theme?->custom_html) {
+            return response($renderer->render($theme->custom_html, $tenant, $products));
+        }
 
         // template_id references a Theme record's key, not directly a Blade
         // folder name. The theme's base_template is the actual view folder
@@ -20,7 +39,6 @@ class TenantHomeController extends Controller
         // resources/views/tenant-templates/, not just 'shop'/'info', so a
         // newly added custom design is rendered correctly rather than
         // silently forced back to 'info'.
-        $theme = Theme::where('key', $tenant->template_id)->first();
         $baseTemplate = $theme->base_template ?? 'info';
 
         if ($theme) {
@@ -41,16 +59,6 @@ class TenantHomeController extends Controller
         if (!ViewFacade::exists("tenant-templates.{$baseTemplate}.index")) {
             $baseTemplate = 'info';
         }
-
-        // Pass the catalog whenever the tenant has the catalog module
-        // enabled, regardless of which base layout is rendering it - the
-        // template itself decides whether/how to display $products, not
-        // this controller.
-        $products = $tenant->hasModule('catalog')
-            ? $tenant->products()->orderBy('name')->get()
-            : collect();
-
-        $tenant->load('galleryImages');
 
         return view("tenant-templates.{$baseTemplate}.index", compact('tenant', 'products'));
     }
