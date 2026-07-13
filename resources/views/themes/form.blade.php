@@ -17,7 +17,7 @@
                            x-bind:style="mode === 'base_template' ? 'border-color:var(--accent-blue);' : ''">
                         <input type="radio" x-model="mode" value="base_template" style="display:none;">
                         <div style="font-size:13px;font-weight:600;color:var(--text-primary);">Use a Built-in Layout</div>
-                        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Pick Shop or Info, customize colors</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Pick a base layout (Shop, Restaurant, Info), customize colors</div>
                     </label>
                     <label style="flex:1;padding:12px;border:2px solid var(--border-card);border-radius:9px;cursor:pointer;text-align:center;"
                            x-bind:style="mode === 'custom_html' ? 'border-color:var(--accent-blue);' : ''">

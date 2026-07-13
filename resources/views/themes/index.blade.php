@@ -15,8 +15,8 @@
 </div>
 
 <div class="eos-page-sub" style="margin-bottom:16px;max-width:640px;">
-    A theme is a named preset (colors, sections) layered on top of one of the base
-    layouts (Shop or Info). To turn a real client site into a reusable theme, use
+    A theme is a named preset (colors, sections) layered on top of one of the 
+    layouts (Shop, Restaurant, or Info). To turn a real client site into a reusable theme, use
     <strong>"Save as Template"</strong> from that tenant's row on the Tenants page.
 </div>
 
