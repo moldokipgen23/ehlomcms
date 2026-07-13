@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Mail\Transport\BrevoApiTransport;
 use App\Services\NotificationService;
 use App\Services\TenantContext;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
@@ -40,6 +41,27 @@ class AppServiceProvider extends ServiceProvider
 
         View::composer('layouts.app', function ($view) {
             $view->with('notifications', app(NotificationService::class)->alerts());
+        });
+
+        // Tenant users (tenant_id set) get a reset link on their own
+        // subdomain's dashboard, not the agency portal - the two logins are
+        // completely separate front doors, so the reset link has to send
+        // them back to the one they actually use.
+        ResetPassword::createUrlUsing(function ($notifiable, string $token) {
+            if ($notifiable->tenant_id) {
+                $subdomain = $notifiable->tenant?->subdomain;
+
+                return route('tenant.password.reset', [
+                    'subdomain' => $subdomain,
+                    'token' => $token,
+                    'email' => $notifiable->getEmailForPasswordReset(),
+                ]);
+            }
+
+            return route('password.reset', [
+                'token' => $token,
+                'email' => $notifiable->getEmailForPasswordReset(),
+            ]);
         });
     }
 }

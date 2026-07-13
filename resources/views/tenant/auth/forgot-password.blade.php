@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Login — {{ config('app.name', 'Ehlom OS') }}</title>
+    <title>Forgot Password — {{ config('app.name', 'Ehlom OS') }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -26,9 +26,15 @@
             </div>
 
             <div class="auth-head">
-                <div class="auth-title">Welcome back</div>
-                <div class="auth-sub">Sign in to your client dashboard</div>
+                <div class="auth-title">Forgot your password?</div>
+                <div class="auth-sub">Enter your email and we'll send you a reset link</div>
             </div>
+
+            @if (session('status'))
+                <div class="eos-alert-bar success" style="margin-bottom:14px;">
+                    <i class="ti ti-check"></i> {{ session('status') }}
+                </div>
+            @endif
 
             @if ($errors->any())
                 <div class="eos-alert-bar warn" style="margin-bottom:14px;">
@@ -36,28 +42,21 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('tenant.login') }}">
+            <form method="POST" action="{{ route('tenant.password.email') }}">
                 @csrf
                 <div class="eos-field">
                     <label class="eos-label" for="email">Email</label>
                     <input id="email" type="email" name="email" value="{{ old('email') }}"
                            class="eos-input" required autofocus autocomplete="username">
                 </div>
-                <div class="eos-field">
-                    <label class="eos-label" for="password">Password</label>
-                    <input id="password" type="password" name="password"
-                           class="eos-input" required autocomplete="current-password">
-                </div>
-                <label class="auth-remember">
-                    <input type="checkbox" name="remember"> Remember me
-                </label>
-                <div style="text-align:right;margin:6px 0 14px;">
-                    <a href="{{ route("tenant.password.request") }}" style="font-size:12.5px;color:var(--text-muted);">Forgot password?</a>
-                </div>
                 <button type="submit" class="eos-btn eos-btn-primary auth-submit">
-                    <i class="ti ti-login-2"></i> Log In
+                    <i class="ti ti-mail"></i> Send Reset Link
                 </button>
             </form>
+
+            <div style="text-align:center;margin-top:14px;">
+                <a href="{{ route('tenant.login') }}" style="font-size:12.5px;color:var(--text-muted);">Back to login</a>
+            </div>
         </div>
         <div class="auth-foot">Ehlom Digital &middot; Client Portal</div>
     </div>

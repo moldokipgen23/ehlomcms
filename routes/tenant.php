@@ -17,6 +17,8 @@
 //   and access tenant subdomains directly.
 
 use App\Http\Controllers\Tenant\Auth\TenantLoginController;
+use App\Http\Controllers\Tenant\Auth\TenantForgotPasswordController;
+use App\Http\Controllers\Tenant\Auth\TenantNewPasswordController;
 use App\Http\Controllers\Tenant\TenantCartController;
 use App\Http\Controllers\Tenant\TenantCatalogController;
 use App\Http\Controllers\Tenant\TenantContentController;
@@ -71,6 +73,11 @@ Route::middleware('tenant')->prefix('dashboard')->group(function () {
     Route::middleware('guest')->group(function () {
         Route::get('login', [TenantLoginController::class, 'create'])->name('tenant.login');
         Route::post('login', [TenantLoginController::class, 'store']);
+
+        Route::get('forgot-password', [TenantForgotPasswordController::class, 'create'])->name('tenant.password.request');
+        Route::post('forgot-password', [TenantForgotPasswordController::class, 'store'])->name('tenant.password.email');
+        Route::get('reset-password/{token}', [TenantNewPasswordController::class, 'create'])->name('tenant.password.reset');
+        Route::post('reset-password', [TenantNewPasswordController::class, 'store'])->name('tenant.password.update');
     });
 
     // Authenticated tenant routes
