@@ -12,16 +12,26 @@ use Illuminate\View\View;
 
 class AdminAddonProductController extends Controller
 {
+    /**
+     * One page, one nav item: the catalog (what you sell) and the request
+     * queue (who wants it / who has it) are different database tables, but
+     * to the admin they're the same concept - "Products & Services" - so
+     * they render together here instead of as two separate sidebar tabs.
+     */
     public function index(): View
     {
         $addons = AddonProduct::orderBy('name')->get();
+        $requests = TenantAddon::with('tenant.client')
+            ->orderByRaw("FIELD(status, 'pending', 'active', 'inactive')")
+            ->orderByDesc('created_at')
+            ->get();
 
-        return view('addon-products.index', compact('addons'));
+        return view('products-services.index', compact('addons', 'requests'));
     }
 
     public function create(): View
     {
-        return view('addon-products.form', ['addon' => null]);
+        return view('products-services.form', ['addon' => null]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -31,38 +41,38 @@ class AdminAddonProductController extends Controller
 
         AddonProduct::create($data);
 
-        return redirect()->route('addon-products.index')->with('success', 'Add-on product created.');
+        return redirect()->route('products-services.index')->with('success', 'Product/service created.');
     }
 
     public function edit(AddonProduct $addonProduct): View
     {
-        return view('addon-products.form', ['addon' => $addonProduct]);
+        return view('products-services.form', ['addon' => $addonProduct]);
     }
 
     public function update(Request $request, AddonProduct $addonProduct): RedirectResponse
     {
         $addonProduct->update($this->validated($request));
 
-        return redirect()->route('addon-products.index')->with('success', 'Add-on product updated.');
+        return redirect()->route('products-services.index')->with('success', 'Product/service updated.');
     }
 
     public function toggleActive(AddonProduct $addonProduct): RedirectResponse
     {
         $addonProduct->update(['active' => !$addonProduct->active]);
 
-        return redirect()->route('addon-products.index')
+        return redirect()->route('products-services.index')
             ->with('success', $addonProduct->name . ($addonProduct->active ? ' is now active.' : ' is now hidden from clients.'));
     }
 
     public function destroy(AddonProduct $addonProduct): RedirectResponse
     {
         if (TenantAddon::where('addon_key', $addonProduct->key)->exists()) {
-            return back()->with('error', 'Cannot delete an add-on that tenants have requested or activated. Hide it instead.');
+            return back()->with('error', 'Cannot delete a product/service that clients have requested or activated. Hide it instead.');
         }
 
         $addonProduct->delete();
 
-        return redirect()->route('addon-products.index')->with('success', 'Add-on product deleted.');
+        return redirect()->route('products-services.index')->with('success', 'Product/service deleted.');
     }
 
     private function validated(Request $request): array

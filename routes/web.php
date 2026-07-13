@@ -82,11 +82,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('themes/{theme}', [AdminThemeController::class, 'destroy'])->name('themes.destroy');
     Route::post('tenants/{tenant}/save-as-template', [AdminThemeController::class, 'createFromTenant'])->name('tenants.save-as-template');
 
-    Route::get('addon-requests', [AdminTenantAddonController::class, 'index'])->name('addon-requests.index');
     Route::post('addon-requests/{addon}/activate', [AdminTenantAddonController::class, 'activate'])->name('addon-requests.activate');
     Route::post('addon-requests/{addon}/deactivate', [AdminTenantAddonController::class, 'deactivate'])->name('addon-requests.deactivate');
 
-    Route::get('addon-products', [AdminAddonProductController::class, 'index'])->name('addon-products.index');
+    Route::get('products-services', [AdminAddonProductController::class, 'index'])->name('products-services.index');
     Route::get('addon-products/create', [AdminAddonProductController::class, 'create'])->name('addon-products.create');
     Route::post('addon-products', [AdminAddonProductController::class, 'store'])->name('addon-products.store');
     Route::get('addon-products/{addonProduct}/edit', [AdminAddonProductController::class, 'edit'])->name('addon-products.edit');

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $addon ? 'Edit Add-on' : 'New Add-on')
+@section('title', $addon ? 'Edit Product/Service' : 'New Product/Service')
 
 @section('subtitle', 'Set the name, description, and price clients see in the Marketplace')
 
@@ -44,8 +44,8 @@
         </div>
 
         <div style="display:flex;gap:8px;">
-            <button type="submit" class="eos-btn eos-btn-primary"><i class="ti ti-check"></i> {{ $addon ? 'Save Changes' : 'Create Add-on' }}</button>
-            <a href="{{ route('addon-products.index') }}" class="eos-btn eos-btn-secondary">Cancel</a>
+            <button type="submit" class="eos-btn eos-btn-primary"><i class="ti ti-check"></i> {{ $addon ? 'Save Changes' : 'Create Product/Service' }}</button>
+            <a href="{{ route('products-services.index') }}" class="eos-btn eos-btn-secondary">Cancel</a>
         </div>
     </form>
 </div>

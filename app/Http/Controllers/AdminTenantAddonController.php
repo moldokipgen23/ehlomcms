@@ -7,22 +7,9 @@ use App\Models\Invoice;
 use App\Models\TenantAddon;
 use App\Services\InvoiceService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
 
 class AdminTenantAddonController extends Controller
 {
-    public function index(): View
-    {
-        $requests = TenantAddon::with('tenant.client')
-            ->orderByRaw("FIELD(status, 'pending', 'active', 'inactive')")
-            ->orderByDesc('created_at')
-            ->get();
-
-        $addons = AddonProduct::get()->keyBy('key');
-
-        return view('tenant-addon-requests.index', compact('requests', 'addons'));
-    }
-
     /**
      * Activation is the payment-confirmation gate itself: the agency has
      * collected payment however it currently does so (offline - see
