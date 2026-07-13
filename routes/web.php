@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\AdminAddonProductController;
 use App\Http\Controllers\AdminTenantAddonController;
 use App\Http\Controllers\AdminTenantController;
 use App\Http\Controllers\AdminThemeController;
@@ -84,6 +85,14 @@ Route::middleware('auth')->group(function () {
     Route::get('addon-requests', [AdminTenantAddonController::class, 'index'])->name('addon-requests.index');
     Route::post('addon-requests/{addon}/activate', [AdminTenantAddonController::class, 'activate'])->name('addon-requests.activate');
     Route::post('addon-requests/{addon}/deactivate', [AdminTenantAddonController::class, 'deactivate'])->name('addon-requests.deactivate');
+
+    Route::get('addon-products', [AdminAddonProductController::class, 'index'])->name('addon-products.index');
+    Route::get('addon-products/create', [AdminAddonProductController::class, 'create'])->name('addon-products.create');
+    Route::post('addon-products', [AdminAddonProductController::class, 'store'])->name('addon-products.store');
+    Route::get('addon-products/{addonProduct}/edit', [AdminAddonProductController::class, 'edit'])->name('addon-products.edit');
+    Route::put('addon-products/{addonProduct}', [AdminAddonProductController::class, 'update'])->name('addon-products.update');
+    Route::post('addon-products/{addonProduct}/toggle-active', [AdminAddonProductController::class, 'toggleActive'])->name('addon-products.toggle-active');
+    Route::delete('addon-products/{addonProduct}', [AdminAddonProductController::class, 'destroy'])->name('addon-products.destroy');
 
     Route::get('settings', [SettingController::class, 'edit'])->name('settings.edit');
     Route::post('settings', [SettingController::class, 'update'])->name('settings.update');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\AddonProduct;
 use App\Models\TenantAddon;
 use App\Services\TenantContext;
 use Illuminate\Http\RedirectResponse;
@@ -14,7 +15,7 @@ class TenantAddonController extends Controller
     public function index(): View
     {
         $tenant = app(TenantContext::class)->get();
-        $addons = config('addons');
+        $addons = AddonProduct::where('active', true)->orderBy('name')->get()->keyBy('key');
         $records = TenantAddon::where('tenant_id', $tenant->id)->get()->keyBy('addon_key');
 
         return view('tenant.addons.index', compact('tenant', 'addons', 'records'));
@@ -31,8 +32,7 @@ class TenantAddonController extends Controller
     {
         $tenant = app(TenantContext::class)->get();
 
-        $addons = config('addons');
-        if (!isset($addons[$addonKey])) {
+        if (!AddonProduct::where('key', $addonKey)->where('active', true)->exists()) {
             return back()->with('error', 'Add-on not found.');
         }
 

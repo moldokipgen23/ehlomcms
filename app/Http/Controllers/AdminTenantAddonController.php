@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AddonProduct;
 use App\Models\Invoice;
 use App\Models\TenantAddon;
 use App\Services\InvoiceService;
@@ -17,7 +18,7 @@ class AdminTenantAddonController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        $addons = config('addons');
+        $addons = AddonProduct::get()->keyBy('key');
 
         return view('tenant-addon-requests.index', compact('requests', 'addons'));
     }
@@ -37,7 +38,7 @@ class AdminTenantAddonController extends Controller
         $addon->update(['status' => 'active', 'activated_at' => now()]);
 
         $tenant = $addon->tenant;
-        $addonMeta = config('addons.' . $addon->addon_key);
+        $addonMeta = AddonProduct::where('key', $addon->addon_key)->first();
 
         if ($tenant?->client_id && $addonMeta) {
             $price = (float) $addonMeta['price'];
