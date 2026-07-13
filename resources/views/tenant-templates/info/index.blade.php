@@ -29,13 +29,20 @@
         .tp-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
         .tp-gallery-img { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
         .tp-contact { font-size: 14px; color: var(--text-secondary); line-height: 1.8; }
-        .tp-contact a { color: var(--accent-blue); text-decoration: none; }
+        .tp-contact a { color: var(--tp-accent, var(--accent-blue)); text-decoration: none; }
         .tp-contact a:hover { text-decoration: underline; }
         .tp-foot { text-align: center; padding: 20px 32px; font-size: 11px; color: var(--text-dim); border-top: 1px solid var(--border); }
     </style>
 </head>
 <body class="antialiased">
-    <div class="tp-wrap">
+    @php
+        $ts = $tenant->theme_settings ?? [];
+        $accent = $ts['accent_color'] ?? '#4f8ef7';
+        $showAbout = $ts['show_about'] ?? true;
+        $showGallery = $ts['show_gallery'] ?? true;
+        $showContact = $ts['show_contact'] ?? true;
+    @endphp
+    <div class="tp-wrap" style="--tp-accent: {{ $accent }};">
 
         {{-- Hero / Banner --}}
         <div class="tp-hero" style="background: linear-gradient(160deg, #1a2240, #0d0f17);">
@@ -54,7 +61,7 @@
         </div>
 
         {{-- About --}}
-        @if ($tenant->about_text)
+        @if ($showAbout && $tenant->about_text)
             <div class="tp-section">
                 <div class="tp-section-title">About</div>
                 <div class="tp-about">{{ $tenant->about_text }}</div>
@@ -62,7 +69,7 @@
         @endif
 
         {{-- Gallery --}}
-        @if ($tenant->galleryImages->count())
+        @if ($showGallery && $tenant->galleryImages->count())
             <div class="tp-section">
                 <div class="tp-section-title">Gallery</div>
                 <div class="tp-gallery-grid">
@@ -90,23 +97,25 @@
         </div>
 
         {{-- Contact --}}
-        <div class="tp-section">
-            <div class="tp-section-title">Contact</div>
-            <div class="tp-contact">
-                @if ($tenant->contact_address)
-                    <div><i class="ti ti-map-pin" style="width:18px;"></i> {{ $tenant->contact_address }}</div>
-                @endif
-                @if ($tenant->contact_phone)
-                    <div><i class="ti ti-phone" style="width:18px;"></i> <a href="tel:{{ $tenant->contact_phone }}">{{ $tenant->contact_phone }}</a></div>
-                @endif
-                @if ($tenant->contact_email)
-                    <div><i class="ti ti-mail" style="width:18px;"></i> <a href="mailto:{{ $tenant->contact_email }}">{{ $tenant->contact_email }}</a></div>
-                @endif
-                @if ($tenant->contact_hours)
-                    <div><i class="ti ti-clock" style="width:18px;"></i> {{ $tenant->contact_hours }}</div>
-                @endif
+        @if ($showContact)
+            <div class="tp-section">
+                <div class="tp-section-title">Contact</div>
+                <div class="tp-contact">
+                    @if ($tenant->contact_address)
+                        <div><i class="ti ti-map-pin" style="width:18px;"></i> {{ $tenant->contact_address }}</div>
+                    @endif
+                    @if ($tenant->contact_phone)
+                        <div><i class="ti ti-phone" style="width:18px;"></i> <a href="tel:{{ $tenant->contact_phone }}">{{ $tenant->contact_phone }}</a></div>
+                    @endif
+                    @if ($tenant->contact_email)
+                        <div><i class="ti ti-mail" style="width:18px;"></i> <a href="mailto:{{ $tenant->contact_email }}">{{ $tenant->contact_email }}</a></div>
+                    @endif
+                    @if ($tenant->contact_hours)
+                        <div><i class="ti ti-clock" style="width:18px;"></i> {{ $tenant->contact_hours }}</div>
+                    @endif
+                </div>
             </div>
-        </div>
+        @endif
 
         <div class="tp-foot">{{ $tenant->name }} &middot; Powered by Ehlom OS</div>
     </div>

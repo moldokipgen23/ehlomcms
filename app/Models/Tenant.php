@@ -30,6 +30,8 @@ class Tenant extends Model
         'contact_address',
         'contact_hours',
         'action_type',
+        'theme_settings',
+        'modules',
     ];
 
     protected function casts(): array
@@ -37,6 +39,8 @@ class Tenant extends Model
         return [
             'logo' => 'string',
             'banner_image' => 'string',
+            'theme_settings' => 'array',
+            'modules' => 'array',
         ];
     }
 
@@ -68,5 +72,25 @@ class Tenant extends Model
     public function orders(): HasMany
     {
         return $this->hasMany(TenantOrder::class);
+    }
+
+    public function addons(): HasMany
+    {
+        return $this->hasMany(TenantAddon::class);
+    }
+
+    public function activeAddons(): HasMany
+    {
+        return $this->hasMany(TenantAddon::class)->where('status', 'active');
+    }
+
+    public function hasActiveAddon(string $key): bool
+    {
+        return $this->activeAddons()->where('addon_key', $key)->exists();
+    }
+
+    public function hasModule(string $key): bool
+    {
+        return in_array($key, $this->modules ?? [], true);
     }
 }

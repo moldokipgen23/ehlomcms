@@ -17,11 +17,8 @@
             </div>
             <div class="eos-field">
                 <label class="eos-label">Template</label>
-                <select name="template_id" class="eos-select">
-                    <option value="info" @selected(old('template_id', $tenant->template_id) === 'info')>Info Page</option>
-                    <option value="shop" @selected(old('template_id', $tenant->template_id) === 'shop')>Shop / Storefront</option>
-                </select>
-                <div class="eos-row-type" style="margin-top:4px;">Controls how your public page looks.</div>
+                <x-theme-gallery :themes="$themes" :selected="old('template_id', $tenant->template_id)" />
+                <div class="eos-row-type" style="margin-top:8px;">Controls how your public page looks.</div>
             </div>
             <div class="eos-field">
                 <label class="eos-label">WhatsApp Number</label>

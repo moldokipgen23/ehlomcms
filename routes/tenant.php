@@ -17,6 +17,7 @@
 //   and access tenant subdomains directly.
 
 use App\Http\Controllers\Tenant\Auth\TenantLoginController;
+use App\Http\Controllers\Tenant\TenantCartController;
 use App\Http\Controllers\Tenant\TenantCatalogController;
 use App\Http\Controllers\Tenant\TenantContentController;
 use App\Http\Controllers\Tenant\TenantDashboardController;
@@ -24,6 +25,8 @@ use App\Http\Controllers\Tenant\TenantHomeController;
 use App\Http\Controllers\Tenant\TenantOrderController;
 use App\Http\Controllers\Tenant\TenantPaymentSettingsController;
 use App\Http\Controllers\Tenant\TenantSettingsController;
+use App\Http\Controllers\Tenant\TenantThemeController;
+use App\Http\Controllers\Tenant\TenantTrackController;
 use Illuminate\Support\Facades\Route;
 
 // Domain-scoped to genuine tenant subdomains only. Without this, these routes
@@ -38,6 +41,24 @@ Route::domain('{subdomain}.' . config('app.tenant_domain', 'ehlom.com'))
 
 Route::middleware('tenant')->group(function () {
     Route::get('/', [TenantHomeController::class, 'index'])->name('tenant.home');
+
+    // Cart + Checkout (public storefront)
+    // Deliberately plain {id} parameters, not Eloquent route-model binding -
+    // see TenantCartController for why (domain-scoped routes break implicit
+    // binding, and binding without a manual tenant_id check would resolve
+    // ANY tenant's product/order by ID regardless of who owns it).
+    Route::get('cart', [TenantCartController::class, 'index'])->name('tenant.cart');
+    Route::post('cart/add/{id}', [TenantCartController::class, 'add'])->name('tenant.cart.add');
+    Route::post('cart/update/{id}', [TenantCartController::class, 'update'])->name('tenant.cart.update');
+    Route::post('cart/remove/{id}', [TenantCartController::class, 'remove'])->name('tenant.cart.remove');
+    Route::get('checkout', [TenantCartController::class, 'checkout'])->name('tenant.checkout');
+    Route::post('checkout', [TenantCartController::class, 'placeOrder'])->name('tenant.checkout.place');
+    Route::get('checkout/pay/{id}', [TenantCartController::class, 'pay'])->name('tenant.checkout.pay');
+    Route::get('checkout/confirm/{id}', [TenantCartController::class, 'confirm'])->name('tenant.checkout.confirm');
+
+    // Order tracking (public)
+    Route::get('track', [TenantTrackController::class, 'show'])->name('tenant.track');
+    Route::get('track/lookup', [TenantTrackController::class, 'lookup'])->name('tenant.track.lookup');
 });
 
 Route::middleware('tenant')->prefix('dashboard')->group(function () {
@@ -79,8 +100,17 @@ Route::middleware('tenant')->prefix('dashboard')->group(function () {
         Route::get('payments', [TenantPaymentSettingsController::class, 'edit'])->name('tenant.payments');
         Route::post('payments', [TenantPaymentSettingsController::class, 'update']);
 
-        // Orders (read-only, only accessible when action_type=razorpay)
+        // Orders
         Route::get('orders', [TenantOrderController::class, 'index'])->name('tenant.orders');
+        Route::post('orders/{id}/status', [TenantOrderController::class, 'updateStatus'])->name('tenant.orders.update-status');
+
+        // Theme customizer
+        Route::get('customize', [TenantThemeController::class, 'edit'])->name('tenant.theme');
+        Route::post('customize', [TenantThemeController::class, 'update'])->name('tenant.theme.update');
+
+        // Add-on marketplace
+        Route::get('addons', [\App\Http\Controllers\Tenant\TenantAddonController::class, 'index'])->name('tenant.addons');
+        Route::post('addons/toggle/{addonKey}', [\App\Http\Controllers\Tenant\TenantAddonController::class, 'toggle'])->name('tenant.addons.toggle');
     });
 
     // Logout (POST, no auth middleware since session is still valid)

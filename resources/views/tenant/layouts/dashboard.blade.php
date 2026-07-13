@@ -28,24 +28,21 @@
         <nav class="eos-nav">
             @php
                 $t = app(\App\Services\TenantContext::class)->get();
+                $modules = config('modules');
                 $links = [
                     'Main' => [
                         ['tenant.dashboard', 'Dashboard', 'ti-layout-dashboard'],
                     ],
-                    'Content' => [
-                        ['tenant.content', 'Content / Pages', 'ti-file-text'],
-                    ],
                 ];
-                if ($t && $t->site_type === 'shopping') {
-                    $storeLinks = [
-                        ['tenant.catalog', 'Catalog', 'ti-box'],
-                    ];
-                    if ($t->action_type === 'razorpay') {
-                        $storeLinks[] = ['tenant.payments', 'Payment Settings', 'ti-credit-card'];
-                        $storeLinks[] = ['tenant.orders', 'Orders', 'ti-truck-delivery'];
+                foreach ($modules as $key => $m) {
+                    if ($t && $t->hasModule($key)) {
+                        $links[$m['nav_section']][] = [$m['route'], $m['label'], $m['icon']];
                     }
-                    $links['Store'] = $storeLinks;
                 }
+                // Theme customizer is always available.
+                $links['Content'][] = ['tenant.theme', 'Customise Theme', 'ti-palette'];
+                // Marketplace / add-ons is always available.
+                $links['Settings'][] = ['tenant.addons', 'Marketplace', 'ti-shopping-bag'];
             @endphp
             @foreach ($links as $section => $items)
                 <div class="eos-nav-section">{{ $section }}</div>
@@ -109,11 +106,13 @@
         @php
             $bottomLinks = [
                 ['tenant.dashboard', 'Dashboard', 'ti-layout-dashboard'],
-                ['tenant.content', 'Content', 'ti-file-text'],
             ];
-            if ($t && $t->site_type === 'shopping') {
-                $bottomLinks[] = ['tenant.catalog', 'Catalog', 'ti-box'];
+            foreach ($modules as $key => $m) {
+                if ($t && $t->hasModule($key)) {
+                    $bottomLinks[] = [$m['route'], $m['label'], $m['icon']];
+                }
             }
+            $bottomLinks[] = ['tenant.addons', 'Marketplace', 'ti-shopping-bag'];
         @endphp
         @foreach ($bottomLinks as [$route, $label, $icon])
             <a href="{{ Route::has($route) ? route($route) : '#' }}"

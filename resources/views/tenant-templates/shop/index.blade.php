@@ -33,17 +33,26 @@
         .tp-card-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
         .tp-card-desc { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .tp-card-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
-        .tp-price { font-size: 16px; font-weight: 700; color: var(--accent-teal); }
+        .tp-price { font-size: 16px; font-weight: 700; color: var(--tp-accent, var(--accent-teal)); }
         .tp-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
         .tp-gallery-img { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
         .tp-contact { font-size: 14px; color: var(--text-secondary); line-height: 1.8; }
-        .tp-contact a { color: var(--accent-blue); text-decoration: none; }
+        .tp-contact a { color: var(--tp-accent, var(--accent-blue)); text-decoration: none; }
         .tp-contact a:hover { text-decoration: underline; }
         .tp-foot { text-align: center; padding: 20px 32px; font-size: 11px; color: var(--text-dim); border-top: 1px solid var(--border); }
     </style>
 </head>
 <body class="antialiased">
-    <div class="tp-wrap">
+    @php
+        $ts = $tenant->theme_settings ?? [];
+        $accent = $ts['accent_color'] ?? '#4f8ef7';
+        $showAbout = $ts['show_about'] ?? true;
+        $showGallery = $ts['show_gallery'] ?? true;
+        $showContact = $ts['show_contact'] ?? true;
+        $cartCount = session('tenant_cart_' . ($tenant->id ?? 'guest'), []);
+        $cartCount = array_sum(array_column($cartCount, 'quantity'));
+    @endphp
+    <div class="tp-wrap" style="--tp-accent: {{ $accent }};">
 
         {{-- Hero / Banner --}}
         <div class="tp-hero" style="background: linear-gradient(160deg, #1a2240, #0d0f17);">
@@ -57,6 +66,14 @@
                         <img src="{{ Storage::url($tenant->logo) }}" alt="Logo" style="height:44px;border-radius:8px;">
                     @endif
                     <div class="tp-name">{{ $tenant->name }}</div>
+                    <div style="margin-left:auto;">
+                        <a href="{{ route('tenant.cart') }}" style="color:#fff;text-decoration:none;position:relative;display:inline-flex;align-items:center;gap:4px;font-size:14px;">
+                            <i class="ti ti-shopping-cart" style="font-size:22px;"></i>
+                            @if ($cartCount > 0)
+                                <span style="position:absolute;top:-6px;right:-10px;background:var(--tp-accent, #4f8ef7);color:#fff;font-size:10px;font-weight:700;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;">{{ $cartCount }}</span>
+                            @endif
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -78,7 +95,15 @@
                                 @endif
                                 <div class="tp-card-foot">
                                     <span class="tp-price">₹{{ number_format($product->price, 2) }}</span>
-                                    <x-tenant-action-button :product="$product" label="Buy Now" />
+                                    <div style="display:flex;gap:6px;">
+                                        <form action="{{ route('tenant.cart.add', $product) }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="eos-btn eos-btn-outline" style="padding:5px 10px;font-size:11px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--text-secondary);cursor:pointer;">
+                                                <i class="ti ti-shopping-cart-plus"></i> Cart
+                                            </button>
+                                        </form>
+                                        <x-tenant-action-button :product="$product" label="Buy Now" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -90,7 +115,7 @@
         </div>
 
         {{-- About --}}
-        @if ($tenant->about_text)
+        @if ($showAbout && $tenant->about_text)
             <div class="tp-section">
                 <div class="tp-section-title">About</div>
                 <div class="tp-about">{{ $tenant->about_text }}</div>
@@ -98,7 +123,7 @@
         @endif
 
         {{-- Gallery --}}
-        @if ($tenant->galleryImages->count())
+        @if ($showGallery && $tenant->galleryImages->count())
             <div class="tp-section">
                 <div class="tp-section-title">Gallery</div>
                 <div class="tp-gallery-grid">
@@ -110,23 +135,25 @@
         @endif
 
         {{-- Contact --}}
-        <div class="tp-section">
-            <div class="tp-section-title">Contact</div>
-            <div class="tp-contact">
-                @if ($tenant->contact_address)
-                    <div><i class="ti ti-map-pin" style="width:18px;"></i> {{ $tenant->contact_address }}</div>
-                @endif
-                @if ($tenant->contact_phone)
-                    <div><i class="ti ti-phone" style="width:18px;"></i> <a href="tel:{{ $tenant->contact_phone }}">{{ $tenant->contact_phone }}</a></div>
-                @endif
-                @if ($tenant->contact_email)
-                    <div><i class="ti ti-mail" style="width:18px;"></i> <a href="mailto:{{ $tenant->contact_email }}">{{ $tenant->contact_email }}</a></div>
-                @endif
-                @if ($tenant->contact_hours)
-                    <div><i class="ti ti-clock" style="width:18px;"></i> {{ $tenant->contact_hours }}</div>
-                @endif
+        @if ($showContact)
+            <div class="tp-section">
+                <div class="tp-section-title">Contact</div>
+                <div class="tp-contact">
+                    @if ($tenant->contact_address)
+                        <div><i class="ti ti-map-pin" style="width:18px;"></i> {{ $tenant->contact_address }}</div>
+                    @endif
+                    @if ($tenant->contact_phone)
+                        <div><i class="ti ti-phone" style="width:18px;"></i> <a href="tel:{{ $tenant->contact_phone }}">{{ $tenant->contact_phone }}</a></div>
+                    @endif
+                    @if ($tenant->contact_email)
+                        <div><i class="ti ti-mail" style="width:18px;"></i> <a href="mailto:{{ $tenant->contact_email }}">{{ $tenant->contact_email }}</a></div>
+                    @endif
+                    @if ($tenant->contact_hours)
+                        <div><i class="ti ti-clock" style="width:18px;"></i> {{ $tenant->contact_hours }}</div>
+                    @endif
+                </div>
             </div>
-        </div>
+        @endif
 
         <div class="tp-foot">{{ $tenant->name }} &middot; Powered by Ehlom OS</div>
     </div>

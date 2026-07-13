@@ -12,15 +12,15 @@ use Illuminate\View\View;
 
 class TenantCatalogController extends Controller
 {
-    private function requireShoppingSite(): void
+    private function requireModule(string $key): void
     {
         $tenant = app(TenantContext::class)->get();
-        abort_if($tenant->site_type !== 'shopping', 404);
+        abort_if(!$tenant->hasModule($key), 404);
     }
 
     public function index(): View
     {
-        $this->requireShoppingSite();
+        $this->requireModule('catalog');
         $tenant = app(TenantContext::class)->get();
         $products = TenantProduct::where('tenant_id', $tenant->id)
             ->orderBy('name')
@@ -31,7 +31,7 @@ class TenantCatalogController extends Controller
 
     public function create(): View
     {
-        $this->requireShoppingSite();
+        $this->requireModule('catalog');
         $tenant = app(TenantContext::class)->get();
 
         return view('tenant.catalog.form', compact('tenant'));
@@ -39,7 +39,7 @@ class TenantCatalogController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $this->requireShoppingSite();
+        $this->requireModule('catalog');
         $tenant = app(TenantContext::class)->get();
 
         $data = $request->validate([
@@ -61,18 +61,18 @@ class TenantCatalogController extends Controller
         return redirect()->route('tenant.catalog')->with('success', 'Product added.');
     }
 
-    public function edit(int $id): View
+    public function edit(string $subdomain, int $id): View
     {
-        $this->requireShoppingSite();
+        $this->requireModule('catalog');
         $tenant = app(TenantContext::class)->get();
         $product = TenantProduct::where('tenant_id', $tenant->id)->findOrFail($id);
 
         return view('tenant.catalog.form', compact('tenant', 'product'));
     }
 
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(Request $request, string $subdomain, int $id): RedirectResponse
     {
-        $this->requireShoppingSite();
+        $this->requireModule('catalog');
         $tenant = app(TenantContext::class)->get();
         $product = TenantProduct::where('tenant_id', $tenant->id)->findOrFail($id);
 
@@ -96,9 +96,9 @@ class TenantCatalogController extends Controller
         return redirect()->route('tenant.catalog')->with('success', 'Product updated.');
     }
 
-    public function destroy(int $id): RedirectResponse
+    public function destroy(string $subdomain, int $id): RedirectResponse
     {
-        $this->requireShoppingSite();
+        $this->requireModule('catalog');
         $tenant = app(TenantContext::class)->get();
         $product = TenantProduct::where('tenant_id', $tenant->id)->findOrFail($id);
 

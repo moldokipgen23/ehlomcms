@@ -44,6 +44,7 @@
             <th>Template</th>
             <th>Plan</th>
             <th>Status</th>
+            <th>Add-ons</th>
             <th>Client</th>
             <th></th>
         </tr>
@@ -65,6 +66,14 @@
                         {{ $tenant->status }}
                     </span>
                 </td>
+                <td style="font-size:11px;">
+                    @php $addonNames = $tenant->activeAddons->map(fn($a) => config('addons.' . $a->addon_key . '.name', $a->addon_key)); @endphp
+                    @if ($addonNames->count())
+                        <span title="{{ $addonNames->implode(', ') }}">{{ $addonNames->implode(', ') }}</span>
+                    @else
+                        <span style="color:var(--text-dim);">—</span>
+                    @endif
+                </td>
                 <td>
                     @if ($tenant->client)
                         <a href="{{ route('clients.show', $tenant->client) }}" style="color:var(--accent-blue);text-decoration:none;">{{ $tenant->client->name }}</a>
@@ -82,7 +91,7 @@
                 </td>
             </tr>
         @empty
-            <tr><td colspan="8"><div class="eos-empty">No tenants yet.</div></td></tr>
+            <tr><td colspan="9"><div class="eos-empty">No tenants yet.</div></td></tr>
         @endforelse
     </tbody>
 </table>

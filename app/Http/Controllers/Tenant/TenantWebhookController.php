@@ -48,22 +48,47 @@ class TenantWebhookController extends Controller
             $status = $payment['status'] ?? 'paid';
             $method = $payment['method'] ?? null;
             $productId = $payment['notes']['product_id'] ?? null;
+            $internalOrderId = $payment['notes']['order_id'] ?? null;
 
-            TenantOrder::updateOrCreate(
-                ['order_id' => $orderId],
-                [
-                    'tenant_id' => $tenant->id,
-                    'tenant_product_id' => $productId,
-                    'amount' => $amount,
-                    'currency' => $currency,
-                    'status' => $status === 'captured' ? 'paid' : $status,
-                    'payment_method' => $method,
-                    'customer_details' => [
-                        'email' => $payment['email'] ?? null,
-                        'contact' => $payment['contact'] ?? null,
+            // Cart-based order (multi-item) — find by internal order ID
+            if ($internalOrderId) {
+                $order = TenantOrder::find($internalOrderId);
+                if ($order && $order->tenant_id === $tenant->id) {
+                    // Cart orders use the fulfillment lifecycle (pending →
+                    // confirmed → shipped → delivered → cancelled, see
+                    // TenantOrderController::STATUSES) rather than a raw
+                    // payment-outcome value - a successful payment moves the
+                    // order to 'confirmed' so it appears correctly in that
+                    // workflow instead of landing on an unrecognized status.
+                    $order->update([
+                        'order_id' => $orderId,
+                        'status' => $status === 'captured' ? 'confirmed' : 'failed',
+                        'payment_method' => $method,
+                        'customer_details' => array_merge($order->customer_details ?? [], [
+                            'email' => $payment['email'] ?? null,
+                            'contact' => $payment['contact'] ?? null,
+                            'razorpay_payment_id' => $orderId,
+                        ]),
+                    ]);
+                }
+            } else {
+                // Single-product Buy Now flow (backward compatible)
+                TenantOrder::updateOrCreate(
+                    ['order_id' => $orderId],
+                    [
+                        'tenant_id' => $tenant->id,
+                        'tenant_product_id' => $productId,
+                        'amount' => $amount,
+                        'currency' => $currency,
+                        'status' => $status === 'captured' ? 'paid' : $status,
+                        'payment_method' => $method,
+                        'customer_details' => [
+                            'email' => $payment['email'] ?? null,
+                            'contact' => $payment['contact'] ?? null,
+                        ],
                     ],
-                ],
-            );
+                );
+            }
         }
 
         return response('OK', 200);

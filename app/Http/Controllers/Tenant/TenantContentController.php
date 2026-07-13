@@ -72,7 +72,7 @@ class TenantContentController extends Controller
         return redirect()->route('tenant.content')->with('success', 'Image added to gallery.');
     }
 
-    public function destroyGalleryImage(int $id): RedirectResponse
+    public function destroyGalleryImage(string $subdomain, int $id): RedirectResponse
     {
         $tenant = app(TenantContext::class)->get();
 

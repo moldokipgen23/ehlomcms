@@ -33,13 +33,9 @@
                         </select>
                         @error('site_type') <div class="eos-error">{{ $message }}</div> @enderror
                     </div>
-                    <div class="eos-field">
+                    <div class="eos-field full">
                         <label class="eos-label">Template</label>
-                        <select name="template_id" class="eos-select">
-                            <option value="">— Auto —</option>
-                            <option value="info" @selected(old('template_id') === 'info')>Info Page</option>
-                            <option value="shop" @selected(old('template_id') === 'shop')>Shop / Storefront</option>
-                        </select>
+                        <x-theme-gallery :themes="$themes" :selected="old('template_id')" />
                         @error('template_id') <div class="eos-error">{{ $message }}</div> @enderror
                     </div>
                     <div class="eos-field">
@@ -57,6 +53,30 @@
                         @error('plan') <div class="eos-error">{{ $message }}</div> @enderror
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="eos-card" style="margin-bottom:14px;">
+            <div class="eos-card-header">
+                <div class="eos-card-title">Modules</div>
+            </div>
+            <div style="padding:16px;">
+                <div class="eos-page-sub" style="margin-bottom:12px;">
+                    Enable dashboard sections for this tenant.
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    @foreach ($modules as $key => $m)
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text-secondary);">
+                            <input type="checkbox" name="modules[]" value="{{ $key }}"
+                                   {{ in_array($key, old('modules', [])) ? 'checked' : '' }}
+                                   style="accent-color:var(--accent-blue);width:16px;height:16px;">
+                            <i class="ti {{ $m['icon'] }}" style="font-size:16px;color:var(--text-muted);"></i>
+                            {{ $m['label'] }}
+                            <span style="font-size:10px;color:var(--text-dim);margin-left:4px;">— {{ $m['description'] }}</span>
+                        </label>
+                    @endforeach
+                </div>
+                @error('modules') <div class="eos-error">{{ $message }}</div> @enderror
             </div>
         </div>
 

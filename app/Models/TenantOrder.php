@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TenantOrder extends Model
 {
@@ -18,6 +19,10 @@ class TenantOrder extends Model
         'status',
         'payment_method',
         'customer_details',
+        'shipping_name',
+        'shipping_phone',
+        'shipping_address',
+        'shipping_pincode',
     ];
 
     protected function casts(): array
@@ -36,5 +41,10 @@ class TenantOrder extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(TenantProduct::class, 'tenant_product_id');
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(TenantOrderItem::class, 'tenant_order_id');
     }
 }

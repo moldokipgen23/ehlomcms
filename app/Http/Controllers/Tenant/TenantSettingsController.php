@@ -15,8 +15,9 @@ class TenantSettingsController extends Controller
     public function edit(): View
     {
         $tenant = app(TenantContext::class)->get();
+        $themes = array_filter(config('themes'), fn($t) => $t['public'] ?? false);
 
-        return view('tenant.settings.index', compact('tenant'));
+        return view('tenant.settings.index', compact('tenant', 'themes'));
     }
 
     public function update(Request $request): RedirectResponse
@@ -25,7 +26,7 @@ class TenantSettingsController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'template_id' => ['nullable', 'string', Rule::in(['shop', 'info'])],
+            'template_id' => ['nullable', 'string', Rule::in(array_keys(config('themes')))],
             'whatsapp_number' => ['nullable', 'string', 'max:255'],
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_phone' => ['nullable', 'string', 'max:255'],

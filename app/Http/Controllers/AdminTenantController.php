@@ -16,7 +16,7 @@ class AdminTenantController extends Controller
 {
     public function index(): View
     {
-        $tenants = Tenant::with('client')
+        $tenants = Tenant::with('client', 'activeAddons')
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -26,8 +26,10 @@ class AdminTenantController extends Controller
     public function create(): View
     {
         $clients = Client::orderBy('name')->get(['id', 'name']);
+        $themes = config('themes');
+        $modules = config('modules');
 
-        return view('tenants.form', compact('clients'));
+        return view('tenants.form', compact('clients', 'themes', 'modules'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -36,10 +38,12 @@ class AdminTenantController extends Controller
             'subdomain' => ['required', 'string', 'max:255', 'unique:tenants,subdomain', 'regex:/^[a-z0-9-]+$/'],
             'name' => ['required', 'string', 'max:255'],
             'site_type' => ['required', Rule::in(['shopping', 'info'])],
-            'template_id' => ['nullable', Rule::in(['shop', 'info'])],
+            'template_id' => ['nullable', Rule::in(array_keys(config('themes')))],
             'plan' => ['nullable', 'string', 'max:255'],
             'client_id' => ['nullable', 'integer', 'exists:clients,id'],
             'action_type' => ['nullable', Rule::in(['whatsapp', 'razorpay'])],
+            'modules' => ['nullable', 'array'],
+            'modules.*' => ['string', Rule::in(array_keys(config('modules')))],
             'owner_name' => ['required', 'string', 'max:255'],
             'owner_email' => ['required', 'email', 'max:255', 'unique:users,email'],
         ]);
@@ -48,6 +52,7 @@ class AdminTenantController extends Controller
         $ownerEmail = $data['owner_email'];
         unset($data['owner_name'], $data['owner_email']);
 
+        $data['modules'] = $data['modules'] ?? [];
         $data['status'] = 'active';
 
         $tenant = Tenant::create($data);
