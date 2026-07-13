@@ -24,13 +24,20 @@ class AdminTenantController extends Controller
         return view('tenants.index', compact('tenants'));
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
         $clients = Client::orderBy('name')->get(['id', 'name']);
         $themes = Theme::orderBy('name')->get()->keyBy('key');
         $modules = config('modules');
 
-        return view('tenants.form', compact('clients', 'themes', 'modules'));
+        // Reached from a client's "Create Tenant Site" button (see
+        // clients/show.blade.php) - prefill the obvious fields so this isn't
+        // a second data-entry pass for information already on file.
+        $prefillClient = $request->filled('client_id')
+            ? Client::find($request->integer('client_id'))
+            : null;
+
+        return view('tenants.form', compact('clients', 'themes', 'modules', 'prefillClient'));
     }
 
     public function store(Request $request): RedirectResponse

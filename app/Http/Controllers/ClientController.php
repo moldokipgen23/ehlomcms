@@ -51,7 +51,7 @@ class ClientController extends Controller
     {
         $client->load([
             'products', 'subscriptions.product', 'projects.products', 'projects.invoice',
-            'invoices', 'domains', 'activities', 'agreements',
+            'invoices', 'domains', 'activities', 'agreements', 'tenant',
         ]);
 
         return view('clients.show', compact('client'));

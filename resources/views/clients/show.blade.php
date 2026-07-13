@@ -44,6 +44,44 @@
             </div>
         </div>
 
+        {{-- Website / Tenant --}}
+        <div class="eos-card" style="margin-bottom:14px;">
+            <div class="eos-card-header">
+                <div class="eos-card-title">Website</div>
+            </div>
+            <div style="padding:16px;">
+                @if ($client->tenant)
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                        <div>
+                            <div style="font-size:13px;font-weight:600;color:var(--text-primary);">
+                                {{ $client->tenant->subdomain }}.{{ config('app.tenant_domain', 'ehlom.com') }}
+                            </div>
+                            <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">
+                                {{ ucfirst($client->tenant->site_type) }} site &middot; {{ ucfirst($client->tenant->status) }}
+                            </div>
+                        </div>
+                        <div class="eos-actions">
+                            <a href="https://{{ $client->tenant->subdomain }}.{{ config('app.tenant_domain', 'ehlom.com') }}" target="_blank" rel="noopener" class="eos-btn eos-btn-secondary" style="font-size:11px;padding:5px 12px;">
+                                <i class="ti ti-external-link"></i> Visit Site
+                            </a>
+                            <a href="{{ route('tenants.index') }}" class="eos-btn eos-btn-secondary" style="font-size:11px;padding:5px 12px;">
+                                <i class="ti ti-settings"></i> Manage
+                            </a>
+                        </div>
+                    </div>
+                @else
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                        <div style="font-size:12.5px;color:var(--text-secondary);">
+                            This client doesn't have a tenant site yet.
+                        </div>
+                        <a href="{{ route('tenants.create', ['client_id' => $client->id]) }}" class="eos-btn eos-btn-primary" style="font-size:11px;padding:5px 12px;">
+                            <i class="ti ti-plus"></i> Create Tenant Site
+                        </a>
+                    </div>
+                @endif
+            </div>
+        </div>
+
         {{-- Pending Invoices --}}
         @php
             $pending = $client->invoices->whereIn('status', ['unpaid', 'overdue'])->sortBy('due_date');

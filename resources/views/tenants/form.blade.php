@@ -22,7 +22,7 @@
                     </div>
                     <div class="eos-field">
                         <label class="eos-label">Business Name *</label>
-                        <input type="text" name="name" value="{{ old('name') }}" class="eos-input" required>
+                        <input type="text" name="name" value="{{ old('name', $prefillClient?->business_name ?: $prefillClient?->name) }}" class="eos-input" required>
                         @error('name') <div class="eos-error">{{ $message }}</div> @enderror
                     </div>
                     <div class="eos-field">
@@ -94,12 +94,12 @@
                 <div class="eos-form-grid">
                     <div class="eos-field">
                         <label class="eos-label">Owner Name *</label>
-                        <input type="text" name="owner_name" value="{{ old('owner_name') }}" class="eos-input" required>
+                        <input type="text" name="owner_name" value="{{ old('owner_name', $prefillClient?->name) }}" class="eos-input" required>
                         @error('owner_name') <div class="eos-error">{{ $message }}</div> @enderror
                     </div>
                     <div class="eos-field">
                         <label class="eos-label">Owner Email *</label>
-                        <input type="email" name="owner_email" value="{{ old('owner_email') }}" class="eos-input" required>
+                        <input type="email" name="owner_email" value="{{ old('owner_email', $prefillClient?->email) }}" class="eos-input" required>
                         @error('owner_email') <div class="eos-error">{{ $message }}</div> @enderror
                     </div>
                 </div>
@@ -116,7 +116,7 @@
                     <select name="client_id" class="eos-select">
                         <option value="">— No linked client —</option>
                         @foreach ($clients as $client)
-                            <option value="{{ $client->id }}" @selected(old('client_id') == $client->id)>{{ $client->name }}</option>
+                            <option value="{{ $client->id }}" @selected(old('client_id', $prefillClient?->id) == $client->id)>{{ $client->name }}</option>
                         @endforeach
                     </select>
                     @error('client_id') <div class="eos-error">{{ $message }}</div> @enderror
