@@ -26,6 +26,7 @@ use App\Http\Controllers\Tenant\TenantDashboardController;
 use App\Http\Controllers\Tenant\TenantHomeController;
 use App\Http\Controllers\Tenant\TenantOrderController;
 use App\Http\Controllers\Tenant\TenantPaymentSettingsController;
+use App\Http\Controllers\Tenant\TenantReservationController;
 use App\Http\Controllers\Tenant\TenantSettingsController;
 use App\Http\Controllers\Tenant\TenantThemeController;
 use App\Http\Controllers\Tenant\TenantTrackController;
@@ -61,6 +62,10 @@ Route::middleware('tenant')->group(function () {
     // Order tracking (public)
     Route::get('track', [TenantTrackController::class, 'show'])->name('tenant.track');
     Route::get('track/lookup', [TenantTrackController::class, 'lookup'])->name('tenant.track.lookup');
+
+    // Reservation request (public storefront, restaurant tenants) - creates a
+    // 'pending' reservation, no login required, same guest pattern as checkout.
+    Route::post('reserve', [TenantReservationController::class, 'store'])->name('tenant.reserve');
 });
 
 Route::middleware('tenant')->prefix('dashboard')->group(function () {
@@ -110,6 +115,10 @@ Route::middleware('tenant')->prefix('dashboard')->group(function () {
         // Orders
         Route::get('orders', [TenantOrderController::class, 'index'])->name('tenant.orders');
         Route::post('orders/{id}/status', [TenantOrderController::class, 'updateStatus'])->name('tenant.orders.update-status');
+
+        // Reservations (restaurant tenants)
+        Route::get('reservations', [TenantReservationController::class, 'index'])->name('tenant.reservations');
+        Route::post('reservations/{id}/status', [TenantReservationController::class, 'updateStatus'])->name('tenant.reservations.update-status');
 
         // Theme customizer
         Route::get('customize', [TenantThemeController::class, 'edit'])->name('tenant.theme');
