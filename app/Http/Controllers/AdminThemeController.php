@@ -6,12 +6,40 @@ use App\Models\Tenant;
 use App\Models\Theme;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class AdminThemeController extends Controller
 {
+    /**
+     * A "base layout" is a real Blade folder under
+     * resources/views/tenant-templates/{key}/index.blade.php - discovered
+     * from disk, not hardcoded, so a developer adding a new custom-built
+     * design (e.g. resources/views/tenant-templates/restaurant/) becomes
+     * immediately selectable here without any further code changes. This is
+     * the actual mechanism for "upload a new design, then assign it" - the
+     * Blade file is the one-time developer step; everything after that
+     * (naming it, publishing it, assigning it to a client) is admin-only.
+     */
+    private function availableBaseTemplates(): array
+    {
+        $dir = resource_path('views/tenant-templates');
+
+        if (!File::isDirectory($dir)) {
+            return [];
+        }
+
+        return collect(File::directories($dir))
+            ->mapWithKeys(function ($path) {
+                $key = basename($path);
+                return [$key => Str::headline($key)];
+            })
+            ->sort()
+            ->all();
+    }
+
     public function index(): View
     {
         $themes = Theme::with('sourceTenant')->orderBy('name')->get();
@@ -22,7 +50,7 @@ class AdminThemeController extends Controller
     public function create(): View
     {
         return view('themes.form', [
-            'baseTemplates' => ['shop' => 'Shop', 'info' => 'Info'],
+            'baseTemplates' => $this->availableBaseTemplates(),
         ]);
     }
 
@@ -31,7 +59,7 @@ class AdminThemeController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'base_template' => ['required', Rule::in(['shop', 'info'])],
+            'base_template' => ['required', Rule::in(array_keys($this->availableBaseTemplates()))],
             'industries' => ['nullable', 'array'],
             'industries.*' => ['string', Rule::in(['shopping', 'info'])],
             'public' => ['nullable', 'boolean'],
