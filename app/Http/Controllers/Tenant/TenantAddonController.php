@@ -15,11 +15,18 @@ class TenantAddonController extends Controller
     {
         $tenant = app(TenantContext::class)->get();
         $addons = config('addons');
-        $activeAddons = $tenant->activeAddons()->pluck('addon_key')->toArray();
+        $records = TenantAddon::where('tenant_id', $tenant->id)->get()->keyBy('addon_key');
 
-        return view('tenant.addons.index', compact('tenant', 'addons', 'activeAddons'));
+        return view('tenant.addons.index', compact('tenant', 'addons', 'records'));
     }
 
+    /**
+     * A tenant can REQUEST an add-on or CANCEL a pending request / disable an
+     * already-active one - they can never flip anything straight to active
+     * themselves. Activation only happens via
+     * AdminTenantAddonController::activate(), after the agency has confirmed
+     * payment (offline for now - see docs/SAAS_REQUIREMENTS_AND_GAPS.md).
+     */
     public function toggle(Request $request, string $subdomain, string $addonKey): RedirectResponse
     {
         $tenant = app(TenantContext::class)->get();
@@ -33,23 +40,18 @@ class TenantAddonController extends Controller
             ->where('addon_key', $addonKey)
             ->first();
 
-        if ($existing) {
-            if ($existing->status === 'active') {
-                $existing->update(['status' => 'inactive']);
-                return back()->with('success', 'Add-on disabled.');
-            } else {
-                $existing->update(['status' => 'active', 'activated_at' => now()]);
-                return back()->with('success', 'Add-on enabled.');
-            }
+        if ($existing && in_array($existing->status, ['active', 'pending'], true)) {
+            $message = $existing->status === 'active' ? 'Add-on disabled.' : 'Request cancelled.';
+            $existing->update(['status' => 'inactive']);
+
+            return back()->with('success', $message);
         }
 
-        TenantAddon::create([
-            'tenant_id' => $tenant->id,
-            'addon_key' => $addonKey,
-            'status' => 'active',
-            'activated_at' => now(),
-        ]);
+        TenantAddon::updateOrCreate(
+            ['tenant_id' => $tenant->id, 'addon_key' => $addonKey],
+            ['status' => 'pending', 'activated_at' => null],
+        );
 
-        return back()->with('success', 'Add-on enabled.');
+        return back()->with('success', 'Requested. The agency will confirm payment and activate this add-on.');
     }
 }

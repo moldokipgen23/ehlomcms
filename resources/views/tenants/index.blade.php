@@ -88,6 +88,21 @@
                             {{ $tenant->status === 'active' ? 'Suspend' : 'Activate' }}
                         </button>
                     </form>
+                    <details style="display:inline-block;position:relative;margin-left:4px;">
+                        <summary class="eos-btn eos-btn-secondary" style="font-size:10px;padding:4px 10px;display:inline-flex;cursor:pointer;list-style:none;">
+                            <i class="ti ti-copy"></i> Save as Template
+                        </summary>
+                        <form action="{{ route('tenants.save-as-template', $tenant) }}" method="POST"
+                              style="position:absolute;right:0;z-index:10;background:var(--bg-card);border:1px solid var(--border-card);border-radius:8px;padding:12px;width:220px;margin-top:6px;">
+                            @csrf
+                            <label class="eos-label" style="font-size:10px;">Theme name</label>
+                            <input type="text" name="name" class="eos-input" style="font-size:11px;padding:6px 8px;margin:4px 0 8px;" required placeholder="e.g. {{ $tenant->name }} Style">
+                            <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary);margin-bottom:8px;">
+                                <input type="checkbox" name="public" value="1"> Make public
+                            </label>
+                            <button type="submit" class="eos-btn eos-btn-primary" style="font-size:10px;padding:5px 10px;width:100%;">Save</button>
+                        </form>
+                    </details>
                 </td>
             </tr>
         @empty

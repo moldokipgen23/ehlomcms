@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\Tenant;
+use App\Models\Theme;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,7 +27,7 @@ class AdminTenantController extends Controller
     public function create(): View
     {
         $clients = Client::orderBy('name')->get(['id', 'name']);
-        $themes = config('themes');
+        $themes = Theme::orderBy('name')->get()->keyBy('key');
         $modules = config('modules');
 
         return view('tenants.form', compact('clients', 'themes', 'modules'));
@@ -38,7 +39,7 @@ class AdminTenantController extends Controller
             'subdomain' => ['required', 'string', 'max:255', 'unique:tenants,subdomain', 'regex:/^[a-z0-9-]+$/'],
             'name' => ['required', 'string', 'max:255'],
             'site_type' => ['required', Rule::in(['shopping', 'info'])],
-            'template_id' => ['nullable', Rule::in(array_keys(config('themes')))],
+            'template_id' => ['nullable', Rule::in(Theme::pluck('key'))],
             'plan' => ['nullable', 'string', 'max:255'],
             'client_id' => ['nullable', 'integer', 'exists:clients,id'],
             'action_type' => ['nullable', Rule::in(['whatsapp', 'razorpay'])],

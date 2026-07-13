@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\AdminTenantAddonController;
 use App\Http\Controllers\AdminTenantController;
+use App\Http\Controllers\AdminThemeController;
 use App\Http\Controllers\AgreementController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DomainController;
@@ -71,6 +73,17 @@ Route::middleware('auth')->group(function () {
     Route::get('tenants/create', [AdminTenantController::class, 'create'])->name('tenants.create');
     Route::post('tenants', [AdminTenantController::class, 'store'])->name('tenants.store');
     Route::post('tenants/{tenant}/toggle-status', [AdminTenantController::class, 'toggleStatus'])->name('tenants.toggle-status');
+
+    Route::get('themes', [AdminThemeController::class, 'index'])->name('themes.index');
+    Route::get('themes/create', [AdminThemeController::class, 'create'])->name('themes.create');
+    Route::post('themes', [AdminThemeController::class, 'store'])->name('themes.store');
+    Route::post('themes/{theme}/toggle-public', [AdminThemeController::class, 'togglePublic'])->name('themes.toggle-public');
+    Route::delete('themes/{theme}', [AdminThemeController::class, 'destroy'])->name('themes.destroy');
+    Route::post('tenants/{tenant}/save-as-template', [AdminThemeController::class, 'createFromTenant'])->name('tenants.save-as-template');
+
+    Route::get('addon-requests', [AdminTenantAddonController::class, 'index'])->name('addon-requests.index');
+    Route::post('addon-requests/{addon}/activate', [AdminTenantAddonController::class, 'activate'])->name('addon-requests.activate');
+    Route::post('addon-requests/{addon}/deactivate', [AdminTenantAddonController::class, 'deactivate'])->name('addon-requests.deactivate');
 
     Route::get('settings', [SettingController::class, 'edit'])->name('settings.edit');
     Route::post('settings', [SettingController::class, 'update'])->name('settings.update');
