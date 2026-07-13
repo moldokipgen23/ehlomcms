@@ -39,7 +39,15 @@ class TenantHomeController extends Controller
         // resources/views/tenant-templates/, not just 'shop'/'info', so a
         // newly added custom design is rendered correctly rather than
         // silently forced back to 'info'.
-        $baseTemplate = $theme->base_template ?? 'info';
+        //
+        // A tenant with NO theme assigned at all used to always fall back to
+        // 'info' here, regardless of site_type - so a 'shopping' tenant with
+        // no theme silently rendered as a generic contact page with no cart,
+        // no catalog, nothing recognizable as a shop. Falling back based on
+        // site_type instead means an unconfigured shopping tenant at least
+        // shows the Shop layout (empty catalog) rather than looking like a
+        // completely different, unrelated kind of site.
+        $baseTemplate = $theme->base_template ?? ($tenant->site_type === 'shopping' ? 'shop' : 'info');
 
         if ($theme) {
             // Layer the theme's baked-in preset UNDER the tenant's own saved
