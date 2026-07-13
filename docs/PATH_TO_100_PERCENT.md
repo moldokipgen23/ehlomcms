@@ -106,10 +106,14 @@ Continues the numbering in `MULTI_TENANT_BUILD_PLAN.md` / `PHASE_PROMPTS_STANDAL
 (Phases 0-14 already built). Full prompts for each live in
 `PHASE_PROMPTS_STANDALONE.md`.
 
-- **Phase 15 — Restaurant module.** Second business vertical. Menu ≈ existing
-  Catalog (relabeled), Orders reuses the existing fulfillment lifecycle, adds a
-  Reservations table. Chosen first because it's the closest in shape to Shopping —
-  cheapest way to prove the module system generalizes to a real second industry.
+- **Phase 15 — Restaurant module. ✅ DONE (2026-07-14).** Second business
+  vertical, verified end-to-end on production. Menu reuses TenantProduct
+  (grouped by category), Orders reuses the existing fulfillment lifecycle, a
+  new tenant-scoped Reservations table + dashboard CRUD + public
+  Book-a-Table form. site_type gained a third value 'restaurant';
+  storefront template auto-discovered. Commits: 95bda6b, 9de567c, 769e9ba.
+  Proved the module system generalizes to a real second industry with zero
+  regression on existing Shopping/Info tenants.
 - **Phase 16 — Make one add-on real.** Pick the highest-demand add-on, wire an actual
   `tenantHasFeature()` gate into real behavior, prove the mechanism end-to-end before
   selling more add-ons as if they work.
@@ -132,7 +136,7 @@ Continues the numbering in `MULTI_TENANT_BUILD_PLAN.md` / `PHASE_PROMPTS_STANDAL
 
 ## Recommended order right now
 
-1. Phase 15 (Restaurant module) — in progress, see TODO
+1. Phase 15 (Restaurant module) — DONE 2026-07-14
 2. Phase 16 (real add-on gating) — before selling any more add-ons
 3. A full real Razorpay test-mode payment, start to finish (blocked on Razorpay
    account/keys)
