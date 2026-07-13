@@ -202,16 +202,43 @@ Do per-client, using the super-admin panel from Phase 6:
 
 ---
 
-### Phase 8 — Later, not MVP (do not start until Phase 0–7 are live and stable)
+### Phases 9-14 — Reusable SaaS platform layer (full prompts in PHASE_PROMPTS_STANDALONE.md)
 
-- Self-serve signup (public form → auto-creates tenant)
+What was Phase 8's informal "later" bucket is now broken into concrete, individually
+reviewable phases:
+
+- **Phase 9 — Theme registry + gallery.** Templates become a WordPress-style browsable
+  library (thumbnail, name, public/private) instead of a hardcoded 2-option dropdown.
+  Private entries support one-off custom templates for a specific paying client.
+- **Phase 10 — Theme customizer.** Per-tenant color/layout settings (accent color,
+  section visibility) applied to their chosen template without touching code.
+- **Phase 11 — Generalized module system.** Replaces the hardcoded
+  `site_type === 'shopping'` gating with a proper enabled-modules list per tenant, so the
+  same dashboard shell is reusable across future industries (restaurant's menu is just
+  Catalog relabeled; school's admissions form is a new module) without rebuilding it each
+  time. Highest-risk phase in this set — it refactors existing access control, requires a
+  backfill for every already-live tenant, and needs full regression testing against the
+  isolation guarantees established in earlier phases.
+- **Phase 12 — Cart + COD/Prepaid + shipping.** A real (intentionally minimal) e-commerce
+  core: multi-item cart, Cash on Delivery as a first-class option alongside Razorpay,
+  shipping address capture. Explicitly skips full customer accounts/login for v1 — guest
+  checkout with phone-number order lookup instead, to keep scope down per product
+  decision.
+- **Phase 13 — Order status + customer lookup.** Shop owner can update fulfillment status
+  (pending → confirmed → shipped → delivered); customer can check status via order
+  number + phone, no login required.
+- **Phase 14 — Add-on marketplace.** Tenant self-toggles paid add-ons (WhatsApp
+  automation, AI agent, etc.) in their dashboard; billed through the agency's own
+  existing `Subscription`/`Invoice` models, kept entirely separate from any tenant's own
+  customer-facing Razorpay/COD payments.
+
+### Still later, not yet scoped into concrete phases
+
+- Self-serve signup (public form → payment → auto-creates tenant + owner login) — needs
+  Phase 12-14's billing patterns proven first
 - Custom domain support (CNAME mapping, verification, SSL automation — likely needs
   Caddy or Cloudflare for SaaS rather than manual Let's Encrypt per domain)
-- Add-ons marketplace (WhatsApp automation, AI agent, etc. as toggleable paid add-ons
-  billed through the existing `Subscription`/`Invoice` models)
 - AI lead-research agent (auto-drafts a tenant from a lead's quote-form answers)
 - AI dashboard assistant (edits a tenant's existing template fields/content via chat —
   explicitly NOT free-form code generation; keep it constrained to the modules already
-  built in Phases 3-5, to avoid breaking the single-shared-codebase model)
-- Restaurant vertical: reuses Catalog + Action Button as-is, just a menu-styled template
-- School vertical: reuses Content/Pages + a beefed-up Contact/Inquiry form module
+  built, to avoid breaking the single-shared-codebase model)

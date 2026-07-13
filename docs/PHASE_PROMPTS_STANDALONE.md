@@ -6,7 +6,18 @@ Each prompt below is self-contained — paste ONE at a time into a fresh AI codi
 repeated in every prompt are there because a weaker/free model may otherwise take shortcuts
 that break tenant data isolation or leak payment credentials.
 
-Do these in order: 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7. Do not skip ahead.
+Do these in order: 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 9 → 10 → 11 → 12 → 13 → 14.
+Do not skip ahead. (Phase 8 was the informal "later" bucket in the original build plan;
+phases 9-14 are that bucket, now broken into concrete, individually-reviewable steps.)
+
+Phases 1-7 (foundation through client migration) are done and live in production as of
+this writing. Phases 9-14 add: a WordPress-style theme gallery + customizer, a reusable
+module system so the same dashboard works across industries without rebuilding it, a
+minimal cart/COD/Prepaid/shipping e-commerce core, order status + customer order lookup,
+and an agency-billed add-on marketplace. Phase 11 in particular is the highest-risk of
+this whole set — it refactors how existing tenant access control works, not just adding
+new features — review it especially carefully and insist on the backward-compatibility
+verification it calls for before deploying.
 
 ---
 
@@ -315,3 +326,268 @@ Not a single AI prompt — do this per client using the Phase 6 admin panel, aft
 
 Do NOT let any AI model do bulk/automatic migration of real client data without a human
 reviewing each one — these are live paying clients' actual sites.
+
+---
+
+## Phase 9 — Theme registry + template gallery
+
+```
+This is the ehlom-os Laravel app. Templates currently exist as a hardcoded 2-option
+choice ('shop', 'info') validated via Rule::in() in both AdminTenantController and
+TenantSettingsController, rendered from resources/views/tenant-templates/{key}/index.blade.php.
+This phase turns that into a proper registry so templates can be browsed as a gallery
+(like WordPress themes) and new ones added without touching validation code every time.
+
+GUARDRAILS:
+- Do not change how existing 'shop'/'info' templates render. They become registry
+  entries, not a rewrite.
+- Do not remove the ability for a template to be "private" (assignable only by the
+  agency admin, not selectable by the tenant themselves) - this is needed for one-off
+  custom templates built for a specific paying client.
+- Every tenant-facing query/render must remain scoped through TenantContext as
+  established in earlier phases - this phase only touches template SELECTION, not
+  tenant data isolation.
+
+TASK:
+1. Create config/themes.php returning an array keyed by template_id, each entry:
+   ['name' => 'Shop Classic', 'description' => '...', 'thumbnail' => 'path/to/preview.png'
+   (a placeholder image is fine for now), 'industries' => ['shopping'], 'public' => true].
+   Add entries for the existing 'shop' and 'info' templates with public => true.
+2. Replace the hardcoded Rule::in(['shop','info']) validation in AdminTenantController
+   and TenantSettingsController with a check against array_keys(config('themes')).
+3. Build a reusable Blade component (resources/views/components/theme-gallery.blade.php)
+   that renders a grid of theme cards (thumbnail, name, description, a "Select" radio/
+   button) instead of a plain <select> dropdown. Use it in both:
+   - resources/views/tenants/form.blade.php (admin creating/editing a tenant) - show ALL
+     registry entries here, public and private.
+   - resources/views/tenant/settings/index.blade.php (tenant's own template picker) -
+     show only entries where public === true.
+4. Confirm existing tenants with template_id='shop' or 'info' keep rendering exactly as
+   before - no visual regression.
+
+Verify: the admin tenant form and the tenant's own Settings page both show a visual
+gallery instead of a dropdown, correctly filtered by public/private, and selecting a
+template still updates template_id and renders correctly on the public storefront.
+```
+
+---
+
+## Phase 10 — Theme customizer (per-tenant color/layout settings)
+
+```
+This is the ehlom-os Laravel app. Phase 9 (done) added a theme registry and gallery
+picker. Templates themselves are still fully static - this phase lets a tenant
+customize color/layout within their chosen template, without touching code, similar to
+the WordPress Customizer.
+
+GUARDRAILS:
+- Must not break rendering for any tenant with no customization saved yet (null/empty
+  theme_settings) - always fall back to sane hardcoded defaults matching current look.
+- Keep the customizable surface small and safe: an accent color, and 2-3 layout toggles
+  (e.g. show/hide gallery section, hero image style). Do NOT allow arbitrary raw CSS/HTML
+  injection from the tenant - that's an XSS risk on their own public storefront. If you
+  add a "custom CSS" field at all, it must be sanitized/escaped, never rendered as raw
+  <style> content pulled directly from user input without validation.
+
+TASK:
+1. Add a migration: nullable `theme_settings` JSON column on tenants.
+2. Add a "Customize" tab to the tenant dashboard (new controller/route, e.g.
+   TenantThemeController) with a simple form: accent color (a constrained set of
+   preset color options, not a free-text hex field, to keep this safe and on-brand),
+   and toggles for section visibility (e.g. hide gallery, hide about).
+3. Update resources/views/tenant-templates/shop/index.blade.php and info/index.blade.php
+   to read from $tenant->theme_settings (with defaults via ?? or array_merge with a
+   defaults array) and apply the accent color via a CSS custom property
+   (e.g. style="--tp-accent: {{ $accentColor }}") instead of hardcoded color values,
+   and conditionally render sections based on the visibility toggles.
+
+Verify: an tenant with no theme_settings saved renders identically to before this phase.
+Setting a different accent color visibly changes their storefront's accent color.
+Toggling a section off hides it on the public page.
+```
+
+---
+
+## Phase 11 — Generalize the module system (reusable dashboard across industries)
+
+```
+This is the ehlom-os Laravel app. Right now the tenant dashboard shows/hides
+Catalog/Payments/Orders based on hardcoded checks against `site_type === 'shopping'`
+and `action_type === 'razorpay'` (see requireShoppingSite() in TenantCatalogController,
+similar checks in TenantOrderController/TenantPaymentSettingsController, and the nav
+logic in resources/views/tenant/layouts/dashboard.blade.php). This phase generalizes
+that into a proper module system so future industries (restaurant, church, school) can
+reuse the same dashboard shell instead of hardcoding new site_type branches forever.
+
+GUARDRAILS - this is the highest-risk phase so far, be careful:
+- Existing 'shopping' tenants (with action_type whatsapp or razorpay) and 'info' tenants
+  MUST continue working EXACTLY as before after this change - this is a refactor of how
+  access is determined, not a change to what any existing tenant can currently do.
+- Write a migration/backfill step that maps every EXISTING tenant's current
+  site_type/action_type into the new module representation automatically - do not leave
+  existing tenants in a broken state with no modules enabled.
+- Every module-gated controller action must still enforce access server-side (not just
+  hide nav items) - this was a real bug found and fixed in an earlier phase (Phase 4's
+  site_type gating was originally UI-only), do not reintroduce that class of bug here.
+
+TASK:
+1. Add a migration: nullable `modules` JSON column on tenants (an array of enabled
+   module keys, e.g. ["content","catalog","payments","orders"]).
+2. Create config/modules.php: a registry of module key => [label, icon, nav section,
+   description]. Include at minimum: content, catalog, payments, orders (matching what
+   exists today).
+3. Write a one-time migration/console command that backfills the `modules` column for
+   every existing tenant based on their current site_type/action_type (e.g. site_type
+   shopping => ['content','catalog'] plus 'payments','orders' if action_type=razorpay;
+   site_type info => ['content']).
+4. Replace the hardcoded site_type/action_type checks in TenantCatalogController,
+   TenantOrderController, TenantPaymentSettingsController with a check against
+   in_array($moduleKey, $tenant->modules ?? []) - add a small helper (e.g. a method on
+   the Tenant model: hasModule(string $key): bool) to keep this DRY.
+5. Update the dashboard sidebar (resources/views/tenant/layouts/dashboard.blade.php) to
+   loop over $tenant->modules against config('modules') instead of the current hardcoded
+   if-checks.
+6. Add a "Modules" section to the AdminTenantController create/edit form so the agency
+   can hand-toggle individual modules per tenant, not just rely on a site_type preset.
+
+Verify: run the backfill against a copy of production-like seeded data (the existing
+testshop1/testshop2/testinfo1 seeders) and confirm every existing tenant's dashboard
+looks and behaves IDENTICALLY to before this phase - same nav items, same access. Then
+confirm the site_type gating bypass test from the earlier security review still fails
+correctly (an info-type tenant still cannot reach dashboard/catalog directly by URL).
+```
+
+---
+
+## Phase 12 — Cart, COD/Prepaid checkout, and shipping capture
+
+```
+This is the ehlom-os Laravel app. Today's "Buy Now" flow (Phase 4, fixed in a later
+session) is single-product, instant-checkout only - no cart, no shipping address
+capture, and Cash on Delivery doesn't exist as an option at all (only WhatsApp deep-link
+or immediate Razorpay payment). This phase adds a real (but intentionally minimal) cart
++ checkout: multiple items, choice of COD or Prepaid, and a shipping address captured at
+checkout. Per explicit product decision, this does NOT include full customer accounts/
+login for v1 - use guest checkout with order lookup by phone number (Phase 13 territory)
+rather than building customer auth here.
+
+GUARDRAILS:
+- Do NOT remove or break the existing single-product instant "Buy Now" Razorpay flow
+  (tenant-action-button.blade.php, TenantWebhookController::handleRazorpay) - it is
+  tested and working. This phase adds cart+checkout as the PRIMARY flow going forward,
+  but the existing quick-buy button can remain for single-item impulse purchases if it
+  doesn't conflict; do not silently deprecate working code without flagging it in your
+  summary.
+- Cart contents belong to a browser session (guest), not a database-backed customer
+  account - keep this simple, no new auth system in this phase.
+- Every cart/checkout query must remain scoped to the CURRENT tenant (via TenantContext)
+  - a shopper's cart on one tenant's subdomain must never leak into or affect another
+  tenant's data, consistent with every isolation guarantee established in earlier phases.
+- Never trust client-submitted price data for the final charge amount - always
+  recalculate order totals server-side from the actual TenantProduct.price values at
+  checkout time, not from anything posted by the browser.
+
+TASK:
+1. Add a migration: create tenant_order_items table (order_id FK to tenant_orders,
+   tenant_product_id FK, quantity, unit_price) - this lets one order contain multiple
+   products, unlike today's single tenant_product_id column on tenant_orders. Keep the
+   existing tenant_product_id column on tenant_orders for backward compatibility with
+   the existing single-item Razorpay webhook flow, but new cart-based orders should use
+   the new order_items table.
+2. Add a migration: shipping_name, shipping_phone, shipping_address, shipping_pincode,
+   payment_method (enum: cod, prepaid) columns on tenant_orders.
+3. Build a session-based cart: "Add to Cart" button on TenantProduct cards (shop
+   template), a /cart page showing items with quantity adjust/remove, cart count in the
+   storefront header.
+4. Build a checkout page: shipping address form + payment method choice (COD always
+   available; Prepaid/Razorpay only shown if the tenant has action_type=razorpay and a
+   configured PaymentSetting).
+   - COD: create the TenantOrder + order_items immediately with status='pending', no
+     payment processing needed.
+   - Prepaid: create the order as 'awaiting_payment', then trigger Razorpay checkout for
+     the CART TOTAL (recalculated server-side); on successful webhook, update status to
+     'paid' (reuse/extend the existing webhook handler, now needs to handle a cart-based
+     order rather than assuming a single product).
+5. Show an order confirmation page/message after checkout with an order number the
+   customer can reference later (Phase 13 will add lookup-by-phone).
+
+Verify: add multiple products to cart, complete a COD checkout - confirm a TenantOrder
+with correct order_items and shipping details is created with status=pending, no payment
+attempted. Then complete a Prepaid checkout with a test Razorpay key (same approach as
+the earlier verified test) - confirm the checkout modal opens with the correct CART
+TOTAL, not a single product's price. Confirm the existing single-product instant Buy Now
+button (if kept) still works unchanged.
+```
+
+---
+
+## Phase 13 — Order status workflow + customer order lookup
+
+```
+This is the ehlom-os Laravel app. Phase 12 (done) added cart-based checkout with COD/
+Prepaid and shipping capture. TenantOrderController is currently read-only. This phase
+lets the shop owner update fulfillment status, and lets their customer check an order's
+status without needing a full account (per the earlier decision to skip customer login
+for v1).
+
+GUARDRAILS:
+- Status updates must remain scoped to the tenant's OWN orders only (TenantContext, same
+  pattern as every other tenant controller).
+- The public order-lookup page must NOT allow browsing/enumerating other customers'
+  orders - require BOTH the order number AND the phone number used at checkout to match
+  before showing any order detail (prevents a stranger from guessing order numbers
+  sequentially to see other people's addresses/order contents).
+
+TASK:
+1. Add a `status` enum column (if not already covered by Phase 12's migrations) with
+   values: pending, confirmed, shipped, delivered, cancelled. Default 'pending'.
+2. Make TenantOrderController's index page allow the tenant to update an order's status
+   via a dropdown/button per row (scoped to their own tenant_id, as established).
+3. Add a public route (e.g. GET/POST {subdomain}.ehlom.com/track) with a simple form:
+   order number + phone number. On submit, look up the order WHERE order number matches
+   AND shipping_phone matches (both required) - show status, items, and shipping address
+   only on a match. No match = generic "not found," don't leak which field was wrong.
+4. Link to this tracking page from the order confirmation shown at the end of Phase 12's
+   checkout flow.
+
+Verify: as the tenant, change an order's status and confirm it persists and is scoped
+correctly (cannot be changed by a different tenant's dashboard). As a guest, confirm the
+tracking page correctly requires both order number and phone to match, and rejects a
+correct order number with a wrong phone number.
+```
+
+---
+
+## Phase 14 — Add-on marketplace (WhatsApp automation, AI agent, etc.)
+
+```
+This is the ehlom-os Laravel app. This phase adds a self-serve add-on marketplace in the
+tenant dashboard, separate from the tenant's own customer-facing COD/Prepaid orders -
+these are add-ons the TENANT pays THE AGENCY for (billing you), not anything their
+shoppers interact with.
+
+GUARDRAILS:
+- This is agency billing, not tenant storefront payments - do not reuse PaymentSetting/
+  the tenant's own Razorpay keys for this. If actual charging is automated in this phase,
+  it must go through the agency's OWN payment collection, separate from any tenant's
+  configured gateway.
+- Given the complexity of full billing automation, it is acceptable (and preferred for
+  this phase) to only build the toggle/tracking mechanism and flag it for the agency to
+  invoice manually via the existing Invoice/Subscription models already in the CRM -
+  don't build a second, parallel billing/charging system in this phase. State clearly in
+  your summary if you scoped it this way.
+
+TASK:
+1. Create config/addons.php: registry of addon key => [name, price, description].
+2. Add a migration: tenant_addons table (tenant_id, addon_key, status [active/inactive],
+   activated_at).
+3. Add a "Marketplace" tab in the tenant dashboard listing available add-ons with a
+   toggle. Toggling on creates/updates a tenant_addons row; toggling off marks it
+   inactive (don't hard-delete, keep history).
+4. Surface active add-ons per tenant on the agency's own /tenants admin page (Phase 6),
+   so you can see who has what enabled and invoice accordingly using the existing
+   Invoice model.
+
+Verify: toggling an add-on on/off correctly updates tenant_addons scoped to the current
+tenant. The agency admin tenants list shows each tenant's active add-ons.
+```
