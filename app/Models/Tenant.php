@@ -74,6 +74,11 @@ class Tenant extends Model
         return $this->hasMany(TenantOrder::class);
     }
 
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(Reservation::class);
+    }
+
     public function addons(): HasMany
     {
         return $this->hasMany(TenantAddon::class);

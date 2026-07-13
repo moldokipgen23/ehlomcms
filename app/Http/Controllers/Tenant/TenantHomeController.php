@@ -47,7 +47,11 @@ class TenantHomeController extends Controller
         // site_type instead means an unconfigured shopping tenant at least
         // shows the Shop layout (empty catalog) rather than looking like a
         // completely different, unrelated kind of site.
-        $baseTemplate = $theme->base_template ?? ($tenant->site_type === 'shopping' ? 'shop' : 'info');
+        $baseTemplate = $theme->base_template ?? match ($tenant->site_type) {
+            'shopping' => 'shop',
+            'restaurant' => 'restaurant',
+            default => 'info',
+        };
 
         if ($theme) {
             // Layer the theme's baked-in preset UNDER the tenant's own saved

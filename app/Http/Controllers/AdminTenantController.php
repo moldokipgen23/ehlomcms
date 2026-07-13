@@ -45,7 +45,7 @@ class AdminTenantController extends Controller
         $data = $request->validate([
             'subdomain' => ['required', 'string', 'max:255', 'unique:tenants,subdomain', 'regex:/^[a-z0-9-]+$/'],
             'name' => ['required', 'string', 'max:255'],
-            'site_type' => ['required', Rule::in(['shopping', 'info'])],
+            'site_type' => ['required', Rule::in(['shopping', 'info', 'restaurant'])],
             'template_id' => ['nullable', Rule::in(Theme::pluck('key'))],
             'plan' => ['nullable', 'string', 'max:255'],
             'client_id' => ['nullable', 'integer', 'exists:clients,id'],

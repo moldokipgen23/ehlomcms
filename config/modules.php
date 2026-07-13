@@ -29,4 +29,11 @@ return [
         'route' => 'tenant.orders',
         'description' => 'View incoming orders and update status.',
     ],
+    'reservations' => [
+        'label' => 'Reservations',
+        'icon' => 'ti-calendar-event',
+        'nav_section' => 'Store',
+        'route' => 'tenant.reservations',
+        'description' => 'Table booking requests from the storefront.',
+    ],
 ];

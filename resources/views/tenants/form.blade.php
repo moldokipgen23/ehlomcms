@@ -30,6 +30,7 @@
                         <select name="site_type" class="eos-select" required>
                             <option value="info" @selected(old('site_type') === 'info')>Info / Portfolio</option>
                             <option value="shopping" @selected(old('site_type') === 'shopping')>Shopping / Store</option>
+                            <option value="restaurant" @selected(old('site_type') === 'restaurant')>Restaurant</option>
                         </select>
                         @error('site_type') <div class="eos-error">{{ $message }}</div> @enderror
                     </div>
