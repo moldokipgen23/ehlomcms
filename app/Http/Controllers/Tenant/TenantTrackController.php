@@ -12,7 +12,9 @@ class TenantTrackController extends Controller
 {
     public function show(): View
     {
-        return view('tenant-templates.shop.track');
+        $tenant = app(TenantContext::class)->get();
+
+        return view('tenant-templates.shop.track', compact('tenant'));
     }
 
     public function lookup(Request $request): View
