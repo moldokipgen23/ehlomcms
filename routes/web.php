@@ -97,6 +97,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('addon-products/{addonProduct}', [AdminAddonProductController::class, 'destroy'])->name('addon-products.destroy');
 
     Route::get('settings', [SettingController::class, 'edit'])->name('settings.edit');
+    Route::get('system-health', [App\Http\Controllers\AdminSystemHealthController::class, 'index'])->name('system-health.index');
     Route::post('settings', [SettingController::class, 'update'])->name('settings.update');
     Route::post('settings/test-email', [SettingController::class, 'testEmail'])->name('settings.testEmail');
 

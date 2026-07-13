@@ -51,6 +51,7 @@
                     ],
                     'System' => [
                         ['settings.edit', 'Settings', 'ti-settings', null],
+                        ['system-health.index', 'System Health', 'ti-activity-heartbeat', app(\App\Services\ErrorLogReader::class)->countSince(now()->subDay()) ?: null],
                     ],
                 ];
             @endphp

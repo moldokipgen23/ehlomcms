@@ -3,10 +3,12 @@
 namespace App\Providers;
 
 use App\Mail\Transport\BrevoApiTransport;
+use App\Services\MailConfigService;
 use App\Services\NotificationService;
 use App\Services\TenantContext;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -38,6 +40,17 @@ class AppServiceProvider extends ServiceProvider
         Mail::extend('brevo-api', function (array $config) {
             return new BrevoApiTransport((string) ($config['key'] ?? ''));
         });
+
+        // Was only being applied ad-hoc before specific sends (invoices,
+        // renewal reminders) - every controller had to remember to call it.
+        // Doing it once here means ANY mail anywhere (including tenant
+        // password resets) uses whatever the admin configured on the
+        // Settings page, with no per-call-site duplication. Guarded by
+        // Schema::hasTable so a fresh install running `migrate` before the
+        // settings table exists doesn't crash on every artisan command.
+        if (Schema::hasTable('settings') && MailConfigService::configured()) {
+            MailConfigService::apply();
+        }
 
         View::composer('layouts.app', function ($view) {
             $view->with('notifications', app(NotificationService::class)->alerts());
