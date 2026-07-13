@@ -47,7 +47,7 @@
                         ['infrastructure.index', 'Domains & Hosting', 'ti-world', \App\Models\Domain::whereDate('expiry_date', '<=', now()->addDays(30))->count() ?: null],
                         ['tenants.index', 'Tenants', 'ti-building-store', null],
                         ['themes.index', 'Themes', 'ti-palette', null],
-                        ['products-services.index', 'Products & Services', 'ti-shopping-cart', \App\Models\TenantAddon::where('status', 'pending')->count() ?: null],
+                        ['addon-marketplace.index', 'Add-on Marketplace', 'ti-shopping-cart', \App\Models\TenantAddon::where('status', 'pending')->count() ?: null],
                     ],
                     'System' => [
                         ['settings.edit', 'Settings', 'ti-settings', null],

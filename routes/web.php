@@ -85,7 +85,10 @@ Route::middleware('auth')->group(function () {
     Route::post('addon-requests/{addon}/activate', [AdminTenantAddonController::class, 'activate'])->name('addon-requests.activate');
     Route::post('addon-requests/{addon}/deactivate', [AdminTenantAddonController::class, 'deactivate'])->name('addon-requests.deactivate');
 
-    Route::get('products-services', [AdminAddonProductController::class, 'index'])->name('products-services.index');
+    Route::get('addon-marketplace', [AdminAddonProductController::class, 'index'])->name('addon-marketplace.index');
+    // Old bookmarked/cached URLs from before the addon merge.
+    Route::redirect('addon-products', '/addon-marketplace');
+    Route::redirect('addon-requests', '/addon-marketplace');
     Route::get('addon-products/create', [AdminAddonProductController::class, 'create'])->name('addon-products.create');
     Route::post('addon-products', [AdminAddonProductController::class, 'store'])->name('addon-products.store');
     Route::get('addon-products/{addonProduct}/edit', [AdminAddonProductController::class, 'edit'])->name('addon-products.edit');

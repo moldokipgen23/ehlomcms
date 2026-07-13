@@ -13,10 +13,13 @@ use Illuminate\View\View;
 class AdminAddonProductController extends Controller
 {
     /**
-     * One page, one nav item: the catalog (what you sell) and the request
-     * queue (who wants it / who has it) are different database tables, but
-     * to the admin they're the same concept - "Products & Services" - so
-     * they render together here instead of as two separate sidebar tabs.
+     * This is the SaaS tenant add-on marketplace (WhatsApp Automation, AI
+     * Agent, etc. that platform tenants request) - a different concept from
+     * the agency's own "Products & Services" (ProductController), which is
+     * the agency's client billing catalog (Web Design, hosting, domains)
+     * tied to Subscriptions/Invoices. Kept as one page here (catalog +
+     * request queue together) so it isn't two separate sidebar tabs, but
+     * named "Add-on Marketplace" to not collide with the pre-existing one.
      */
     public function index(): View
     {
@@ -26,12 +29,12 @@ class AdminAddonProductController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('products-services.index', compact('addons', 'requests'));
+        return view('addon-marketplace.index', compact('addons', 'requests'));
     }
 
     public function create(): View
     {
-        return view('products-services.form', ['addon' => null]);
+        return view('addon-marketplace.form', ['addon' => null]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -41,26 +44,26 @@ class AdminAddonProductController extends Controller
 
         AddonProduct::create($data);
 
-        return redirect()->route('products-services.index')->with('success', 'Product/service created.');
+        return redirect()->route('addon-marketplace.index')->with('success', 'Product/service created.');
     }
 
     public function edit(AddonProduct $addonProduct): View
     {
-        return view('products-services.form', ['addon' => $addonProduct]);
+        return view('addon-marketplace.form', ['addon' => $addonProduct]);
     }
 
     public function update(Request $request, AddonProduct $addonProduct): RedirectResponse
     {
         $addonProduct->update($this->validated($request));
 
-        return redirect()->route('products-services.index')->with('success', 'Product/service updated.');
+        return redirect()->route('addon-marketplace.index')->with('success', 'Product/service updated.');
     }
 
     public function toggleActive(AddonProduct $addonProduct): RedirectResponse
     {
         $addonProduct->update(['active' => !$addonProduct->active]);
 
-        return redirect()->route('products-services.index')
+        return redirect()->route('addon-marketplace.index')
             ->with('success', $addonProduct->name . ($addonProduct->active ? ' is now active.' : ' is now hidden from clients.'));
     }
 
@@ -72,7 +75,7 @@ class AdminAddonProductController extends Controller
 
         $addonProduct->delete();
 
-        return redirect()->route('products-services.index')->with('success', 'Product/service deleted.');
+        return redirect()->route('addon-marketplace.index')->with('success', 'Product/service deleted.');
     }
 
     private function validated(Request $request): array

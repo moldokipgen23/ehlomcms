@@ -1,16 +1,16 @@
 @extends('layouts.app')
 
-@section('title', 'Products & Services')
+@section('title', 'Add-on Marketplace')
 
-@section('subtitle', 'What you sell to clients, and who has requested or activated it')
+@section('subtitle', 'Add-ons your platform tenants can request (WhatsApp Automation, AI Agent, etc.) and who has requested or activated them')
 
 @section('content')
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
     <div class="eos-page-title" style="font-size:16px;font-weight:700;color:var(--text-primary);">
-        Your Products & Services
+        Your Add-ons
     </div>
     <a href="{{ route('addon-products.create') }}" class="eos-btn eos-btn-primary">
-        <i class="ti ti-plus"></i> New Product/Service
+        <i class="ti ti-plus"></i> New Add-on
     </a>
 </div>
 
@@ -46,7 +46,7 @@
                     <a href="{{ route('addon-products.edit', $addon) }}" class="eos-btn eos-btn-secondary" style="font-size:10px;padding:4px 10px;">
                         <i class="ti ti-edit"></i> Edit
                     </a>
-                    <form action="{{ route('addon-products.destroy', $addon) }}" method="POST" onsubmit="return confirm('Delete this product/service?');">
+                    <form action="{{ route('addon-products.destroy', $addon) }}" method="POST" onsubmit="return confirm('Delete this add-on?');">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="eos-btn eos-btn-danger" style="font-size:10px;padding:4px 10px;">
