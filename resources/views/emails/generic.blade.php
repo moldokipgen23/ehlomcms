@@ -2,8 +2,12 @@
     use App\Models\Setting;
 
     // Pull branding for the email shell. The logo is embedded as a base64 data
-    // URI so it survives forwards and works without an external host.
-    $logoData = Setting::imageData('company_logo');
+    // URI so it survives forwards and works without an external host - but
+    // resized first (emailImageData, not imageData) since embedding the
+    // full-resolution upload pushed total email size well past Gmail's
+    // ~102KB clipping threshold, arriving as a truncated "View entire
+    // message" email with an apparently blank body.
+    $logoData = Setting::emailImageData('company_logo');
     $brandName = Setting::get('smtp_from_name') ?: 'Ehlom Digital';
     $fromEmail = Setting::get('smtp_from_address');
 @endphp

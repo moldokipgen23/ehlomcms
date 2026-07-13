@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Setting extends Model
 {
@@ -70,7 +71,9 @@ class Setting extends Model
     }
 
     /**
-     * Return a stored image as a base64 data URI for embedding in PDFs.
+     * Return a stored image as a base64 data URI for embedding in PDFs, at
+     * full resolution (PDFs are viewed/printed, not size-constrained the
+     * way email clients are).
      */
     public static function imageData(string $key): ?string
     {
@@ -89,5 +92,78 @@ class Setting extends Model
         $mime = mime_content_type($full) ?: 'image/png';
 
         return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($full));
+    }
+
+    /**
+     * Same as imageData() but resized down before encoding, specifically for
+     * embedding in email HTML. An uploaded logo embedded at full resolution
+     * (e.g. 180KB+) pushes total email size over Gmail's ~102KB clipping
+     * threshold, so the message arrives truncated with "View entire message"
+     * and a blank-looking body - happened on every email this app sends
+     * (invoices, renewal reminders, password resets), not just a one-off.
+     * Resized copies are cached on disk next to the original so this only
+     * costs a GD resize once per uploaded logo, not once per email sent.
+     */
+    public static function emailImageData(string $key, int $maxDimension = 160): ?string
+    {
+        $path = static::get($key);
+
+        if (! $path) {
+            return null;
+        }
+
+        $full = storage_path('app/public/' . $path);
+
+        if (! is_file($full)) {
+            return null;
+        }
+
+        $cachePath = storage_path('app/public/email-cache/' . md5($path . $maxDimension) . '.png');
+
+        if (is_file($cachePath) && filemtime($cachePath) >= filemtime($full)) {
+            return 'data:image/png;base64,' . base64_encode(file_get_contents($cachePath));
+        }
+
+        [$width, $height] = @getimagesize($full) ?: [0, 0];
+
+        if ($width <= 0 || $height <= 0 || ($width <= $maxDimension && $height <= $maxDimension)) {
+            // Already small enough, or unreadable dimensions - fall back to
+            // the original rather than risk a bad resize.
+            $mime = mime_content_type($full) ?: 'image/png';
+
+            return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($full));
+        }
+
+        $source = match (true) {
+            str_ends_with(strtolower($full), '.png') => @imagecreatefrompng($full),
+            str_ends_with(strtolower($full), '.gif') => @imagecreatefromgif($full),
+            default => @imagecreatefromjpeg($full),
+        };
+
+        if (! $source) {
+            $mime = mime_content_type($full) ?: 'image/png';
+
+            return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($full));
+        }
+
+        $ratio = min($maxDimension / $width, $maxDimension / $height);
+        $newWidth = max(1, (int) round($width * $ratio));
+        $newHeight = max(1, (int) round($height * $ratio));
+
+        $resized = imagecreatetruecolor($newWidth, $newHeight);
+        imagealphablending($resized, false);
+        imagesavealpha($resized, true);
+        imagecopyresampled($resized, $source, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+        imagedestroy($source);
+
+        $dir = dirname($cachePath);
+        if (! is_dir($dir)) {
+            mkdir($dir, 0750, true);
+        }
+
+        imagepng($resized, $cachePath);
+        imagedestroy($resized);
+
+        return 'data:image/png;base64,' . base64_encode(file_get_contents($cachePath));
     }
 }
