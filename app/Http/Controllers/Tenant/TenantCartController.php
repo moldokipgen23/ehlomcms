@@ -103,7 +103,7 @@ class TenantCartController extends Controller
         return view('tenant-templates.shop.cart', compact('cart', 'total', 'count', 'tenant'));
     }
 
-    public function checkout(): View
+    public function checkout(): View|RedirectResponse
     {
         $tenant = app(TenantContext::class)->get();
         $cart = $this->getCart();
