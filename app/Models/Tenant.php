@@ -16,6 +16,9 @@ class Tenant extends Model
     protected $fillable = [
         'client_id',
         'subdomain',
+        'custom_domain',
+        'domain_status',
+        'domain_verified_at',
         'name',
         'site_type',
         'template_id',
@@ -97,5 +100,15 @@ class Tenant extends Model
     public function hasModule(string $key): bool
     {
         return in_array($key, $this->modules ?? [], true);
+    }
+
+    public function backups(): HasMany
+    {
+        return $this->hasMany(TenantBackup::class);
+    }
+
+    public function aiSetting(): HasOne
+    {
+        return $this->hasOne(AiSetting::class);
     }
 }

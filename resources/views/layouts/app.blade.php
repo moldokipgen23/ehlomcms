@@ -43,19 +43,36 @@
                     'Products' => [
                         ['modules.index', 'Business Modules', 'ti-components', null],
                         ['themes.index', 'Themes', 'ti-palette', null],
+                        ['themes.marketplace', 'Theme Marketplace', 'ti-shopping-cart', null],
                         ['addon-marketplace.index', 'Add-on Marketplace', 'ti-shopping-cart', \App\Models\TenantAddon::where('status', 'pending')->count() ?: null],
+                        ['email-templates.index', 'Email Templates', 'ti-mail', null],
+                        ['ai-settings.index', 'AI Settings', 'ti-sparkles', null],
                     ],
-                    'Hosting' => [
-                        ['infrastructure.index', 'Domains & Hosting', 'ti-world', \App\Models\Domain::whereDate('expiry_date', '<=', now()->addDays(30))->count() ?: null],
+                    'Content' => [
+                        ['media.index', 'Media Library', 'ti-photo', null],
+                        ['ai-content.index', 'AI Content', 'ti-sparkles', null],
                     ],
                     'Finance' => [
                         ['revenue.index', 'Revenue', 'ti-chart-line', null],
                         ['invoices.index', 'Invoices', 'ti-file-invoice', \App\Models\Invoice::where('status', 'unpaid')->count() ?: null],
+                        ['payments.index', 'Payments', 'ti-cash', null],
+                        ['expenses.index', 'Expenses', 'ti-currency-rupee', null],
                         ['products.index', 'Service Catalog', 'ti-box', null],
                     ],
+                    'Hosting' => [
+                        ['hosting.index', 'Hosting Plans', 'ti-server', null],
+                        ['infrastructure.index', 'Domains & Hosting', 'ti-world', \App\Models\Domain::whereDate('expiry_date', '<=', now()->addDays(30))->count() ?: null],
+                    ],
+                    'Support' => [
+                        ['admin.tickets.index', 'Tickets', 'ti-ticket', \App\Models\TenantTicket::where('status', 'open')->count() ?: null],
+                    ],
                     'System' => [
+                        ['users.index', 'Users', 'ti-user', null],
+                        ['audit-logs.index', 'Activity Logs', 'ti-list-details', null],
                         ['settings.edit', 'Settings', 'ti-settings', null],
                         ['system-health.index', 'System Health', 'ti-activity-heartbeat', app(\App\Services\ErrorLogReader::class)->countSince(now()->subDay()) ?: null],
+                        ['backups.index', 'Backups', 'ti-database', null],
+                        ['domains.admin.index', 'Custom Domains', 'ti-world-www', \App\Models\Tenant::where('domain_status', 'pending')->count() ?: null],
                     ],
                 ];
             @endphp

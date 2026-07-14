@@ -204,5 +204,6 @@
 
         <div class="tp-foot">{{ $tenant->name }} &middot; Powered by Ehlom OS</div>
     </div>
+    @include('tenant-templates.partials.ai-assistant')
 </body>
 </html>

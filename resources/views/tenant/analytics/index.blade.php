@@ -3,6 +3,16 @@
 @section('title', 'Analytics')
 
 @section('content')
+@if ($insights)
+    <div class="eos-card" style="padding:16px;margin-bottom:14px;background:linear-gradient(135deg,var(--accent-alpha,#eef2ff),#fff);">
+        <div class="eos-card-header" style="margin-bottom:8px;">
+            <div class="eos-card-title"><i class="ti ti-sparkles" style="margin-right:6px;"></i> AI Insights</div>
+            <span class="eos-card-link" style="font-size:10px;">Updated hourly</span>
+        </div>
+        <div style="font-size:13px;line-height:1.7;color:var(--text-primary);white-space:pre-wrap;">{{ $insights }}</div>
+    </div>
+@endif
+
 <div class="eos-row" style="gap:14px;margin-bottom:14px;">
     <div class="eos-card" style="flex:1;padding:16px;">
         <div class="eos-row-type" style="margin-bottom:4px;">Total visits</div>

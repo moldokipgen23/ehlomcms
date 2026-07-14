@@ -48,6 +48,8 @@
                 $links['Content'][] = ['tenant.theme', 'Customise Theme', 'ti-palette'];
                 // Marketplace / add-ons is always available.
                 $links['Settings'][] = ['tenant.addons', 'Marketplace', 'ti-shopping-bag'];
+                // Support tickets are always available.
+                $links['Settings'][] = ['tenant.tickets', 'Support', 'ti-ticket'];
             @endphp
             @foreach ($links as $section => $items)
                 <div class="eos-nav-section">{{ $section }}</div>
@@ -94,6 +96,15 @@
         </div>
 
         <div class="eos-content">
+            @if (session()->has('impersonator_id'))
+                <div class="eos-alert-bar" style="background:rgba(245,158,11,0.12);border-color:#f59e0b;color:#f59e0b;">
+                    <i class="ti ti-eye"></i> You are viewing this dashboard as a tenant (impersonation).
+                    <form method="POST" action="{{ route('tenant.leave-impersonation') }}" style="display:inline;margin-left:8px;">
+                        @csrf
+                        <button type="submit" style="background:#f59e0b;color:#fff;border:none;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;">Leave</button>
+                    </form>
+                </div>
+            @endif
             @if (session('success'))
                 <div class="eos-alert-bar"><i class="ti ti-circle-check"></i> {{ session('success') }}</div>
             @endif
@@ -118,6 +129,7 @@
                 }
             }
             $bottomLinks[] = ['tenant.addons', 'Marketplace', 'ti-shopping-bag'];
+            $bottomLinks[] = ['tenant.tickets', 'Support', 'ti-ticket'];
         @endphp
         @foreach ($bottomLinks as [$route, $label, $icon])
             <a href="{{ Route::has($route) ? route($route) : '#' }}"

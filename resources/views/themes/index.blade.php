@@ -60,6 +60,9 @@
                     @endif
                 </td>
                 <td>
+                    <a href="{{ route('themes.download', $theme) }}" class="eos-btn" style="font-size:10px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;text-decoration:none;color:var(--text-secondary);" title="Download as theme.zip">
+                        <i class="ti ti-download"></i>
+                    </a>
                     <form action="{{ route('themes.destroy', $theme) }}" method="POST" onsubmit="return confirm('Delete this theme?');" style="display:inline;">
                         @csrf
                         @method('DELETE')

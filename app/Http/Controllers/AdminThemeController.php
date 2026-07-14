@@ -6,10 +6,12 @@ use App\Models\Tenant;
 use App\Models\Theme;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use ZipArchive;
 
 class AdminThemeController extends Controller
 {
@@ -172,6 +174,55 @@ class AdminThemeController extends Controller
         $theme->delete();
 
         return redirect()->route('themes.index')->with('success', 'Theme deleted.');
+    }
+
+    public function downloadAsZip(Theme $theme): Response
+    {
+        $zip = new ZipArchive;
+        $zipPath = tempnam(sys_get_temp_dir(), 'theme_') . '.zip';
+
+        if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
+            abort(500, 'Could not create zip file.');
+        }
+
+        // theme.json
+        $manifest = [
+            'name' => $theme->name,
+            'key' => $theme->key,
+            'description' => $theme->description,
+            'version' => '1.0',
+            'base_template' => $theme->base_template,
+            'industries' => $theme->industries,
+            'default_settings' => $theme->default_settings,
+        ];
+        $zip->addFromString('theme.json', json_encode($manifest, JSON_PRETTY_PRINT));
+
+        // preview image placeholder
+        $zip->addFromString('preview.jpg', 'Replace this file with an actual 1200x900 preview image.');
+        $zip->addFromString('preview.png', 'Replace this file with an actual 1200x900 preview image.');
+
+        // README
+        $readme = "# {$theme->name}\n\n{$theme->description}\n\n"
+            . "## Template Tokens\n\n"
+            . "Use {{tenant.name}}, {{tenant.logo}}, {{tenant.banner}} in your HTML.\n"
+            . "Wrap product listings in {{#products}}...{{/products}}.\n"
+            . "Use {{item.name}}, {{item.price}}, {{item.photo}}, {{item.buy_button}} per product.\n";
+        $zip->addFromString('README.md', $readme);
+
+        // Base template hint
+        if ($theme->base_template) {
+            $zip->addFromString('views/README.txt', "This theme is based on the '{$theme->base_template}' layout.\n"
+                . "Place custom Blade files in views/ to override the base template.\n");
+        }
+
+        // Custom HTML if it exists
+        if ($theme->custom_html) {
+            $zip->addFromString('custom.html', $theme->custom_html);
+        }
+
+        $zip->close();
+
+        return response()->download($zipPath, Str::slug($theme->name) . '-theme.zip')->deleteFileAfterSend(true);
     }
 
     private function uniqueKey(string $name): string

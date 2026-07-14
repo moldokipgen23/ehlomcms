@@ -31,8 +31,11 @@ use App\Http\Controllers\Tenant\TenantServiceController;
 use App\Http\Controllers\Tenant\TenantSettingsController;
 use App\Http\Controllers\Tenant\TenantTestimonialController;
 use App\Http\Controllers\Tenant\TenantBlogController;
+use App\Http\Controllers\Tenant\TenantAiAssistantController;
 use App\Http\Controllers\Tenant\TenantThemeController;
+use App\Http\Controllers\Tenant\TenantTicketController;
 use App\Http\Controllers\Tenant\TenantTrackController;
+use App\Http\Controllers\Tenant\TenantImpersonateController;
 use Illuminate\Support\Facades\Route;
 
 // Domain-scoped to genuine tenant subdomains only. Without this, these routes
@@ -69,6 +72,9 @@ Route::middleware('tenant')->group(function () {
     // Reservation request (public storefront, restaurant tenants) - creates a
     // 'pending' reservation, no login required, same guest pattern as checkout.
     Route::post('reserve', [TenantReservationController::class, 'store'])->name('tenant.reserve');
+
+    // AI Assistant chat (public storefront)
+    Route::post('ai-assistant/chat', [TenantAiAssistantController::class, 'chat'])->name('tenant.ai-assistant.chat');
 });
 
 Route::middleware('tenant')->prefix('dashboard')->group(function () {
@@ -86,6 +92,16 @@ Route::middleware('tenant')->prefix('dashboard')->group(function () {
         Route::post('forgot-password', [TenantForgotPasswordController::class, 'store'])->name('tenant.password.email');
         Route::get('reset-password/{token}', [TenantNewPasswordController::class, 'create'])->name('tenant.password.reset');
         Route::post('reset-password', [TenantNewPasswordController::class, 'store'])->name('tenant.password.update');
+
+        // Cross-domain impersonation handoff (see AdminImpersonateController
+        // ::loginAsTenant). 'signed' rejects the request outright if the
+        // signature/expiry (2 min) don't check out - that signature is the
+        // entire authorization for this route, since it's otherwise a
+        // guest/unauthenticated endpoint by necessity (there is no session
+        // to be authenticated with yet).
+        Route::get('impersonate/consume', [TenantImpersonateController::class, 'consume'])
+            ->middleware('signed')
+            ->name('tenant.impersonate.consume');
     });
 
     // Authenticated tenant routes
@@ -159,8 +175,17 @@ Route::middleware('tenant')->prefix('dashboard')->group(function () {
         Route::post('addons/toggle/{addonKey}', [\App\Http\Controllers\Tenant\TenantAddonController::class, 'toggle'])->name('tenant.addons.toggle');
     });
 
+    // Support tickets
+    Route::get('support', [TenantTicketController::class, 'index'])->name('tenant.tickets');
+    Route::post('support', [TenantTicketController::class, 'store'])->name('tenant.tickets.store');
+    Route::get('support/{ticket}', [TenantTicketController::class, 'show'])->name('tenant.tickets.show');
+
     // Logout (POST, no auth middleware since session is still valid)
     Route::post('logout', [TenantLoginController::class, 'destroy'])->name('tenant.logout');
 });
+
+// Impersonation leave — must be reachable while logged in as a tenant user
+// (no tenant.auth middleware, but still requires TenantContext).
+Route::middleware('tenant')->post('leave-impersonation', [TenantImpersonateController::class, 'leave'])->name('tenant.leave-impersonation');
 
 }); // end Route::domain('{subdomain}.'.config('app.tenant_domain'))

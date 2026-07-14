@@ -82,6 +82,12 @@
                     @endif
                 </td>
                 <td>
+                    <form method="POST" action="{{ route('tenants.impersonate', $tenant) }}" style="display:inline;">
+                        @csrf
+                        <button type="submit" class="eos-btn eos-btn-secondary" style="font-size:10px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--text-secondary);cursor:pointer;" title="Login as this tenant">
+                            <i class="ti ti-eye"></i>
+                        </button>
+                    </form>
                     <form method="POST" action="{{ route('tenants.toggle-status', $tenant) }}" style="display:inline;">
                         @csrf
                         <button type="submit" class="eos-btn eos-btn-{{ $tenant->status === 'active' ? 'danger' : 'primary' }}" style="font-size:10px;padding:4px 10px;">
