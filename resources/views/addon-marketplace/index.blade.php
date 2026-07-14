@@ -14,36 +14,47 @@
     </a>
 </div>
 
-<table class="eos-table" style="margin-bottom:28px;">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Price</th>
-            <th>Visibility</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @forelse ($addons as $addon)
-            <tr>
-                <td style="font-weight:600;">
-                    <i class="ti {{ $addon->icon }}" style="margin-right:6px;color:var(--text-muted);"></i>
-                    {{ $addon->name }}
-                    @if ($addon->description)
-                        <div style="font-size:11px;color:var(--text-dim);font-weight:400;margin-top:2px;">{{ $addon->description }}</div>
-                    @endif
-                </td>
-                <td>₹{{ number_format($addon->price, 0) }}/mo</td>
-                <td>
-                    <form action="{{ route('addon-products.toggle-active', $addon) }}" method="POST" style="display:inline;">
+@if ($addons->isEmpty())
+    <div class="eos-empty" style="margin-bottom:28px;">No add-ons yet.</div>
+@else
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:28px;">
+        @foreach ($addons as $addon)
+            @php $s = $stats[$addon->key] ?? ['active' => 0, 'pending' => 0]; @endphp
+            <div class="eos-card" style="padding:14px;display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+                    <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+                        <i class="ti {{ $addon->icon }}" style="font-size:18px;color:var(--text-muted);flex:none;"></i>
+                        <div style="font-weight:600;color:var(--text-primary);font-size:14px;">{{ $addon->name }}</div>
+                    </div>
+                    <div style="font-size:12px;color:var(--text-dim);white-space:nowrap;">₹{{ number_format($addon->price, 0) }}/mo</div>
+                </div>
+
+                @if ($addon->description)
+                    <div style="font-size:12px;color:var(--text-dim);line-height:1.5;">{{ $addon->description }}</div>
+                @endif
+
+                <div style="display:flex;flex-wrap:wrap;gap:5px;">
+                    @forelse ($addon->business_types ?: [] as $bt)
+                        <span class="eos-badge badge-draft" style="font-size:10px;">{{ config("business_types.$bt.label", $bt) }}</span>
+                    @empty
+                        <span class="eos-badge badge-draft" style="font-size:10px;">All business types</span>
+                    @endforelse
+                </div>
+
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:8px;border-top:1px solid var(--border);">
+                    <span class="eos-badge" style="font-size:10px;background:var(--bg-hover);color:var(--text-secondary);">
+                        {{ $s['active'] }} active @if($s['pending']) &middot; {{ $s['pending'] }} pending @endif
+                    </span>
+                    <form action="{{ route('addon-products.toggle-active', $addon) }}" method="POST">
                         @csrf
                         <button type="submit" class="eos-badge {{ $addon->active ? 'badge-active' : 'badge-pending' }}" style="border:none;cursor:pointer;">
-                            {{ $addon->active ? 'Visible to clients' : 'Hidden' }}
+                            {{ $addon->active ? 'Visible' : 'Hidden' }}
                         </button>
                     </form>
-                </td>
-                <td style="display:flex;gap:6px;">
-                    <a href="{{ route('addon-products.edit', $addon) }}" class="eos-btn eos-btn-secondary" style="font-size:10px;padding:4px 10px;">
+                </div>
+
+                <div style="display:flex;gap:6px;">
+                    <a href="{{ route('addon-products.edit', $addon) }}" class="eos-btn eos-btn-secondary" style="font-size:10px;padding:4px 10px;flex:1;text-align:center;">
                         <i class="ti ti-edit"></i> Edit
                     </a>
                     <form action="{{ route('addon-products.destroy', $addon) }}" method="POST" onsubmit="return confirm('Delete this add-on?');">
@@ -53,13 +64,11 @@
                             <i class="ti ti-trash"></i>
                         </button>
                     </form>
-                </td>
-            </tr>
-        @empty
-            <tr><td colspan="4"><div class="eos-empty">No products or services yet.</div></td></tr>
-        @endforelse
-    </tbody>
-</table>
+                </div>
+            </div>
+        @endforeach
+    </div>
+@endif
 
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
     <div class="eos-page-title" style="font-size:16px;font-weight:700;color:var(--text-primary);">

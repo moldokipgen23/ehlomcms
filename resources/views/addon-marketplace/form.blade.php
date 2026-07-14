@@ -39,6 +39,20 @@
                             Visible to clients in the Marketplace
                         </label>
                     </div>
+                    <div class="eos-field full">
+                        <label class="eos-label">Business Types</label>
+                        <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">Leave all unchecked to show this add-on under every business type.</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+                            @php $selected = old('business_types', $addon->business_types ?? []); @endphp
+                            @foreach ($businessTypes as $typeKey => $type)
+                                <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);cursor:pointer;">
+                                    <input type="checkbox" name="business_types[]" value="{{ $typeKey }}" {{ in_array($typeKey, $selected) ? 'checked' : '' }}>
+                                    {{ $type['label'] }}
+                                </label>
+                            @endforeach
+                        </div>
+                        @error('business_types') <div class="eos-error">{{ $message }}</div> @enderror
+                    </div>
                 </div>
             </div>
         </div>

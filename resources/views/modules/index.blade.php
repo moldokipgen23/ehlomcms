@@ -17,15 +17,37 @@
 <div style="margin-bottom:8px;" class="eos-page-title">
     <span style="font-size:16px;font-weight:700;color:var(--text-primary);">Business Types</span>
 </div>
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:28px;">
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:28px;">
     @foreach ($businessTypes as $typeKey => $type)
-        <div class="eos-card" style="padding:14px;">
-            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">{{ $type['label'] }}</div>
-            <div style="font-size:11px;color:var(--text-dim);margin-bottom:10px;">Template: {{ $type['template'] }}</div>
-            <div style="display:flex;flex-wrap:wrap;gap:5px;">
-                @foreach ($type['default_modules'] ?? [] as $mKey)
-                    <span class="eos-badge badge-draft" style="font-size:10px;">{{ $modules[$mKey]['label'] ?? $mKey }}</span>
-                @endforeach
+        <div class="eos-card" style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+            <div>
+                <div style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">{{ $type['label'] }}</div>
+                <div style="font-size:11px;color:var(--text-dim);">Template: {{ $type['template'] }}</div>
+            </div>
+
+            <div>
+                <div style="font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--accent-green);font-weight:600;margin-bottom:6px;">Free</div>
+                <div style="display:flex;flex-wrap:wrap;gap:5px;">
+                    @forelse ($type['default_modules'] ?? [] as $mKey)
+                        <span class="eos-badge badge-active" style="font-size:10px;">{{ $modules[$mKey]['label'] ?? $mKey }}</span>
+                    @empty
+                        <span style="font-size:11px;color:var(--text-dim);">None yet</span>
+                    @endforelse
+                </div>
+            </div>
+
+            <div>
+                <div style="font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--accent-amber);font-weight:600;margin-bottom:6px;">Paid add-ons</div>
+                <div style="display:flex;flex-direction:column;gap:5px;">
+                    @forelse ($paidByType[$typeKey] ?? [] as $addon)
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;">
+                            <span style="color:var(--text-secondary);"><i class="ti {{ $addon->icon }}" style="color:var(--text-muted);margin-right:4px;"></i>{{ $addon->name }}</span>
+                            <span style="color:var(--text-dim);white-space:nowrap;">₹{{ number_format($addon->price, 0) }}/mo</span>
+                        </div>
+                    @empty
+                        <span style="font-size:11px;color:var(--text-dim);">None yet</span>
+                    @endforelse
+                </div>
             </div>
         </div>
     @endforeach

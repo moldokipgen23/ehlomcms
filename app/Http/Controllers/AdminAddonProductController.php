@@ -29,12 +29,18 @@ class AdminAddonProductController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('addon-marketplace.index', compact('addons', 'requests'));
+        // Per-addon activation stats for the card grid (active / pending count).
+        $stats = $requests->groupBy('addon_key')->map(fn ($group) => [
+            'active' => $group->where('status', 'active')->count(),
+            'pending' => $group->where('status', 'pending')->count(),
+        ]);
+
+        return view('addon-marketplace.index', compact('addons', 'requests', 'stats'));
     }
 
     public function create(): View
     {
-        return view('addon-marketplace.form', ['addon' => null]);
+        return view('addon-marketplace.form', ['addon' => null, 'businessTypes' => config('business_types')]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -49,7 +55,7 @@ class AdminAddonProductController extends Controller
 
     public function edit(AddonProduct $addonProduct): View
     {
-        return view('addon-marketplace.form', ['addon' => $addonProduct]);
+        return view('addon-marketplace.form', ['addon' => $addonProduct, 'businessTypes' => config('business_types')]);
     }
 
     public function update(Request $request, AddonProduct $addonProduct): RedirectResponse
@@ -86,6 +92,8 @@ class AdminAddonProductController extends Controller
             'price' => ['required', 'numeric', 'min:0'],
             'icon' => ['nullable', 'string', 'max:255'],
             'active' => ['nullable', 'boolean'],
+            'business_types' => ['nullable', 'array'],
+            'business_types.*' => ['string', Rule::in(array_keys(config('business_types')))],
         ]) + ['active' => $request->boolean('active')];
     }
 
