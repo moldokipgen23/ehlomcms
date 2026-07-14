@@ -48,9 +48,15 @@ class AdminThemeBuilderController extends Controller
             'analysis' => ['required', 'array'],
             'theme_name' => ['required', 'string', 'max:255'],
             'business_type' => ['required', 'string'],
+            'ai_api_key' => ['nullable', 'string'],
+            'ai_provider' => ['nullable', 'in:openai,anthropic'],
         ]);
 
-        $generator = app(ThemeGenerator::class);
+        $apiKey = $request->input('ai_api_key') ?: config('services.ai.api_key');
+        $provider = $request->input('ai_provider', 'openai');
+        $model = $provider === 'anthropic' ? 'claude-sonnet-4-20250514' : 'gpt-4o';
+
+        $generator = new \App\Services\ThemeGenerator($apiKey, $provider, $model);
         $result = $generator->generate(
             $request->input('analysis'),
             $request->input('theme_name'),

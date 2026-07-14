@@ -60,6 +60,24 @@
                     <input type="text" class="eos-input" value="{{ $analysis['business_type'] }}" readonly>
                     <input type="hidden" name="business_type" value="{{ $analysis['business_type'] }}">
                 </div>
+
+                <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
+                    <div style="font-size:12px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                        <i class="ti ti-robot" style="color:var(--accent-teal);"></i> AI Generation (optional)
+                    </div>
+                    <div class="eos-field">
+                        <label class="eos-label">AI Provider</label>
+                        <select name="ai_provider" class="eos-input" id="aiProviderSelect">
+                            <option value="openai">OpenAI (GPT-4o)</option>
+                            <option value="anthropic">Anthropic (Claude)</option>
+                        </select>
+                    </div>
+                    <div class="eos-field">
+                        <label class="eos-label">API Key</label>
+                        <input type="password" name="ai_api_key" class="eos-input" placeholder="sk-... or sk-ant-..." id="aiApiKeyInput">
+                        <div style="font-size:10px;color:var(--text-dim);margin-top:4px;">Leave empty to use static template generation (no AI)</div>
+                    </div>
+                </div>
             </div>
         </div>
         <div style="display:flex;gap:10px;justify-content:flex-end;">

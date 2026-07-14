@@ -218,9 +218,12 @@
                             @endphp
                             @foreach ($typeThemes as $key => $theme)
                                 @php $industries = $theme['industries'] ?? []; @endphp
-                                <div class="theme-card" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg-card);cursor:pointer;transition:all .2s;" onclick="selectTheme(this, '{{ $key }}')">
-                                    <div style="aspect-ratio:16/10;background:var(--bg-hover);display:flex;align-items:center;justify-content:center;">
+                                <div class="theme-card" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg-card);cursor:pointer;transition:all .2s;position:relative;" onclick="selectTheme(this, '{{ $key }}')">
+                                    <div style="aspect-ratio:16/10;background:var(--bg-hover);display:flex;align-items:center;justify-content:center;position:relative;">
                                         <i class="ti {{ $industries[0] === 'shopping' ? 'ti-shopping-cart' : ($industries[0] === 'info' ? 'ti-info-circle' : 'ti-palette') }}" style="font-size:28px;color:var(--accent-teal);"></i>
+                                        <a href="{{ route('onboarding.theme-preview', ['theme' => $key]) }}" target="_blank" onclick="event.stopPropagation();" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:4px;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;text-decoration:none;" title="Preview theme">
+                                            <i class="ti ti-eye" style="font-size:11px;color:white;"></i>
+                                        </a>
                                     </div>
                                     <div style="padding:8px;">
                                         <div style="font-weight:600;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $theme['name'] }}</div>
@@ -261,9 +264,12 @@
                 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;">
                     @foreach ($themes as $key => $theme)
                         @php $industries = $theme['industries'] ?? []; @endphp
-                        <div class="theme-card" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg-card);cursor:pointer;transition:all .2s;" onclick="selectTheme(this, '{{ $key }}')">
-                            <div style="aspect-ratio:16/10;background:var(--bg-hover);display:flex;align-items:center;justify-content:center;">
+                        <div class="theme-card" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg-card);cursor:pointer;transition:all .2s;position:relative;" onclick="selectTheme(this, '{{ $key }}')">
+                            <div style="aspect-ratio:16/10;background:var(--bg-hover);display:flex;align-items:center;justify-content:center;position:relative;">
                                 <i class="ti {{ $industries[0] === 'shopping' ? 'ti-shopping-cart' : ($industries[0] === 'info' ? 'ti-info-circle' : 'ti-palette') }}" style="font-size:28px;color:var(--accent-teal);"></i>
+                                <a href="{{ route('onboarding.theme-preview', ['theme' => $key]) }}" target="_blank" onclick="event.stopPropagation();" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:4px;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;text-decoration:none;" title="Preview theme">
+                                    <i class="ti ti-eye" style="font-size:11px;color:white;"></i>
+                                </a>
                             </div>
                             <div style="padding:8px;">
                                 <div style="font-weight:600;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $theme['name'] }}</div>

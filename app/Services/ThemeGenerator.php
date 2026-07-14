@@ -3,18 +3,32 @@
 namespace App\Services;
 
 use App\Models\Theme;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class ThemeGenerator
 {
+    private ?string $apiKey;
+    private string $provider;
+    private string $model;
+
+    public function __construct(?string $apiKey = null, string $provider = 'openai', string $model = 'gpt-4o')
+    {
+        $this->apiKey = $apiKey;
+        $this->provider = $provider;
+        $this->model = $model;
+    }
+
     public function generate(array $analysis, string $themeName, string $businessType): array
     {
         $themeKey = Str::slug($themeName);
 
-        $bladeContent = $this->generateBlade($analysis, $themeName, $businessType);
+        if ($this->apiKey) {
+            $bladeContent = $this->generateWithAi($analysis, $themeName, $businessType);
+        } else {
+            $bladeContent = $this->generateBlade($analysis, $themeName, $businessType);
+        }
+
         $config = $this->generateConfig($analysis, $themeName, $businessType);
-        $previewHtml = $this->generatePreview($analysis, $themeName);
 
         $theme = Theme::create([
             'key' => $themeKey,
@@ -40,9 +54,118 @@ class ThemeGenerator
         ];
     }
 
+    private function generateWithAi(array $analysis, string $themeName, string $businessType): string
+    {
+        $systemPrompt = $this->buildSystemPrompt($analysis, $themeName, $businessType);
+        $userPrompt = $this->buildUserPrompt($analysis, $themeName, $businessType);
+
+        if ($this->provider === 'anthropic') {
+            return $this->callAnthropic($systemPrompt, $userPrompt);
+        }
+
+        return $this->callOpenAi($systemPrompt, $userPrompt);
+    }
+
+    private function buildSystemPrompt(array $analysis, string $themeName, string $businessType): string
+    {
+        $sections = implode(', ', $analysis['sections'] ?? []);
+        $colors = implode(', ', array_slice($analysis['colors'] ?? [], 5));
+        $components = implode(', ', $analysis['components'] ?? []);
+
+        return "You are an expert web developer converting HTML designs into Laravel Blade templates for the ALOM Theme SDK.\n\n"
+            . "TASK: Generate a complete, working Blade template for a {$businessType} business website called \"{$themeName}\".\n\n"
+            . "REQUIREMENTS:\n"
+            . "1. Output MUST be valid HTML with Blade syntax (@foreach, @if, {{ }}, etc.)\n"
+            . "2. Use CSS variables from the ALOM design system: --bg-card, --bg-hover, --border, --text-primary, --text-secondary, --text-dim, --accent-teal, --accent-amber\n"
+            . "3. Font stack: Inter for body, Syne for headlines\n"
+            . "4. Icons: Tabler Icons CDN (https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css)\n"
+            . "5. Responsive: mobile-first, works on all screen sizes\n"
+            . "6. Use \$tenant variable for dynamic data (name, about_text, contact_email, contact_phone, etc.)\n"
+            . "7. Use \$tenant->products for product listings\n"
+            . "8. Sections found in the design: {$sections}\n"
+            . "9. Colors extracted: {$colors}\n"
+            . "10. Components found: {$components}\n\n"
+            . "BLADE SYNTAX RULES:\n"
+            . "- Product listing: @foreach (\\$tenant->products->take(6) as \\$product) ... @endforeach\n"
+            . "- Conditional sections: @if (\\$tenant->hasModule('catalog')) ... @endif\n"
+            . "- Tenant data: {{ \\$tenant->name }}, {{ \\$tenant->about_text }}, {{ \\$tenant->contact_email }}\n"
+            . "- Theme settings: {{ \\$tenant->theme_settings['accent_color'] ?? '#14b8a6' }}\n\n"
+            . "OUTPUT: Return ONLY the complete HTML template. No explanation, no markdown code blocks.";
+    }
+
+    private function buildUserPrompt(array $analysis, string $themeName, string $businessType): string
+    {
+        $rawHtml = $analysis['raw_html'] ?? '';
+        $rawCss = $analysis['raw_css'] ?? '';
+
+        $prompt = "Generate a Blade template for \"{$themeName}\" ({$businessType} business).\n\n";
+
+        if ($rawHtml) {
+            $prompt .= "ORIGINAL HTML STRUCTURE:\n{$rawHtml}\n\n";
+        }
+
+        if ($rawCss) {
+            $prompt .= "ORIGINAL CSS:\n{$rawCss}\n\n";
+        }
+
+        $prompt .= "SECTIONS TO INCLUDE: " . implode(', ', $analysis['sections'] ?? ['hero', 'products', 'about', 'contact']) . "\n";
+        $prompt .= "COLORS: " . implode(', ', array_slice($analysis['colors'] ?? [], 5)) . "\n";
+        $prompt .= "FONTS: " . implode(', ', $analysis['fonts'] ?? ['Inter', 'Syne']) . "\n";
+
+        return $prompt;
+    }
+
+    private function callOpenAi(string $systemPrompt, string $userPrompt): string
+    {
+        $client = new \GuzzleHttp\Client(['timeout' => 60]);
+        $response = $client->post('https://api.openai.com/v1/chat/completions', [
+            'headers' => [
+                'Authorization' => "Bearer {$this->apiKey}",
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                'model' => $this->model,
+                'messages' => [
+                    ['role' => 'system', 'content' => $systemPrompt],
+                    ['role' => 'user', 'content' => $userPrompt],
+                ],
+                'max_tokens' => 4000,
+                'temperature' => 0.7,
+            ],
+        ]);
+
+        $body = json_decode($response->getBody(), true);
+
+        return $body['choices'][0]['message']['content'] ?? $this->generateBlade([], '', '');
+    }
+
+    private function callAnthropic(string $systemPrompt, string $userPrompt): string
+    {
+        $client = new \GuzzleHttp\Client(['timeout' => 60]);
+        $response = $client->post('https://api.anthropic.com/v1/messages', [
+            'headers' => [
+                'x-api-key' => $this->apiKey,
+                'anthropic-version' => '2023-06-01',
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                'model' => $this->model ?: 'claude-sonnet-4-20250514',
+                'system' => $systemPrompt,
+                'messages' => [
+                    ['role' => 'user', 'content' => $userPrompt],
+                ],
+                'max_tokens' => 4000,
+            ],
+        ]);
+
+        $body = json_decode($response->getBody(), true);
+
+        return $body['content'][0]['text'] ?? $this->generateBlade([], '', '');
+    }
+
     private function generateBlade(array $analysis, string $themeName, string $businessType): string
     {
-        $sections = $analysis['sections'] ?? [];
+        $sections = $analysis['sections'] ?? ['hero', 'cards', 'about', 'contact'];
         $colors = $analysis['colors'] ?? ['#0f172a', '#14b8a6', '#f8fafc'];
         $primaryColor = $colors[0] ?? '#0f172a';
         $accentColor = $colors[1] ?? '#14b8a6';
@@ -145,10 +268,5 @@ class ThemeGenerator
             'colors' => $colors,
             'fonts' => $analysis['fonts'] ?? ['Inter', 'Syne'],
         ];
-    }
-
-    private function generatePreview(array $analysis, string $themeName): string
-    {
-        return "<!DOCTYPE html><html><head><title>{$themeName} Preview</title></head><body><h1>{$themeName}</h1><p>Preview generated</p></body></html>";
     }
 }
