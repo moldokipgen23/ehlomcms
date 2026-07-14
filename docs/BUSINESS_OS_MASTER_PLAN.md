@@ -269,3 +269,35 @@ label, predates HostingPlan, kept for backward compat) vs `HostingPlan` (new str
 catalog) vs `Subscription` (old CRM recurring billing, tied to Client) - three real
 billing concepts that are NOT the same thing and weren't unified in this pass. Worth a
 dedicated look before any actual payment automation is built on top of them.
+
+### Themes / Theme Marketplace merge + real ZIP upload (2026-07-15)
+
+User directly asked why Themes and Theme Marketplace were two pages and pushed back hard
+on it (rightly - it traced to the original vision doc listing them separately, but they
+were genuinely indistinguishable in practice since every theme was public). Per explicit
+request: merged into one Themes page, cards grouped by business type (same visual
+pattern as Business Modules), Theme Marketplace controller/view/route/sidebar link
+removed entirely.
+
+Added the ZIP upload that was missing (only export/download existed before, no import).
+Reads theme.json + custom.html from the uploaded zip entirely in-memory
+(ZipArchive::getFromName()) - never extracts arbitrary files to disk, never executes
+anything from the zip. The security boundary: an uploaded zip can only ever become
+inert template text (the theme's custom_html field), rendered through the existing
+CustomThemeRenderer token-substitution path - the same as pasting HTML by hand.
+
+Two more real bugs found and fixed during this pass:
+- The theme create form's "Suited For" checkboxes were hardcoded to only Shopping/Info -
+  Restaurant and Portfolio/Business (both added earlier this session) were never
+  selectable for a custom theme. Now loops config('business_types').
+- Introduced and immediately caught a Blade 500: wrote a literal token example inside
+  the view's own {{ }} echo syntax, which this codebase's own code comments already
+  document as breaking Blade's compiler. Fixed by reusing the existing tokenDocs()
+  controller-built string instead of writing the token literally in the view.
+
+Verified fully live: built a real theme.zip (theme.json + custom.html with a unique
+marker string), uploaded it via a real multipart POST, confirmed it appeared under both
+tagged business types, assigned it to a throwaway tenant, and confirmed the storefront
+rendered the actual uploaded HTML with tenant name/about correctly substituted - not a
+cached fallback. Test tenant and theme deleted after. Regression-checked demoshop and
+testshop still return 200.
