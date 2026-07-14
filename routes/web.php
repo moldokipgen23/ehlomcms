@@ -10,7 +10,6 @@ use App\Http\Controllers\AdminTenantController;
 use App\Http\Controllers\AdminAiContentController;
 use App\Http\Controllers\AdminAiSettingsController;
 use App\Http\Controllers\AdminAuditLogController;
-use App\Http\Controllers\AdminHostingController;
 use App\Http\Controllers\AdminModuleController;
 use App\Http\Controllers\AdminRevenueController;
 use App\Http\Controllers\AdminSystemHealthController;
@@ -194,11 +193,6 @@ Route::middleware('auth')->group(function () {
 
     // Audit Logs
     Route::get('audit-logs', [AdminAuditLogController::class, 'index'])->name('audit-logs.index');
-
-    // Hosting Plans
-    Route::get('hosting', [AdminHostingController::class, 'index'])->name('hosting.index');
-    Route::post('hosting/plans', [AdminHostingController::class, 'storePlan'])->name('hosting.plans.store');
-    Route::delete('hosting/plans/{hostingPlan}', [AdminHostingController::class, 'destroyPlan'])->name('hosting.plans.destroy');
 
     // AI Settings
     Route::get('ai-settings', [AdminAiSettingsController::class, 'index'])->name('ai-settings.index');

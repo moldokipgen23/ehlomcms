@@ -55,7 +55,7 @@ class Tenant extends Model
 
     public function hostingPlan(): BelongsTo
     {
-        return $this->belongsTo(HostingPlan::class);
+        return $this->belongsTo(Product::class, 'hosting_plan_id');
     }
 
     public function users(): HasMany

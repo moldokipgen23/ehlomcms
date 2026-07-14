@@ -20,9 +20,9 @@
         {{-- ── HOSTING PLANS ── --}}
         <div x-show="tab === 'hosting'" x-cloak>
             <div style="font-size:11px;color:var(--text-dim);background:var(--bg-hover);border-radius:6px;padding:8px 10px;margin-bottom:10px;">
-                These are billing line items for your existing manually-hosted clients (Service
-                Catalog, category=hosting). For assigning a hosting plan to a tenant SaaS site, see
-                <a href="{{ route('hosting.index') }}" style="color:var(--accent-blue);">Hosting</a> under Products.
+                One catalog, two uses: these are the billing line items for manually-hosted
+                clients, and the same rows are assignable directly to a tenant SaaS site from the
+                <a href="{{ route('tenants.index') }}" style="color:var(--accent-blue);">Tenants</a> list.
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                 <p style="font-size:11.5px;color:var(--text-dim);margin:0;">Your hosting plans &amp; their prices — shared, managed, or anything you offer.</p>

@@ -59,7 +59,6 @@
                         ['products.index', 'Service Catalog', 'ti-box', null],
                     ],
                     'Hosting' => [
-                        ['hosting.index', 'Hosting Plans', 'ti-server', null],
                         ['infrastructure.index', 'Domains & Hosting', 'ti-world', \App\Models\Domain::whereDate('expiry_date', '<=', now()->addDays(30))->count() ?: null],
                     ],
                     'Support' => [

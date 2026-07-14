@@ -46,4 +46,13 @@ class Product extends Model
             ->withPivot('quantity', 'unit_price')
             ->withTimestamps();
     }
+
+    /**
+     * Tenant SaaS sites currently assigned this plan (category=hosting
+     * products only, in practice) - see Tenant::hostingPlan().
+     */
+    public function tenants(): HasMany
+    {
+        return $this->hasMany(Tenant::class, 'hosting_plan_id');
+    }
 }
