@@ -80,6 +80,7 @@ Route::middleware('auth')->group(function () {
     Route::post('tenants/{tenant}/toggle-status', [AdminTenantController::class, 'toggleStatus'])->name('tenants.toggle-status');
 
     Route::get('business-modules', [AdminModuleController::class, 'index'])->name('modules.index');
+    Route::post('business-modules/{businessType}', [AdminModuleController::class, 'updateAssignments'])->name('modules.update-assignments');
 
     Route::get('themes', [AdminThemeController::class, 'index'])->name('themes.index');
     Route::get('themes/create', [AdminThemeController::class, 'create'])->name('themes.create');

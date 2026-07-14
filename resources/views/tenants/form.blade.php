@@ -27,12 +27,13 @@
                     </div>
                     <div class="eos-field">
                         <label class="eos-label">Site Type *</label>
-                        <select name="site_type" class="eos-select" required>
+                        <select name="site_type" id="eos-site-type" class="eos-select" required>
                             @foreach ($businessTypes as $typeKey => $type)
                                 <option value="{{ $typeKey }}" @selected(old('site_type') === $typeKey)>{{ $type['label'] }}</option>
                             @endforeach
                         </select>
                         @error('site_type') <div class="eos-error">{{ $message }}</div> @enderror
+                        <div class="eos-row-type" style="margin-top:4px;">Picking a type auto-ticks its free modules below — set from the <a href="{{ route('modules.index') }}" style="color:var(--accent-blue);">Business Modules</a> page.</div>
                     </div>
                     <div class="eos-field full">
                         <label class="eos-label">Template</label>
@@ -68,7 +69,7 @@
                 <div style="display:flex;flex-direction:column;gap:8px;">
                     @foreach ($modules as $key => $m)
                         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text-secondary);">
-                            <input type="checkbox" name="modules[]" value="{{ $key }}"
+                            <input type="checkbox" name="modules[]" value="{{ $key }}" class="eos-module-checkbox"
                                    {{ in_array($key, old('modules', [])) ? 'checked' : '' }}
                                    style="accent-color:var(--accent-blue);width:16px;height:16px;">
                             <i class="ti {{ $m['icon'] }}" style="font-size:16px;color:var(--text-muted);"></i>
@@ -80,6 +81,31 @@
                 @error('modules') <div class="eos-error">{{ $message }}</div> @enderror
             </div>
         </div>
+
+        @if (!old('site_type'))
+            <script>
+                // Auto-tick a business type's free modules (from
+                // BusinessTypeModule, admin-edited on the Business Modules
+                // page) when Site Type changes. Skipped on a validation-
+                // failure redisplay (old('site_type') present) so the
+                // admin's in-progress choices aren't silently overwritten.
+                (function () {
+                    var freeByType = @json($freeByType);
+                    var select = document.getElementById('eos-site-type');
+                    var checkboxes = document.querySelectorAll('.eos-module-checkbox');
+
+                    function applyDefaults() {
+                        var defaults = freeByType[select.value] || [];
+                        checkboxes.forEach(function (cb) {
+                            cb.checked = defaults.indexOf(cb.value) !== -1;
+                        });
+                    }
+
+                    select.addEventListener('change', applyDefaults);
+                    applyDefaults();
+                })();
+            </script>
+        @endif
 
         <div class="eos-card" style="margin-bottom:14px;">
             <div class="eos-card-header">

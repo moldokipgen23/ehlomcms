@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BusinessTypeModule;
 use App\Models\Client;
 use App\Models\Tenant;
 use App\Models\Theme;
@@ -31,6 +32,15 @@ class AdminTenantController extends Controller
         $modules = config('modules');
         $businessTypes = config('business_types');
 
+        // Free-module defaults per business type, admin-edited from the
+        // Business Modules page (business_type_modules table) - used to
+        // auto-tick the right checkboxes in the browser when the admin
+        // picks a Site Type, without a page reload.
+        $freeByType = [];
+        foreach ($businessTypes as $typeKey => $type) {
+            $freeByType[$typeKey] = BusinessTypeModule::modulesFor($typeKey);
+        }
+
         // Reached from a client's "Create Tenant Site" button (see
         // clients/show.blade.php) - prefill the obvious fields so this isn't
         // a second data-entry pass for information already on file.
@@ -38,7 +48,7 @@ class AdminTenantController extends Controller
             ? Client::find($request->integer('client_id'))
             : null;
 
-        return view('tenants.form', compact('clients', 'themes', 'modules', 'businessTypes', 'prefillClient'));
+        return view('tenants.form', compact('clients', 'themes', 'modules', 'businessTypes', 'freeByType', 'prefillClient'));
     }
 
     public function store(Request $request): RedirectResponse
