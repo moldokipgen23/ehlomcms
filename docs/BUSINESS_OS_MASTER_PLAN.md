@@ -116,7 +116,7 @@ back-end features land. Reservations already added for restaurant tenants.
 4. ✅ Sidebar regrouped into the target sections
 
 **Wave 2 — Fill the MVP business types:**
-4. Portfolio / Business vertical (pages, services, testimonials, blog, gallery)
+4. ✅ DONE 2026-07-14: Portfolio / Business vertical (services, testimonials, blog, gallery + existing content module for about/contact). Scope note: no separate generic "Pages" CMS module was built - the existing Content module already covers a portfolio site's static page needs, and a second module literally named "Pages" would collide with the existing "Content / Pages" module label. A real multi-page builder belongs with the later Theme Engine work, not this MVP vertical.
 5. School vertical — AFTER Roles exist (students, teachers, classes, admissions)
 
 **Wave 3 — Operational maturity (System + Hosting + Support):**
