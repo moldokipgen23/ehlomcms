@@ -234,3 +234,38 @@ a flag defaulted off. Ship to everyone (code inert), enable for one test tenant,
 other tenant changed, then enable for real buyers. Test migrations against the local
 `ehlom_os` DB copy first. This is the shared-codebase substitute for the master doc's
 "rebuild image, roll out to 1-2 clients first."
+
+
+### Data-model wiring pass (2026-07-15)
+
+User spotted duplicate-looking tags on the Theme Marketplace and asked whether
+Client/Tenant, Themes/Theme Marketplace, and Domains/Hosting were actually connected.
+Investigated with real production data rather than guessing:
+
+- **Client <-> Tenant**: mechanism already existed and works correctly (verified live
+  with throwaway data - client_id saves, Client page shows the linked tenant). Real
+  production state: 2 real Clients (Ngamboi, Dora), 2 real Tenants (both literally named
+  "Demo Shop"/"My Test Shop" - showcase data, not real client sites) - currently 0 linked
+  pairs, correctly so, since force-linking demo tenants to real clients would be wrong.
+- **Theme Marketplace duplicate tags**: fixed - was rendering base_template (raw key)
+  and industries (also raw keys) as two separate badge rows; for 3 of 4 themes those
+  are literally identical text. Now shows one badge per business type in its real label.
+- **Hosting Plans had zero attachment mechanism** - confirmed no foreign key pointed at
+  it from anywhere. Added tenants.hosting_plan_id (nullOnDelete), wired into the Tenants
+  list (inline assignable select) and Tenant create form, Hosting Plans page now shows
+  real tenant counts per plan. Verified live: created a real plan, assigned it to a
+  tenant, confirmed it showed correctly in both directions, then cleaned up.
+- **A third naming collision found**: the OLD Domains & Hosting page (Client-linked
+  manual billing) has its own "Hosting Plans" tab - but that's actually Product records
+  (Service Catalog, category=hosting), unrelated to the new HostingPlan model. Renamed
+  to "Hosting Pricing" and added cross-reference notes on both pages.
+- **Cross-linked the two domain systems**: Client show page now displays the linked
+  Tenant's custom_domain/SSL status inline (if set) with a link to Custom Domains admin;
+  Custom Domains admin page now shows a Client column linking back. Verified live in
+  both directions with a throwaway Client+Tenant pair, then cleaned up.
+
+**Still genuinely separate, not merged, by design**: `Tenant.plan` (legacy free-text
+label, predates HostingPlan, kept for backward compat) vs `HostingPlan` (new structured
+catalog) vs `Subscription` (old CRM recurring billing, tied to Client) - three real
+billing concepts that are NOT the same thing and weren't unified in this pass. Worth a
+dedicated look before any actual payment automation is built on top of them.
