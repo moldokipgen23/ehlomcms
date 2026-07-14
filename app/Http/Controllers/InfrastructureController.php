@@ -26,11 +26,11 @@ class InfrastructureController extends Controller
             ->orderBy('expiry_date')
             ->get();
 
-        // Subscribers: clients who have purchased domains or hosting
+        // Subscribers: clients who have purchased domains or have active tenants
         $subscribers = Client::whereHas('domains', fn ($q) => $q->where('status', 'active'))
-            ->orWhereHas('tenants', fn ($q) => $q->where('status', 'active'))
-            ->with(['domains', 'tenants'])
-            ->withCount(['domains as domains_count', 'tenants as tenants_count'])
+            ->orWhereHas('tenant', fn ($q) => $q->where('status', 'active'))
+            ->with(['domains', 'tenant'])
+            ->withCount(['domains as domains_count'])
             ->orderBy('name')
             ->get();
 

@@ -104,7 +104,7 @@
             <div class="eos-card" style="padding:0;">
                 <table class="eos-table">
                     <thead>
-                        <tr><th>Client</th><th>Email</th><th>Phone</th><th>Domains</th><th>Tenants</th><th>Total Spent</th><th style="text-align:right;">Actions</th></tr>
+                        <tr><th>Client</th><th>Email</th><th>Phone</th><th>Domains</th><th>Tenant Site</th><th>Total Spent</th><th style="text-align:right;">Actions</th></tr>
                     </thead>
                     <tbody>
                         @forelse ($subscribers as $client)
@@ -122,10 +122,10 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if ($client->tenants_count > 0)
-                                        <span class="eos-badge badge-active">{{ $client->tenants_count }}</span>
+                                    @if ($client->tenant)
+                                        <a href="{{ route('tenants.edit', $client->tenant) }}" style="color:var(--accent-blue);font-size:12px;text-decoration:none;">{{ $client->tenant->name }}</a>
                                     @else
-                                        <span style="color:var(--text-dim);font-size:12px;">0</span>
+                                        <span style="color:var(--text-dim);font-size:12px;">—</span>
                                     @endif
                                 </td>
                                 <td style="font-size:12px;font-weight:600;">₹{{ number_format($client->domains->sum('renewal_cost') ?? 0, 0) }}</td>
