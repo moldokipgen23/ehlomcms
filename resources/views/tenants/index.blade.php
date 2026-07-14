@@ -122,6 +122,23 @@
                             <button type="submit" class="eos-btn eos-btn-primary" style="font-size:10px;padding:5px 10px;width:100%;">Save</button>
                         </form>
                     </details>
+                    <details style="display:inline-block;position:relative;margin-left:4px;">
+                        <summary class="eos-btn eos-btn-primary" style="font-size:10px;padding:4px 10px;display:inline-flex;cursor:pointer;list-style:none;">
+                            <i class="ti ti-gift"></i> Grant Add-on
+                        </summary>
+                        <form action="{{ route('admin.addons.grant', $tenant) }}" method="POST"
+                              style="position:absolute;right:0;z-index:10;background:var(--bg-card);border:1px solid var(--border-card);border-radius:8px;padding:12px;width:280px;margin-top:6px;">
+                            @csrf
+                            <label class="eos-label" style="font-size:10px;">Add-on</label>
+                            <select name="addon_key" class="eos-select" style="font-size:11px;padding:6px 8px;margin:4px 0 8px;width:100%;" required>
+                                <option value="">Select add-on…</option>
+                                @foreach (\App\Models\AddonProduct::where('active', true)->get() as $addon)
+                                    <option value="{{ $addon->key }}">{{ $addon->name }} (₹{{ number_format($addon->price, 0) }}/mo)</option>
+                                @endforeach
+                            </select>
+                            <button type="submit" class="eos-btn eos-btn-primary" style="font-size:10px;padding:5px 10px;width:100%;">Activate Free</button>
+                        </form>
+                    </details>
                 </td>
             </tr>
         @empty

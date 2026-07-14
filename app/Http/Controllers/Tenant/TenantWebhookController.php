@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\AddonProduct;
 use App\Models\PaymentSetting;
 use App\Models\Tenant;
+use App\Models\TenantAddon;
 use App\Models\TenantOrder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -88,6 +90,46 @@ class TenantWebhookController extends Controller
                         ],
                     ],
                 );
+            }
+        }
+
+        return response('OK', 200);
+    }
+
+    public function handleAddonActivation(Request $request): Response
+    {
+        $payload = $request->getContent();
+        $signature = $request->header('X-Razorpay-Signature');
+
+        $expectedSignature = hash_hmac('sha256', $payload, config('services.razorpay.webhook_secret'));
+
+        if (!hash_equals($expectedSignature, $signature)) {
+            Log::warning('Addon webhook: invalid signature');
+            return response('Invalid signature', 400);
+        }
+
+        $event = $request->input('event');
+        $payment = $request->input('payload.payment.entity', []);
+
+        if ($event === 'payment.captured' && $payment) {
+            $notes = $payment['notes'] ?? [];
+            $type = $notes['type'] ?? null;
+            $addonKey = $notes['addon_key'] ?? null;
+            $tenantId = $notes['tenant_id'] ?? null;
+
+            if ($type === 'addon' && $addonKey && $tenantId) {
+                $addonRecord = TenantAddon::where('tenant_id', $tenantId)
+                    ->where('addon_key', $addonKey)
+                    ->first();
+
+                if ($addonRecord && $addonRecord->status !== 'active') {
+                    $addonRecord->update([
+                        'status' => 'active',
+                        'activated_at' => now(),
+                        'razorpay_payment_id' => $payment['id'],
+                    ]);
+                    Log::info('Add-on activated via webhook', ['tenant_id' => $tenantId, 'addon_key' => $addonKey]);
+                }
             }
         }
 

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Services\TenantContext;
 
 class Product extends Model
 {
@@ -54,5 +55,10 @@ class Product extends Model
     public function tenants(): HasMany
     {
         return $this->hasMany(Tenant::class, 'hosting_plan_id');
+    }
+
+    public function isAvailableForTenant($tenant): bool
+    {
+        return $this->status === 'active';
     }
 }

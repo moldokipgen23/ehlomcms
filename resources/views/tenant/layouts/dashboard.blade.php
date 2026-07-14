@@ -46,8 +46,10 @@
                 }
                 // Theme customizer is always available.
                 $links['Content'][] = ['tenant.theme', 'Customise Theme', 'ti-palette'];
-                // Marketplace / add-ons is always available.
+// Marketplace / add-ons is always available.
                 $links['Settings'][] = ['tenant.addons', 'Marketplace', 'ti-shopping-bag'];
+                // Domains & Hosting is always available.
+                $links['Settings'][] = ['tenant.infrastructure', 'Domains & Hosting', 'ti-server'];
                 // Support tickets are always available.
                 $links['Settings'][] = ['tenant.tickets', 'Support', 'ti-ticket'];
             @endphp

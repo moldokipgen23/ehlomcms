@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\AddonProduct;
 use App\Models\Invoice;
+use App\Models\Tenant;
 use App\Models\TenantAddon;
 use App\Services\InvoiceService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class AdminTenantAddonController extends Controller
 {
@@ -59,5 +61,25 @@ class AdminTenantAddonController extends Controller
         $addon->update(['status' => 'inactive']);
 
         return back()->with('success', 'Add-on deactivated.');
+    }
+
+    /**
+     * Manual grant: agency gives an add-on to a tenant for free (no payment,
+     * no invoice). Useful for courtesy, demos, or agency-managed clients.
+     */
+    public function grant(Request $request, Tenant $tenant): RedirectResponse
+    {
+        $request->validate([
+            'addon_key' => 'required|string|exists:addon_products,key',
+        ]);
+
+        $addonMeta = AddonProduct::where('key', $request->addon_key)->where('active', true)->firstOrFail();
+
+        TenantAddon::updateOrCreate(
+            ['tenant_id' => $tenant->id, 'addon_key' => $request->addon_key],
+            ['status' => 'active', 'activated_at' => now()],
+        );
+
+        return back()->with('success', $addonMeta->name . ' granted to ' . $tenant->name . ' (manual, no charge).');
     }
 }

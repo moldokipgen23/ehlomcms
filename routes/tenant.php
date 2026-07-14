@@ -19,6 +19,7 @@
 use App\Http\Controllers\Tenant\Auth\TenantLoginController;
 use App\Http\Controllers\Tenant\Auth\TenantForgotPasswordController;
 use App\Http\Controllers\Tenant\Auth\TenantNewPasswordController;
+use App\Http\Controllers\Tenant\TenantAddonController;
 use App\Http\Controllers\Tenant\TenantCartController;
 use App\Http\Controllers\Tenant\TenantCatalogController;
 use App\Http\Controllers\Tenant\TenantContentController;
@@ -31,6 +32,8 @@ use App\Http\Controllers\Tenant\TenantServiceController;
 use App\Http\Controllers\Tenant\TenantSettingsController;
 use App\Http\Controllers\Tenant\TenantTestimonialController;
 use App\Http\Controllers\Tenant\TenantBlogController;
+use App\Http\Controllers\Tenant\TenantAddonCheckoutController;
+use App\Http\Controllers\Tenant\TenantInfrastructureCheckoutController;
 use App\Http\Controllers\Tenant\TenantAiAssistantController;
 use App\Http\Controllers\Tenant\TenantThemeController;
 use App\Http\Controllers\Tenant\TenantTicketController;
@@ -75,6 +78,17 @@ Route::middleware('tenant')->group(function () {
 
     // AI Assistant chat (public storefront)
     Route::post('ai-assistant/chat', [TenantAiAssistantController::class, 'chat'])->name('tenant.ai-assistant.chat');
+
+// Add-on marketplace checkout (public - requires Razorpay)
+    Route::get('addons/{addon}/checkout', [TenantAddonCheckoutController::class, 'create'])->name('tenant.addons.checkout');
+    Route::post('addons/{addon}/checkout', [TenantAddonCheckoutController::class, 'checkout'])->name('tenant.addons.pay');
+    Route::get('addons/success', [TenantAddonCheckoutController::class, 'success'])->name('tenant.addons.success');
+
+    // Domain/Hosting marketplace
+    Route::get('infrastructure', [TenantInfrastructureCheckoutController::class, 'index'])->name('tenant.infrastructure');
+    Route::get('infrastructure/{product}/checkout', [TenantInfrastructureCheckoutController::class, 'create'])->name('tenant.infrastructure.checkout');
+    Route::post('infrastructure/{product}/checkout', [TenantInfrastructureCheckoutController::class, 'checkout'])->name('tenant.infrastructure.pay');
+    Route::get('infrastructure/success', [TenantInfrastructureCheckoutController::class, 'success'])->name('tenant.infrastructure.success');
 });
 
 Route::middleware('tenant')->prefix('dashboard')->group(function () {
@@ -173,6 +187,9 @@ Route::middleware('tenant')->prefix('dashboard')->group(function () {
         // Add-on marketplace
         Route::get('addons', [\App\Http\Controllers\Tenant\TenantAddonController::class, 'index'])->name('tenant.addons');
         Route::post('addons/toggle/{addonKey}', [\App\Http\Controllers\Tenant\TenantAddonController::class, 'toggle'])->name('tenant.addons.toggle');
+        Route::get('addons/{addon}/checkout', [\App\Http\Controllers\Tenant\TenantAddonCheckoutController::class, 'create'])->name('tenant.addons.checkout');
+        Route::post('addons/{addon}/checkout', [\App\Http\Controllers\Tenant\TenantAddonCheckoutController::class, 'checkout'])->name('tenant.addons.pay');
+        Route::get('addons/success', [\App\Http\Controllers\Tenant\TenantAddonCheckoutController::class, 'success'])->name('tenant.addons.success');
     });
 
     // Support tickets

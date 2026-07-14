@@ -106,6 +106,8 @@ Route::middleware('auth')->group(function () {
     Route::post('addon-requests/{addon}/activate', [AdminTenantAddonController::class, 'activate'])->name('addon-requests.activate');
     Route::post('addon-requests/{addon}/deactivate', [AdminTenantAddonController::class, 'deactivate'])->name('addon-requests.deactivate');
 
+    Route::post('tenants/{tenant}/grant-addon', [AdminTenantAddonController::class, 'grant'])->name('admin.addons.grant');
+
     Route::get('addon-marketplace', [AdminAddonProductController::class, 'index'])->name('addon-marketplace.index');
     // Old bookmarked/cached URLs from before the addon merge.
     Route::redirect('addon-products', '/addon-marketplace');
@@ -208,6 +210,11 @@ require __DIR__.'/auth.php';
 // Razorpay webhook (no auth — signature-verified).
 use App\Http\Controllers\Tenant\TenantWebhookController;
 Route::post('webhook/razorpay/{subdomain}', [TenantWebhookController::class, 'handleRazorpay'])
+    ->withoutMiddleware([\App\Http\Middleware\ResolveTenant::class]);
+
+// Add-on webhook (no auth — signature-verified).
+use App\Http\Controllers\Tenant\TenantAddonWebhookController;
+Route::post('webhook/razorpay/addon', [TenantAddonWebhookController::class, 'handle'])
     ->withoutMiddleware([\App\Http\Middleware\ResolveTenant::class]);
 
 // Tenant-scoped subdomain routes.
