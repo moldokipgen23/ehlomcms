@@ -64,7 +64,7 @@ class AdminTenantController extends Controller
             'plan' => ['nullable', 'string', 'max:255'],
             'hosting_plan_id' => ['nullable', 'integer', Rule::exists('products', 'id')->where('category', 'hosting')],
             'client_id' => ['nullable', 'integer', 'exists:clients,id'],
-            'action_type' => ['nullable', Rule::in(['whatsapp', 'razorpay'])],
+            'action_type' => ['nullable', Rule::in(['whatsapp', 'razorpay', 'offline'])],
             'modules' => ['nullable', 'array'],
             'modules.*' => ['string', Rule::in(array_keys(config('modules')))],
             'owner_name' => ['required', 'string', 'max:255'],
