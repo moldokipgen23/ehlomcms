@@ -15,10 +15,15 @@
                 @if ($theme->description)
                     <div style="font-size:12px;color:var(--text-muted);margin-top:4px;line-height:1.5;">{{ $theme->description }}</div>
                 @endif
+                {{-- One tag per business type this theme fits, in plain
+                     labels (e.g. "Shopping / Store") - previously also
+                     showed the raw internal base_template key as a second
+                     badge (e.g. "business" + "business", "shop" + "shopping"),
+                     which read as a duplicate since it's the same underlying
+                     fact shown twice in two different raw forms. --}}
                 <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
-                    <span class="eos-badge badge-draft">{{ $theme->base_template }}</span>
                     @foreach (($theme->industries ?? []) as $ind)
-                        <span class="eos-badge badge-active">{{ $ind }}</span>
+                        <span class="eos-badge badge-active">{{ config("business_types.$ind.label", $ind) }}</span>
                     @endforeach
                 </div>
                 <a href="{{ route('themes.download', $theme) }}" class="eos-btn eos-btn-primary" style="margin-top:14px;width:100%;text-align:center;text-decoration:none;display:block;padding:8px 0;font-size:13px;">
