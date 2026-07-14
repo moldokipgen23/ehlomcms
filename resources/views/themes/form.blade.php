@@ -80,7 +80,7 @@
                         <div style="background:var(--bg-hover);border-radius:8px;padding:12px;margin-bottom:8px;font-size:11.5px;color:var(--text-secondary);line-height:1.7;">
                             Must contain a <code>theme.json</code> at the root (name, description, industries,
                             base_template) and/or a <code>custom.html</code> using the same
-                            <code>{{ '{{tenant.name}}' }}</code>-style tags as the paste-HTML mode. This is exactly
+                            <code>{{ $tokenDocs['tenant'][0] }}</code>-style tags as the paste-HTML mode. This is exactly
                             the format the <strong>Download</strong> button on any existing theme produces — download
                             one, edit it, re-upload it.
                         </div>
