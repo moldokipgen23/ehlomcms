@@ -51,14 +51,14 @@ Flagged here so we don't silently collapse two real tables.
   admin list + reply, tenant-side "Support" screen. **Wave 3.**
 
 ### PRODUCTS
-- **Business Modules** — MISSING. Admin page listing every module (Content, Catalog,
-  Orders, Reservations, + future) with which business types use it, and the DEFAULT
-  module set per business type so tenant-create auto-checks the right boxes. **Wave 1
-  (next).**
+- **Business Modules** — BUILT (Wave 1, 2026-07-14). Admin page lists every module +
+  which business types use it + live tenant counts; config/business_types.php holds the
+  default module set per type. (Auto-check on tenant-create form still TODO.)
 - **Themes** — BUILT (Info/Shop/Restaurant Classic, Save-as-Template, custom HTML).
-- **Add-ons** — PARTIAL. Catalog + request/activate flow exist, but activation only flips
-  a badge — no `tenantHasFeature()` gate turns on real behavior. Make ONE add-on real,
-  then the rest are incremental. **Wave 1.**
+- **Add-ons** — PARTIAL, but the GATE now works (Wave 1, 2026-07-14). Tenant::hasActiveAddon()
+  is wired to real behavior for the first time: Analytics Pro now actually tracks storefront
+  visits + shows a dashboard screen, gated on activation. Pattern proven; the other three
+  add-ons (WhatsApp, AI Agent, Email Marketing) still need their real feature builds.
 - **Theme Marketplace** — MISSING. Public/browsable theme library + a real Theme SDK
   (theme.zip: theme.json, views/, blocks/, assets/, preview.jpg). **Wave 4.**
 
@@ -77,8 +77,8 @@ Flagged here so we don't silently collapse two real tables.
 - **Payments** — PARTIAL. Invoices carry paid/unpaid; no standalone payments ledger.
   **Wave 4.**
 - **Expenses** — MISSING. Simple expense records for agency P&L. **Wave 4.**
-- **Revenue** — MISSING. Cross-tenant dashboard: total MRR, active tenants, churn,
-  renewals due. High value to the owner. **Wave 1.**
+- **Revenue** — BUILT (Wave 1, 2026-07-14). Finance dashboard: MRR/ARR, active subs + tenants,
+  collected vs outstanding, renewals due next 30 days. (Churn still TODO.)
 
 ### CONTENT
 - **Templates** — PARTIAL (same as Themes today; may stay merged).
@@ -109,11 +109,11 @@ back-end features land. Reservations already added for restaurant tenants.
 
 ## Build waves (dependency-ordered, not date-ordered)
 
-**Wave 1 — Make it honest & sellable (admin visibility of what exists):**
-1. Business Modules admin page + default module set per business type (Products)
-2. Make one Add-on really gate a feature (Products) — proves the mechanism
-3. Revenue dashboard — MRR/active/renewals (Finance)
-+ cosmetic: regroup existing sidebar into the 7 target sections (cheap, high clarity)
+**Wave 1 — Make it honest & sellable — ✅ DONE 2026-07-14:**
+1. ✅ Business Modules admin page + config/business_types.php
+2. ✅ Analytics Pro add-on made real (first working hasActiveAddon gate)
+3. ✅ Revenue/MRR dashboard
+4. ✅ Sidebar regrouped into the target sections
 
 **Wave 2 — Fill the MVP business types:**
 4. Portfolio / Business vertical (pages, services, testimonials, blog, gallery)
