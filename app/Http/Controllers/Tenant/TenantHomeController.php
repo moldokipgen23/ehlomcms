@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\TenantBlogPost;
 use App\Models\TenantPageView;
+use App\Models\TenantService;
+use App\Models\TenantTestimonial;
 use App\Models\Theme;
 use App\Services\CustomThemeRenderer;
 use App\Services\TenantContext;
@@ -36,6 +39,20 @@ class TenantHomeController extends Controller
             ? $tenant->products()->orderBy('name')->get()
             : collect();
 
+        // Portfolio/Business tenant data - only queried when the relevant
+        // module is enabled, same pattern as $products above.
+        $services = $tenant->hasModule('services')
+            ? TenantService::where('tenant_id', $tenant->id)->orderBy('name')->get()
+            : collect();
+
+        $testimonials = $tenant->hasModule('testimonials')
+            ? TenantTestimonial::where('tenant_id', $tenant->id)->orderByDesc('created_at')->get()
+            : collect();
+
+        $posts = $tenant->hasModule('blog')
+            ? TenantBlogPost::where('tenant_id', $tenant->id)->where('status', 'published')->orderByDesc('published_at')->limit(6)->get()
+            : collect();
+
         $tenant->load('galleryImages');
 
         // A theme built by pasting raw HTML (see CustomThemeRenderer) takes
@@ -62,6 +79,7 @@ class TenantHomeController extends Controller
         $baseTemplate = $theme->base_template ?? match ($tenant->site_type) {
             'shopping' => 'shop',
             'restaurant' => 'restaurant',
+            'business' => 'business',
             default => 'info',
         };
 
@@ -84,6 +102,6 @@ class TenantHomeController extends Controller
             $baseTemplate = 'info';
         }
 
-        return view("tenant-templates.{$baseTemplate}.index", compact('tenant', 'products'));
+        return view("tenant-templates.{$baseTemplate}.index", compact('tenant', 'products', 'services', 'testimonials', 'posts'));
     }
 }
