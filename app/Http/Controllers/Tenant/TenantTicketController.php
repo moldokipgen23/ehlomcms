@@ -40,15 +40,20 @@ class TenantTicketController extends Controller
         return redirect()->route('tenant.tickets')->with('success', 'Support ticket created.');
     }
 
-    public function show(TenantTicket $ticket): View
+    /**
+     * Plain {ticket} route param, not Eloquent route-model binding - this
+     * codebase's domain-scoped tenant routes break implicit binding (see
+     * TenantCartController for the same note). Confirmed live: the original
+     * TenantTicket $ticket type-hint 500'd with "Argument #1 ($ticket) must
+     * be of type App\Models\TenantTicket, string given" the moment this
+     * route was actually visited. findOrFail scoped by tenant_id does the
+     * lookup and ownership check in one query, same pattern used everywhere
+     * else in this controller family.
+     */
+    public function show(string $subdomain, int $ticket): View
     {
         $tenant = app(TenantContext::class)->get();
-
-        if ($ticket->tenant_id !== $tenant->id) {
-            abort(404);
-        }
-
-        $ticket->load('replies.user');
+        $ticket = TenantTicket::where('tenant_id', $tenant->id)->with('replies.user')->findOrFail($ticket);
 
         return view('tenant.tickets.show', compact('ticket', 'tenant'));
     }
