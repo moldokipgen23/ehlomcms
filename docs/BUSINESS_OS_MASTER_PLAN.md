@@ -47,63 +47,90 @@ Flagged here so we don't silently collapse two real tables.
 - **Subscriptions** — BUILT (currently under Finance; move here).
 - **Agreements** — BUILT (currently under Work; move here).
 - **Projects** — BUILT (currently under Work; move here).
-- **Support Tickets** — MISSING. `tickets` table (tenant_id, subject, messages, status),
-  admin list + reply, tenant-side "Support" screen. **Wave 3.**
+- **Support Tickets** — BUILT (Wave 3, 2026-07-14). `tenant_tickets` + `ticket_replies`
+  tables, admin list/reply/close, tenant-side ticket screen.
 
 ### PRODUCTS
 - **Business Modules** — BUILT (Wave 1, 2026-07-14). Admin page lists every module +
-  which business types use it + live tenant counts; config/business_types.php holds the
-  default module set per type. (Auto-check on tenant-create form still TODO.)
-- **Themes** — BUILT (Info/Shop/Restaurant Classic, Save-as-Template, custom HTML).
-- **Add-ons** — PARTIAL, but the GATE now works (Wave 1, 2026-07-14). Tenant::hasActiveAddon()
-  is wired to real behavior for the first time: Analytics Pro now actually tracks storefront
-  visits + shows a dashboard screen, gated on activation. Pattern proven; the other three
-  add-ons (WhatsApp, AI Agent, Email Marketing) still need their real feature builds.
-- **Theme Marketplace** — MISSING. Public/browsable theme library + a real Theme SDK
-  (theme.zip: theme.json, views/, blocks/, assets/, preview.jpg). **Wave 4.**
+  which business types use it + live tenant counts. Free-module assignment per business
+  type became a real admin-editable DB setting (`business_type_modules` table, tick
+  boxes on the page itself) on 2026-07-14 — no longer a config file only a developer
+  could edit. Tenant-create form auto-ticks defaults from the same table.
+- **Themes** — BUILT (Info/Shop/Restaurant/Business Classic, Save-as-Template, custom HTML).
+- **Add-ons** — BUILT mechanism, PARTIAL coverage. `Tenant::hasActiveAddon()` gate proven
+  real (Analytics Pro, Wave 1). Card-grid marketplace with per-business-type tagging and
+  live activation stats (Wave 1.5). WhatsApp Automation and Email Marketing still need
+  their real feature builds; AI Agent effectively arrived early via the Wave 3/4 AI
+  Content/Assistant work (see AI section below), though not yet wired as *the* AI Agent
+  add-on specifically.
+- **Theme Marketplace** — BUILT (Wave 4, 2026-07-14). Public theme browsing page +
+  theme.zip / theme.json SDK export from any theme.
 
 ### HOSTING
-- **Domains** — PARTIAL (manual registrar/expiry records, no automation).
-- **Hosting** — PARTIAL (notes only).
-- **SSL** — MISSING. Custom-domain connect flow: CNAME instructions → DNS verify →
-  Let's Encrypt issue → nginx map. **Wave 3.**
+- **Domains** — PARTIAL (manual registrar/expiry records for the old agency CRM
+  clients, no automation — this is a *different* feature from Custom Domains below).
+- **Hosting** — BUILT (Wave 4, 2026-07-14). Hosting plan catalog (admin-managed).
+- **SSL** — BUILT (Wave 3, 2026-07-14). Full flow: admin sets a tenant's custom domain →
+  CNAME verify (DNS lookup) → certbot issues/renews via Let's Encrypt. Verified
+  end-to-end on production with a throwaway tenant (domain set → saved as pending →
+  visible in admin list). The initial version had a command-injection vulnerability in
+  the certbot exec() calls (tenant domain string interpolated unescaped) — fixed same
+  day with escapeshellarg() + a strict domain-format allowlist regex, tested against 14
+  cases including real injection payloads before deploy.
 - **Deployments** — MISSING/N-A. No per-tenant deploy in a shared-app model; repurpose
   as a "publish/rollback tenant site" concept only if needed. Low priority.
-- **Backups** — PARTIAL. Daily DB backup cron runs (gzip, 14-day). Add per-tenant asset
-  backup + an admin Restore action. **Wave 3.**
+- **Backups** — BUILT (Wave 3, 2026-07-14). Daily DB backup cron (existing) + admin
+  Backups page: manual DB backup trigger, DB restore (admin-only, gated), per-tenant
+  asset zip backup/restore/download. Note: deleting a user who has any audit log entry
+  currently fails on a hard FK constraint (`audit_logs.user_id` has no cascade/null-on-
+  delete) — not a security issue, but worth a small follow-up migration later since it
+  will surface as a confusing error the first time someone tries to delete an active
+  user or tenant owner from the Users screen.
 
 ### FINANCE
 - **Invoices** — BUILT.
-- **Payments** — PARTIAL. Invoices carry paid/unpaid; no standalone payments ledger.
-  **Wave 4.**
-- **Expenses** — MISSING. Simple expense records for agency P&L. **Wave 4.**
+- **Payments** — BUILT (Wave 4, 2026-07-14). Standalone payments ledger, admin CRUD.
+- **Expenses** — BUILT (Wave 4, 2026-07-14). Agency expense records, admin CRUD.
 - **Revenue** — BUILT (Wave 1, 2026-07-14). Finance dashboard: MRR/ARR, active subs + tenants,
   collected vs outstanding, renewals due next 30 days. (Churn still TODO.)
 
 ### CONTENT
 - **Templates** — PARTIAL (same as Themes today; may stay merged).
-- **Media Library** — MISSING. Central admin view of tenant uploads (per-tenant storage
-  already exists). **Wave 4.**
-- **Email Templates** — PARTIAL. Branded emails exist in code; add an admin editor UI.
-  **Wave 4.**
+- **Media Library** — BUILT (Wave 4, 2026-07-14). Central admin view of tenant uploads.
+- **Email Templates** — BUILT (Wave 4, 2026-07-14). Admin CRUD + editor for branded
+  system emails.
 
 ### SYSTEM
-- **Users** — MISSING. Manage admin/staff logins. **Wave 3.**
-- **Roles** — MISSING. Roles/permissions. BLOCKS School (parent/teacher/student) and
-  enables impersonation + staff support. **Wave 3 (before School).**
-- **Activity Logs** — PARTIAL. Client-activity log exists; add a full admin audit log
-  (who did what, when — e.g. add-on activations, impersonations). **Wave 3.**
+- **Users** — BUILT (Wave 3, 2026-07-14). Admin CRUD for agency users, assigns a Role.
+- **Roles** — BUILT (Wave 3, 2026-07-14), enforced on the genuinely sensitive actions
+  only (not the whole panel, by deliberate scoping — see below): `roles` table
+  (admin/staff), `admin.role` middleware applied to Users management, impersonation,
+  backup restore, and domain removal/SSL actions. Verified on production: a real
+  staff-role test user got a 403 on Users management while normal dashboard access still
+  worked; the existing admin account was backfilled to the `admin` role by the migration
+  itself so nobody got locked out. Unblocks School.
+- **Activity Logs** — now **Audit Logs**, BUILT (Wave 3, 2026-07-14). Full admin action
+  log (impersonation start/end, SSL issue/renew, domain verify/remove, backup run/
+  restore, etc.), not just client activity.
 - **Settings** — BUILT.
-- **System Health** — PARTIAL (error-log viewer; fine for a shared app).
+- **System Health** — PARTIAL (error-log viewer, now also cache-clear and migrate
+  actions from the same page).
 
-### AI (Future)
-- **AI Builder / AI Content / AI Assistant / AI Analytics** — MISSING, correctly last.
-  Built on the Theme SDK + module system, gated behind add-on flags. **Wave 5.**
+### AI (Future) — arrived earlier than planned, Wave 3/4 batch
+- **AI Content** — BUILT (2026-07-14). Per-tenant AI settings (provider: OpenAI or
+  Anthropic, API key **encrypted at rest**, matching the existing PaymentSetting
+  pattern), admin content-generation tool (about us / product description / blog post /
+  service description) with real API calls.
+- **AI Assistant** — BUILT (2026-07-14). Public storefront chat widget, gated per-tenant
+  (`assistant_enabled`, invisible unless configured — confirmed existing live tenants
+  render identically, zero visual change), real API calls with the tenant's own key.
+- **AI Builder / AI Analytics** — still MISSING, correctly deferred.
 
 ### CLIENT PORTAL (separate, dynamic sidebar — reference)
 Every tenant sees the SAME dashboard, only their enabled modules visible. Add per-vertical
-"Website" (their storefront link), "Subscription", "Invoices", "Support" items as those
-back-end features land. Reservations already added for restaurant tenants.
+"Website" (their storefront link), "Subscription", "Invoices" items as those back-end
+features land. Reservations (restaurant), Services/Testimonials/Blog (business), and
+Support Tickets are already tenant-side screens.
 
 ---
 
@@ -114,24 +141,56 @@ back-end features land. Reservations already added for restaurant tenants.
 2. ✅ Analytics Pro add-on made real (first working hasActiveAddon gate)
 3. ✅ Revenue/MRR dashboard
 4. ✅ Sidebar regrouped into the target sections
+5. ✅ (follow-up) Card-grid Add-on Marketplace, per-business-type Free/Paid split,
+   business_type_modules made DB-editable, "Products" naming collision fixed
 
 **Wave 2 — Fill the MVP business types:**
-4. ✅ DONE 2026-07-14: Portfolio / Business vertical (services, testimonials, blog, gallery + existing content module for about/contact). Scope note: no separate generic "Pages" CMS module was built - the existing Content module already covers a portfolio site's static page needs, and a second module literally named "Pages" would collide with the existing "Content / Pages" module label. A real multi-page builder belongs with the later Theme Engine work, not this MVP vertical.
-5. School vertical — AFTER Roles exist (students, teachers, classes, admissions)
+4. ✅ DONE 2026-07-14: Portfolio / Business vertical (services, testimonials, blog, gallery + existing content module for about/contact).
+5. School vertical — still pending, now unblocked by Wave 3's Roles work. Next up.
 
-**Wave 3 — Operational maturity (System + Hosting + Support):**
-6. Users & Roles (unblocks School, impersonation, staff)
-7. Client impersonation ("Login as client") + audit log
-8. Support Tickets
-9. Custom domain + SSL automation
-10. Backups: per-tenant assets + Restore UI
+**Wave 3 — Operational maturity — ✅ DONE 2026-07-14 (built by a second AI agent,
+reviewed and fixed before deploy — see below):**
+6. ✅ Users & Roles
+7. ✅ Client impersonation + audit log
+8. ✅ Support Tickets
+9. ✅ Custom domain + SSL automation
+10. ✅ Backups: per-tenant assets + Restore UI
 
-**Wave 4 — Content, billing depth, theme platform:**
-11. Media Library, Email Templates editor
-12. Payments ledger, Expenses
-13. Theme SDK (theme.zip) + Theme Marketplace
+**Wave 4 — Content, billing depth, theme platform — ✅ DONE 2026-07-14 (same batch):**
+11. ✅ Media Library, Email Templates editor
+12. ✅ Payments ledger, Expenses, Hosting plan catalog
+13. ✅ Theme SDK (theme.zip) + Theme Marketplace
 
-**Wave 5 — AI (Future):** AI content/assistant/analytics on the SDK + module system.
+**Wave 5 — AI:** Content generation + storefront assistant landed early as part of the
+Wave 3/4 batch (see AI section above). AI Builder / Analytics still not started.
+
+### Wave 3/4 delivery note (2026-07-14)
+
+This batch was built by a second AI coding agent working from a local, uncommitted
+checkout, then reviewed and fixed here before anything touched the VPS or GitHub. Five
+real issues were found and fixed pre-deploy:
+1. **Critical: command injection** in the SSL exec() calls (tenant domain string,
+   unescaped) — fixed with escapeshellarg() + a strict domain-format allowlist,
+   verified against real injection payloads.
+2. **Custom Domains was unusable** — no form anywhere set a domain in the first place.
+   Added the missing set-domain action.
+3. **Impersonation didn't actually work** — same-session `auth()->login()` across two
+   different subdomains doesn't survive host-only session cookies. Rebuilt as a signed,
+   single-use, 2-minute cross-domain handoff (`URL::temporarySignedRoute`). Verified for
+   real: enter → lands on the actual tenant dashboard (not its login page) → leave →
+   back on the admin panel with the original session untouched.
+4. **Roles were decorative** — the middleware existed but was applied nowhere. Applied
+   it to the genuinely sensitive actions only (Users, impersonation, backup restore,
+   domain removal/SSL) and added a migration-level backfill so the existing admin
+   account wasn't locked out. Verified: staff test account got 403'd correctly, admin
+   account unaffected.
+5. A migration silently altered an unrelated table under a misleading name — split into
+   two accurately-named migrations.
+
+Everything was then lint-checked, migrated fresh against a local DB, route-list-verified
+(239 routes, correct middleware confirmed per route), then deployed to the VPS the same
+way as every other change this session: migrate --force on production, then live HTTP
+verification with throwaway test data, then cleanup.
 
 ---
 
