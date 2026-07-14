@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\Domain;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -10,7 +11,7 @@ class InfrastructureController extends Controller
 {
     /**
      * The Domains & Hosting hub: hosting plans + domain pricing catalogs,
-     * plus the per-client registered-domain tracker.
+     * plus the per-client registered-domain tracker and subscriber overview.
      */
     public function index(Request $request)
     {
@@ -25,10 +26,18 @@ class InfrastructureController extends Controller
             ->orderBy('expiry_date')
             ->get();
 
-        $tab = in_array($request->tab, ['hosting', 'domain', 'registered'], true)
+        // Subscribers: clients who have purchased domains or hosting
+        $subscribers = Client::whereHas('domains', fn ($q) => $q->where('status', 'active'))
+            ->orWhereHas('tenants', fn ($q) => $q->where('status', 'active'))
+            ->with(['domains', 'tenants'])
+            ->withCount(['domains as domains_count', 'tenants as tenants_count'])
+            ->orderBy('name')
+            ->get();
+
+        $tab = in_array($request->tab, ['hosting', 'domain', 'registered', 'subscribers'], true)
             ? $request->tab
             : 'hosting';
 
-        return view('infrastructure.index', compact('hostingPlans', 'domainPricing', 'domains', 'filter', 'tab'));
+        return view('infrastructure.index', compact('hostingPlans', 'domainPricing', 'domains', 'filter', 'tab', 'subscribers'));
     }
 }

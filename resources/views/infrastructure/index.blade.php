@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Domains & Hosting')
-@section('subtitle', 'Hosting plans, domain pricing & registered domains')
+@section('subtitle', 'Hosting plans, domain pricing, registered domains & subscribers')
 
 @section('content')
     <div x-data="{ tab: '{{ $tab }}' }">
@@ -14,6 +14,9 @@
             </button>
             <button type="button" class="eos-tab" :class="{ active: tab === 'registered' }" @click="tab = 'registered'">
                 <i class="ti ti-list-check"></i> Registered Domains
+            </button>
+            <button type="button" class="eos-tab" :class="{ active: tab === 'subscribers' }" @click="tab = 'subscribers'">
+                <i class="ti ti-users"></i> Subscribers
             </button>
         </div>
 
@@ -87,6 +90,53 @@
                             </tr>
                         @empty
                             <tr><td colspan="8"><div class="eos-empty">No domains found.</div></td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {{-- ── SUBSCRIBERS ── --}}
+        <div x-show="tab === 'subscribers'" x-cloak>
+            <div style="font-size:11px;color:var(--text-dim);background:var(--bg-hover);border-radius:6px;padding:8px 10px;margin-bottom:10px;">
+                Clients who have purchased domains or hosting services. Track who's subscribed and what they have.
+            </div>
+            <div class="eos-card" style="padding:0;">
+                <table class="eos-table">
+                    <thead>
+                        <tr><th>Client</th><th>Email</th><th>Phone</th><th>Domains</th><th>Tenants</th><th>Total Spent</th><th style="text-align:right;">Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($subscribers as $client)
+                            <tr>
+                                <td style="font-weight:600;">
+                                    <a href="{{ route('clients.show', $client) }}" style="color:var(--accent-teal);text-decoration:none;">{{ $client->name }}</a>
+                                </td>
+                                <td style="font-size:12px;">{{ $client->email ?? '—' }}</td>
+                                <td style="font-size:12px;">{{ $client->phone ?? '—' }}</td>
+                                <td>
+                                    @if ($client->domains_count > 0)
+                                        <span class="eos-badge badge-active">{{ $client->domains_count }}</span>
+                                    @else
+                                        <span style="color:var(--text-dim);font-size:12px;">0</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if ($client->tenants_count > 0)
+                                        <span class="eos-badge badge-active">{{ $client->tenants_count }}</span>
+                                    @else
+                                        <span style="color:var(--text-dim);font-size:12px;">0</span>
+                                    @endif
+                                </td>
+                                <td style="font-size:12px;font-weight:600;">₹{{ number_format($client->domains->sum('renewal_cost') ?? 0, 0) }}</td>
+                                <td style="text-align:right;">
+                                    <div class="eos-actions" style="justify-content:flex-end;">
+                                        <a href="{{ route('clients.show', $client) }}" class="eos-icon-action edit" title="View Client"><i class="ti ti-eye"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="7"><div class="eos-empty">No subscribers found.</div></td></tr>
                         @endforelse
                     </tbody>
                 </table>

@@ -61,6 +61,7 @@
                     ],
                     'Hosting' => [
                         ['infrastructure.index', 'Domains & Hosting', 'ti-world', \App\Models\Domain::whereDate('expiry_date', '<=', now()->addDays(30))->count() ?: null],
+                        ['domains.admin.index', 'Custom Domains', 'ti-world-www', \App\Models\Tenant::where('domain_status', 'pending')->count() ?: null],
                     ],
                     'Support' => [
                         ['admin.tickets.index', 'Tickets', 'ti-ticket', \App\Models\TenantTicket::where('status', 'open')->count() ?: null],
@@ -71,7 +72,6 @@
                         ['settings.edit', 'Settings', 'ti-settings', null],
                         ['system-health.index', 'System Health', 'ti-activity-heartbeat', app(\App\Services\ErrorLogReader::class)->countSince(now()->subDay()) ?: null],
                         ['backups.index', 'Backups', 'ti-database', null],
-                        ['domains.admin.index', 'Custom Domains', 'ti-world-www', \App\Models\Tenant::where('domain_status', 'pending')->count() ?: null],
                     ],
                 ];
             @endphp
