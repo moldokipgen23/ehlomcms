@@ -9,33 +9,68 @@ class BusinessTypeModule extends Model
     protected $fillable = [
         'business_type',
         'module_key',
+        'status',
+        'price',
     ];
 
-    /**
-     * All module keys currently assigned (free, by default) to a business
-     * type, in the order config('modules') defines them.
-     */
-    public static function modulesFor(string $businessType): array
+    protected function casts(): array
     {
-        return static::where('business_type', $businessType)->pluck('module_key')->all();
+        return [
+            'price' => 'decimal:2',
+        ];
     }
 
     /**
-     * Replace a business type's module assignment wholesale - the tick-box
-     * form on the Business Modules page always submits the full desired
-     * set, so a delete-then-insert is simpler and safer than diffing.
+     * All module assignments for a business type, keyed by module_key, each
+     * entry ['status' => 'free'|'paid', 'price' => float|null]. A
+     * module_key absent from this array is "Off" for that type.
      */
-    public static function syncFor(string $businessType, array $moduleKeys): void
+    public static function assignmentsFor(string $businessType): array
+    {
+        return static::where('business_type', $businessType)
+            ->get()
+            ->keyBy('module_key')
+            ->map(fn ($row) => ['status' => $row->status, 'price' => $row->price])
+            ->all();
+    }
+
+    /**
+     * Backward-compatible helper: module keys currently free for a type.
+     */
+    public static function modulesFor(string $businessType): array
+    {
+        return static::where('business_type', $businessType)->where('status', 'free')->pluck('module_key')->all();
+    }
+
+    /**
+     * Replace a business type's module assignment wholesale - the form on
+     * the Business Modules page always submits the full desired set, so a
+     * delete-then-insert is simpler and safer than diffing.
+     *
+     * $assignments: [module_key => ['status' => 'free'|'paid'|'off', 'price' => float|null]]
+     */
+    public static function syncFor(string $businessType, array $assignments): void
     {
         static::where('business_type', $businessType)->delete();
 
         $now = now();
-        $rows = collect($moduleKeys)->unique()->values()->map(fn ($key) => [
-            'business_type' => $businessType,
-            'module_key' => $key,
-            'created_at' => $now,
-            'updated_at' => $now,
-        ])->all();
+        $rows = [];
+
+        foreach ($assignments as $moduleKey => $assignment) {
+            $status = $assignment['status'] ?? 'off';
+            if ($status === 'off') {
+                continue;
+            }
+
+            $rows[] = [
+                'business_type' => $businessType,
+                'module_key' => $moduleKey,
+                'status' => $status,
+                'price' => $status === 'paid' ? ($assignment['price'] ?? null) : null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
 
         if ($rows) {
             static::insert($rows);

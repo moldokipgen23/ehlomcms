@@ -8,6 +8,7 @@ class AddonProduct extends Model
 {
     protected $fillable = [
         'key',
+        'module_key',
         'name',
         'description',
         'price',

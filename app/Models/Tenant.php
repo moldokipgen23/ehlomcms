@@ -105,7 +105,15 @@ class Tenant extends Model
 
     public function hasModule(string $key): bool
     {
-        return in_array($key, $this->modules ?? [], true);
+        if (in_array($key, $this->modules ?? [], true)) {
+            return true;
+        }
+
+        // A module marked "Paid" for this tenant's business type becomes a
+        // real AddonProduct (key = "module-{key}") on the Business Modules
+        // page - buying it unlocks the module without an admin manually
+        // ticking it on the tenant record.
+        return $this->hasActiveAddon('module-' . $key);
     }
 
     public function backups(): HasMany
