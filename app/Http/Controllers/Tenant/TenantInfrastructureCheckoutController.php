@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Tenant;
 use App\Http\Controllers\Controller;
 use App\Models\PaymentSetting;
 use App\Models\Product;
+use App\Services\InvoiceAutoGenerator;
 use App\Services\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -56,6 +57,25 @@ class TenantInfrastructureCheckoutController extends Controller
 
         $product = Product::find($productId);
 
-        return view('tenant.infrastructure.success', compact('product', 'type'));
+        // Auto-generate invoice for the purchase
+        $invoice = null;
+        if ($product) {
+            try {
+                $invoice = app(InvoiceAutoGenerator::class)->forInfrastructure(
+                    $tenant,
+                    $product->name,
+                    (float) $product->price * 1.18,
+                    $product->category
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Auto invoice failed for infrastructure', [
+                    'tenant_id' => $tenant->id,
+                    'product_id' => $product->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return view('tenant.infrastructure.success', compact('product', 'type', 'invoice'));
     }
 }

@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\AddonProduct;
 use App\Models\PaymentSetting;
 use App\Models\TenantAddon;
+use App\Services\InvoiceAutoGenerator;
 use App\Services\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class TenantAddonCheckoutController extends Controller
@@ -75,6 +77,24 @@ class TenantAddonCheckoutController extends Controller
 
         $addonRecord->addonMeta = AddonProduct::where('key', $addonKey)->first();
 
-        return view('tenant.addons.success', compact('addonRecord'));
+        // Auto-generate invoice for the add-on purchase
+        $invoice = null;
+        if ($addonRecord->addonMeta) {
+            try {
+                $invoice = app(InvoiceAutoGenerator::class)->forAddon(
+                    $tenant,
+                    $addonRecord->addonMeta->name ?? $addonKey,
+                    (float) ($addonRecord->addonMeta->price ?? 0) * 1.18
+                );
+            } catch (\Throwable $e) {
+                Log::error('Auto invoice failed for add-on', [
+                    'tenant_id' => $tenant->id,
+                    'addon_key' => $addonKey,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return view('tenant.addons.success', compact('addonRecord', 'invoice'));
     }
 }

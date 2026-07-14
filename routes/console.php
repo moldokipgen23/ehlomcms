@@ -10,5 +10,7 @@ Artisan::command('inspire', function () {
 
 Schedule::command('invoices:generate-renewals')->daily();
 Schedule::command('reminders:send-renewals')->dailyAt('09:00');
+Schedule::command('email:domain-expiry-warnings')->dailyAt('10:00');
+Schedule::command('email:onboarding-reminders')->dailyAt('11:00');
 Schedule::command('backup:database')->dailyAt('02:00');
 Schedule::command('ssl:renew-all')->dailyAt('03:00');
