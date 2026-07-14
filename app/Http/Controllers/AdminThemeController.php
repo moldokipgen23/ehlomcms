@@ -42,11 +42,27 @@ class AdminThemeController extends Controller
             ->all();
     }
 
+    /**
+     * Themes and Theme Marketplace used to be two separate pages showing
+     * near-identical content (every current theme happens to be public, so
+     * the "public only" filter changed nothing visible) - merged into one
+     * page, grouped by business type like the Business Modules page, per
+     * direct user request. A theme with multiple industries appears under
+     * each one; a theme with none (shouldn't normally happen, but Save-as-
+     * Template could theoretically produce one) falls into "Cross-business".
+     */
     public function index(): View
     {
         $themes = Theme::with('sourceTenant')->orderBy('name')->get();
+        $businessTypes = config('business_types');
 
-        return view('themes.index', compact('themes'));
+        $byType = [];
+        foreach ($businessTypes as $typeKey => $type) {
+            $byType[$typeKey] = $themes->filter(fn ($t) => in_array($typeKey, $t->industries ?? [], true))->values();
+        }
+        $crossBusiness = $themes->filter(fn ($t) => empty($t->industries))->values();
+
+        return view('themes.index', compact('themes', 'businessTypes', 'byType', 'crossBusiness'));
     }
 
     public function create(): View
@@ -55,6 +71,7 @@ class AdminThemeController extends Controller
             'baseTemplates' => $this->availableBaseTemplates(),
             'tokenDocs' => $this->tokenDocs(),
             'customHtmlPlaceholder' => $this->customHtmlPlaceholder(),
+            'businessTypes' => config('business_types'),
         ]);
     }
 
@@ -101,6 +118,10 @@ class AdminThemeController extends Controller
     {
         $mode = $request->input('mode', 'base_template');
 
+        if ($mode === 'upload_zip') {
+            return $this->storeFromZip($request);
+        }
+
         $rules = [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
@@ -123,6 +144,75 @@ class AdminThemeController extends Controller
         Theme::create($data);
 
         return redirect()->route('themes.index')->with('success', 'Theme created.');
+    }
+
+    /**
+     * Reads a theme.zip (the same format downloadAsZip() produces) and
+     * creates a theme from it. Deliberately does NOT extract the zip's
+     * files to disk or execute anything from it - only two specific,
+     * known-by-name entries are ever read, and only into plain string/JSON
+     * values (ZipArchive::getFromName() reads in-memory, no filesystem
+     * write). theme.json's HTML ends up as custom_html, rendered through
+     * the existing CustomThemeRenderer's {{token}} substitution - the same
+     * safe path as pasting HTML by hand, never interpreted as PHP/Blade.
+     * This is the actual security boundary: an uploaded zip can only ever
+     * become inert template text, never code that runs on this server.
+     */
+    private function storeFromZip(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'theme_zip' => ['required', 'file', 'mimes:zip', 'max:10240'],
+            'public' => ['nullable', 'boolean'],
+        ]);
+
+        $zip = new ZipArchive;
+        $path = $validated['theme_zip']->getRealPath();
+
+        if ($zip->open($path) !== true) {
+            return back()->withInput()->with('error', 'Could not read that zip file.');
+        }
+
+        $manifestJson = $zip->getFromName('theme.json');
+        if ($manifestJson === false) {
+            $zip->close();
+            return back()->withInput()->with('error', 'theme.zip must contain a theme.json file at its root (see the format used by an exported theme).');
+        }
+
+        $manifest = json_decode($manifestJson, true);
+        if (!is_array($manifest) || empty($manifest['name'])) {
+            $zip->close();
+            return back()->withInput()->with('error', 'theme.json is not valid - it needs at least a "name" field.');
+        }
+
+        $customHtml = $zip->getFromName('custom.html') ?: null;
+        $baseTemplate = $manifest['base_template'] ?? null;
+        $zip->close();
+
+        // A zip must supply usable content one way or another - either real
+        // HTML to render, or a base_template key that actually exists on
+        // disk. Otherwise this would create a theme that 500s the moment a
+        // tenant is assigned to it.
+        if (!$customHtml && (!$baseTemplate || !array_key_exists($baseTemplate, $this->availableBaseTemplates()))) {
+            return back()->withInput()->with('error', 'This zip has no custom.html and no valid base_template - nothing to render. Include one or the other.');
+        }
+
+        $industries = array_values(array_intersect(
+            (array) ($manifest['industries'] ?? []),
+            array_keys(config('business_types'))
+        ));
+
+        $theme = Theme::create([
+            'key' => $this->uniqueKey($manifest['name']),
+            'name' => $manifest['name'],
+            'description' => $manifest['description'] ?? null,
+            'base_template' => $customHtml ? null : $baseTemplate,
+            'custom_html' => $customHtml,
+            'industries' => $industries,
+            'default_settings' => $manifest['default_settings'] ?? null,
+            'public' => (bool) ($request->boolean('public')),
+        ]);
+
+        return redirect()->route('themes.index')->with('success', "\"{$theme->name}\" imported from zip.");
     }
 
     /**

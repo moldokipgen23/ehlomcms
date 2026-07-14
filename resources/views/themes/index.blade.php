@@ -2,7 +2,7 @@
 
 @section('title', 'Themes')
 
-@section('subtitle', 'Template library used across every tenant')
+@section('subtitle', 'Template library used across every tenant, grouped by business type')
 
 @section('content')
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
@@ -14,67 +14,39 @@
     </a>
 </div>
 
-<div class="eos-page-sub" style="margin-bottom:16px;max-width:640px;">
-    A theme is a named preset (colors, sections) layered on top of one of the 
-    layouts (Shop, Restaurant, or Info). To turn a real client site into a reusable theme, use
+<div class="eos-page-sub" style="margin-bottom:20px;max-width:720px;">
+    A theme is layered on top of one of the base layouts (Shop, Restaurant, Info,
+    Business), or is raw HTML you paste/upload. <strong>Public</strong> themes are
+    reusable for any future client; keep a one-off custom design <strong>Private</strong>
+    so it stays exclusive. To turn a real client site into a reusable theme, use
     <strong>"Save as Template"</strong> from that tenant's row on the Tenants page.
 </div>
 
-<table class="eos-table">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Base Layout</th>
-            <th>Industries</th>
-            <th>Visibility</th>
-            <th>Source</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @forelse ($themes as $theme)
-            <tr>
-                <td style="font-weight:600;">
-                    {{ $theme->name }}
-                    @if ($theme->description)
-                        <div style="font-size:11px;color:var(--text-dim);font-weight:400;margin-top:2px;">{{ $theme->description }}</div>
-                    @endif
-                </td>
-                <td><span class="eos-badge badge-draft">{{ ucfirst($theme->base_template) }}</span></td>
-                <td style="font-size:11px;color:var(--text-muted);">
-                    {{ collect($theme->industries ?? [])->implode(', ') ?: '—' }}
-                </td>
-                <td>
-                    <form action="{{ route('themes.toggle-public', $theme) }}" method="POST" style="display:inline;">
-                        @csrf
-                        <button type="submit" class="eos-badge {{ $theme->public ? 'badge-active' : 'badge-pending' }}" style="border:none;cursor:pointer;">
-                            {{ $theme->public ? 'Public' : 'Private' }}
-                        </button>
-                    </form>
-                </td>
-                <td style="font-size:11px;color:var(--text-dim);">
-                    @if ($theme->sourceTenant)
-                        Cloned from {{ $theme->sourceTenant->name }}
-                    @else
-                        Built-in
-                    @endif
-                </td>
-                <td>
-                    <a href="{{ route('themes.download', $theme) }}" class="eos-btn" style="font-size:10px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;text-decoration:none;color:var(--text-secondary);" title="Download as theme.zip">
-                        <i class="ti ti-download"></i>
-                    </a>
-                    <form action="{{ route('themes.destroy', $theme) }}" method="POST" onsubmit="return confirm('Delete this theme?');" style="display:inline;">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="eos-btn eos-btn-danger" style="font-size:10px;padding:4px 10px;">
-                            <i class="ti ti-trash"></i>
-                        </button>
-                    </form>
-                </td>
-            </tr>
+@foreach ($businessTypes as $typeKey => $type)
+    <div style="margin-bottom:8px;" class="eos-page-title">
+        <span style="font-size:14px;font-weight:700;color:var(--text-primary);">{{ $type['label'] }}</span>
+        <span style="font-size:11px;color:var(--text-dim);font-weight:400;">{{ $byType[$typeKey]->count() }} theme{{ $byType[$typeKey]->count() !== 1 ? 's' : '' }}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:24px;">
+        @forelse ($byType[$typeKey] as $theme)
+            @include('themes._card', ['theme' => $theme])
         @empty
-            <tr><td colspan="6"><div class="eos-empty">No themes yet.</div></td></tr>
+            <div style="grid-column:1/-1;">
+                <div class="eos-empty" style="padding:20px;">No themes for {{ $type['label'] }} yet.</div>
+            </div>
         @endforelse
-    </tbody>
-</table>
+    </div>
+@endforeach
+
+@if ($crossBusiness->count())
+    <div style="margin-bottom:8px;" class="eos-page-title">
+        <span style="font-size:14px;font-weight:700;color:var(--text-primary);">Cross-business</span>
+        <span style="font-size:11px;color:var(--text-dim);font-weight:400;">{{ $crossBusiness->count() }} theme{{ $crossBusiness->count() !== 1 ? 's' : '' }}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:24px;">
+        @foreach ($crossBusiness as $theme)
+            @include('themes._card', ['theme' => $theme])
+        @endforeach
+    </div>
+@endif
 @endsection

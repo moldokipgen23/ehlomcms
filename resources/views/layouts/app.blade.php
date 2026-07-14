@@ -43,7 +43,6 @@
                     'Products' => [
                         ['modules.index', 'Business Modules', 'ti-components', null],
                         ['themes.index', 'Themes', 'ti-palette', null],
-                        ['themes.marketplace', 'Theme Marketplace', 'ti-shopping-cart', null],
                         ['addon-marketplace.index', 'Add-on Marketplace', 'ti-shopping-cart', \App\Models\TenantAddon::where('status', 'pending')->count() ?: null],
                         ['email-templates.index', 'Email Templates', 'ti-mail', null],
                         ['ai-settings.index', 'AI Settings', 'ti-sparkles', null],

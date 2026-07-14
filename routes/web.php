@@ -21,7 +21,6 @@ use App\Http\Controllers\AdminPaymentController;
 use App\Http\Controllers\AdminTicketController;
 use App\Http\Controllers\AdminThemeController;
 use App\Http\Controllers\AdminUserController;
-use App\Http\Controllers\ThemeMarketplaceController;
 use App\Http\Controllers\AgreementController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DomainController;
@@ -190,9 +189,8 @@ Route::middleware('auth')->group(function () {
     Route::post('expenses', [AdminExpenseController::class, 'store'])->name('expenses.store');
     Route::delete('expenses/{expense}', [AdminExpenseController::class, 'destroy'])->name('expenses.destroy');
 
-    // Wave 4.5 — Theme SDK download + Marketplace
+    // Wave 4.5 — Theme SDK download (theme.zip export)
     Route::get('themes/{theme}/download', [AdminThemeController::class, 'downloadAsZip'])->name('themes.download');
-    Route::get('theme-marketplace', [ThemeMarketplaceController::class, 'index'])->name('themes.marketplace');
 
     // Audit Logs
     Route::get('audit-logs', [AdminAuditLogController::class, 'index'])->name('audit-logs.index');
