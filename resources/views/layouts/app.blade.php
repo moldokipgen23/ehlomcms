@@ -32,22 +32,25 @@
                     'Main' => [
                         ['dashboard', 'Dashboard', 'ti-layout-dashboard', null],
                         ['leads.index', 'Leads', 'ti-user-star', \Illuminate\Support\Facades\Schema::hasTable('leads') ? \App\Models\Lead::where('status', 'new')->count() : null],
+                    ],
+                    'Client Management' => [
                         ['clients.index', 'Clients', 'ti-users', \App\Models\Client::count()],
+                        ['tenants.index', 'Tenants', 'ti-building-store', null],
+                        ['projects.index', 'Projects', 'ti-briefcase', null],
+                        ['agreements.index', 'Agreements', 'ti-file-text', \App\Models\Agreement::where('status', 'draft')->count() ?: null],
+                        ['subscriptions.index', 'Subscriptions', 'ti-credit-card', null],
+                    ],
+                    'Products' => [
+                        ['modules.index', 'Business Modules', 'ti-components', null],
+                        ['themes.index', 'Themes', 'ti-palette', null],
+                        ['addon-marketplace.index', 'Add-on Marketplace', 'ti-shopping-cart', \App\Models\TenantAddon::where('status', 'pending')->count() ?: null],
+                    ],
+                    'Hosting' => [
+                        ['infrastructure.index', 'Domains & Hosting', 'ti-world', \App\Models\Domain::whereDate('expiry_date', '<=', now()->addDays(30))->count() ?: null],
                     ],
                     'Finance' => [
                         ['invoices.index', 'Invoices', 'ti-file-invoice', \App\Models\Invoice::where('status', 'unpaid')->count() ?: null],
-                        ['subscriptions.index', 'Subscriptions', 'ti-credit-card', null],
-                    ],
-                    'Work' => [
-                        ['projects.index', 'Projects', 'ti-briefcase', null],
                         ['products.index', 'Products & Services', 'ti-box', null],
-                        ['agreements.index', 'Agreements', 'ti-file-text', \App\Models\Agreement::where('status', 'draft')->count() ?: null],
-                    ],
-                    'Infrastructure' => [
-                        ['infrastructure.index', 'Domains & Hosting', 'ti-world', \App\Models\Domain::whereDate('expiry_date', '<=', now()->addDays(30))->count() ?: null],
-                        ['tenants.index', 'Tenants', 'ti-building-store', null],
-                        ['themes.index', 'Themes', 'ti-palette', null],
-                        ['addon-marketplace.index', 'Add-on Marketplace', 'ti-shopping-cart', \App\Models\TenantAddon::where('status', 'pending')->count() ?: null],
                     ],
                     'System' => [
                         ['settings.edit', 'Settings', 'ti-settings', null],

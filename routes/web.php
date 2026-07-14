@@ -4,6 +4,7 @@ use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\AdminAddonProductController;
 use App\Http\Controllers\AdminTenantAddonController;
 use App\Http\Controllers\AdminTenantController;
+use App\Http\Controllers\AdminModuleController;
 use App\Http\Controllers\AdminThemeController;
 use App\Http\Controllers\AgreementController;
 use App\Http\Controllers\ClientController;
@@ -74,6 +75,8 @@ Route::middleware('auth')->group(function () {
     Route::get('tenants/create', [AdminTenantController::class, 'create'])->name('tenants.create');
     Route::post('tenants', [AdminTenantController::class, 'store'])->name('tenants.store');
     Route::post('tenants/{tenant}/toggle-status', [AdminTenantController::class, 'toggleStatus'])->name('tenants.toggle-status');
+
+    Route::get('business-modules', [AdminModuleController::class, 'index'])->name('modules.index');
 
     Route::get('themes', [AdminThemeController::class, 'index'])->name('themes.index');
     Route::get('themes/create', [AdminThemeController::class, 'create'])->name('themes.create');
