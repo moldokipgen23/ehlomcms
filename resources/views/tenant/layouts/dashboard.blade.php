@@ -39,6 +39,11 @@
                         $links[$m['nav_section']][] = [$m['route'], $m['label'], $m['icon']];
                     }
                 }
+                // Analytics is an add-on, not a module — shown only when the
+                // tenant has the analytics_pro add-on active.
+                if ($t && $t->hasActiveAddon('analytics_pro')) {
+                    $links['Store'][] = ['tenant.analytics', 'Analytics', 'ti-chart-bar'];
+                }
                 // Theme customizer is always available.
                 $links['Content'][] = ['tenant.theme', 'Customise Theme', 'ti-palette'];
                 // Marketplace / add-ons is always available.

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\TenantPageView;
 use App\Models\Theme;
 use App\Services\CustomThemeRenderer;
 use App\Services\TenantContext;
@@ -15,6 +16,17 @@ class TenantHomeController extends Controller
     public function index(CustomThemeRenderer $renderer): View|Response
     {
         $tenant = app(TenantContext::class)->get();
+
+        // Analytics Pro add-on: record a storefront visit only when the tenant
+        // has the add-on active. This is the gate in action — no add-on, no
+        // tracking (and the dashboard Analytics screen 404s). Bots/HEAD aside,
+        // this is a deliberately simple, honest "home page visits" counter.
+        if ($tenant->hasActiveAddon('analytics_pro')) {
+            TenantPageView::create([
+                'tenant_id' => $tenant->id,
+                'path' => '/',
+            ]);
+        }
 
         $theme = Theme::where('key', $tenant->template_id)->first();
 

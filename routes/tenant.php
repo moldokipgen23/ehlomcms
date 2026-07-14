@@ -120,6 +120,9 @@ Route::middleware('tenant')->prefix('dashboard')->group(function () {
         Route::get('reservations', [TenantReservationController::class, 'index'])->name('tenant.reservations');
         Route::post('reservations/{id}/status', [TenantReservationController::class, 'updateStatus'])->name('tenant.reservations.update-status');
 
+        // Analytics (gated by the analytics_pro add-on inside the controller)
+        Route::get('analytics', [\App\Http\Controllers\Tenant\TenantAnalyticsController::class, 'index'])->name('tenant.analytics');
+
         // Theme customizer
         Route::get('customize', [TenantThemeController::class, 'edit'])->name('tenant.theme');
         Route::post('customize', [TenantThemeController::class, 'update'])->name('tenant.theme.update');
