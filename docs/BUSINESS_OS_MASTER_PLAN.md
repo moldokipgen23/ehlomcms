@@ -192,6 +192,39 @@ Everything was then lint-checked, migrated fresh against a local DB, route-list-
 way as every other change this session: migrate --force on production, then live HTTP
 verification with throwaway test data, then cleanup.
 
+**Follow-up functional pass (2026-07-15):** the above was thorough code review + safe
+non-destructive testing, but a direct question ("is it 100% working?") prompted actually
+clicking through every remaining untested screen with real form submissions - not just
+loading each page and checking for 200. This found 2 more real bugs neither lint nor
+route:list could catch, both now fixed and verified live:
+- Hosting Plans and Email Templates 500'd on save whenever their optional JSON field
+  (features / variables) was left blank - `$validated['field']` was accessed directly,
+  but Laravel's validate() omits an absent nullable field from the array entirely rather
+  than setting it to null, so direct access threw "Undefined array key". Fixed with
+  `empty()` (verified this doesn't dereference a missing key, unlike direct [] access).
+- The tenant-side ticket detail page 500'd for any real ticket - `TenantTicketController::
+  show()` used Eloquent implicit route-model binding, which this codebase's own existing
+  comments (TenantCartController) already document as broken on domain-scoped tenant
+  routes. Fixed with the same plain-param + tenant-scoped findOrFail() pattern used
+  everywhere else in this controller family.
+
+Also fixed same-day: the naming collision between "Info / Portfolio" and "Portfolio /
+Business" (both said Portfolio) - renamed to "Info / Basic", plus the Info Classic theme
+description no longer says "portfolio sites" either.
+
+All 4 business types (Info/Basic, Shopping, Restaurant, Portfolio/Business) verified
+end-to-end same day with a fresh throwaway tenant per type: correct storefront content,
+zero cross-contamination between verticals, correct dashboard sidebar per type.
+
+**Honest state after this pass:** every admin screen in Wave 1-4 has now been either
+proven with a real write (Users, Roles, Impersonation, Domains/SSL-set, Backups run,
+Business Modules, Add-ons, Revenue, Support Tickets, Expenses, Payments, Hosting Plans,
+Email Templates, Analytics) or confirmed to load/render correctly (Theme Marketplace,
+Media Library, Audit Log, AI Settings/Content pages - these last few still need a real
+OpenAI/Anthropic API key to prove the actual AI calls, and actual certbot SSL issuance
+still needs a domain with real DNS pointed at this server to fully prove - both are
+architecturally sound and reviewed, just not fireable with fake test data).
+
 ---
 
 ## How every new module/feature stays safe (the rule)
