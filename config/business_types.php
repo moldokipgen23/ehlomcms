@@ -16,8 +16,14 @@
  */
 
 return [
+    // Deliberately NOT called "Portfolio" - the 'business' type below already
+    // owns that word (Portfolio / Business, the richer vertical with
+    // Services/Testimonials/Blog). This is the simple tier: about/gallery/
+    // contact only, for churches, NGOs, village sites - no separate identity
+    // beyond "a basic info site." Renamed 2026-07-14 after both types
+    // showing "Portfolio" in their label read as a duplicate.
     'info' => [
-        'label' => 'Info / Portfolio',
+        'label' => 'Info / Basic',
         'template' => 'info',
         'default_modules' => ['content'],
     ],
