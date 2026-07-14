@@ -51,7 +51,7 @@
                     'Finance' => [
                         ['revenue.index', 'Revenue', 'ti-chart-line', null],
                         ['invoices.index', 'Invoices', 'ti-file-invoice', \App\Models\Invoice::where('status', 'unpaid')->count() ?: null],
-                        ['products.index', 'Products & Services', 'ti-box', null],
+                        ['products.index', 'Service Catalog', 'ti-box', null],
                     ],
                     'System' => [
                         ['settings.edit', 'Settings', 'ti-settings', null],
