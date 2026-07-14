@@ -103,7 +103,7 @@ class AdminThemeController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'industries' => ['nullable', 'array'],
-            'industries.*' => ['string', Rule::in(['shopping', 'info'])],
+            'industries.*' => ['string', Rule::in(array_keys(config('business_types')))],
             'public' => ['nullable', 'boolean'],
         ];
 

@@ -28,9 +28,9 @@
                     <div class="eos-field">
                         <label class="eos-label">Site Type *</label>
                         <select name="site_type" class="eos-select" required>
-                            <option value="info" @selected(old('site_type') === 'info')>Info / Portfolio</option>
-                            <option value="shopping" @selected(old('site_type') === 'shopping')>Shopping / Store</option>
-                            <option value="restaurant" @selected(old('site_type') === 'restaurant')>Restaurant</option>
+                            @foreach ($businessTypes as $typeKey => $type)
+                                <option value="{{ $typeKey }}" @selected(old('site_type') === $typeKey)>{{ $type['label'] }}</option>
+                            @endforeach
                         </select>
                         @error('site_type') <div class="eos-error">{{ $message }}</div> @enderror
                     </div>

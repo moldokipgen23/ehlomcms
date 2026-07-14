@@ -31,4 +31,9 @@ return [
         'template' => 'restaurant',
         'default_modules' => ['content', 'catalog', 'reservations', 'orders'],
     ],
+    'business' => [
+        'label' => 'Portfolio / Business',
+        'template' => 'business',
+        'default_modules' => ['content', 'services', 'testimonials', 'blog'],
+    ],
 ];

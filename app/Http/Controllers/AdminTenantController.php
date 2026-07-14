@@ -29,6 +29,7 @@ class AdminTenantController extends Controller
         $clients = Client::orderBy('name')->get(['id', 'name']);
         $themes = Theme::orderBy('name')->get()->keyBy('key');
         $modules = config('modules');
+        $businessTypes = config('business_types');
 
         // Reached from a client's "Create Tenant Site" button (see
         // clients/show.blade.php) - prefill the obvious fields so this isn't
@@ -37,7 +38,7 @@ class AdminTenantController extends Controller
             ? Client::find($request->integer('client_id'))
             : null;
 
-        return view('tenants.form', compact('clients', 'themes', 'modules', 'prefillClient'));
+        return view('tenants.form', compact('clients', 'themes', 'modules', 'businessTypes', 'prefillClient'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -45,7 +46,7 @@ class AdminTenantController extends Controller
         $data = $request->validate([
             'subdomain' => ['required', 'string', 'max:255', 'unique:tenants,subdomain', 'regex:/^[a-z0-9-]+$/'],
             'name' => ['required', 'string', 'max:255'],
-            'site_type' => ['required', Rule::in(['shopping', 'info', 'restaurant'])],
+            'site_type' => ['required', Rule::in(array_keys(config('business_types')))],
             'template_id' => ['nullable', Rule::in(Theme::pluck('key'))],
             'plan' => ['nullable', 'string', 'max:255'],
             'client_id' => ['nullable', 'integer', 'exists:clients,id'],

@@ -27,7 +27,10 @@ use App\Http\Controllers\Tenant\TenantHomeController;
 use App\Http\Controllers\Tenant\TenantOrderController;
 use App\Http\Controllers\Tenant\TenantPaymentSettingsController;
 use App\Http\Controllers\Tenant\TenantReservationController;
+use App\Http\Controllers\Tenant\TenantServiceController;
 use App\Http\Controllers\Tenant\TenantSettingsController;
+use App\Http\Controllers\Tenant\TenantTestimonialController;
+use App\Http\Controllers\Tenant\TenantBlogController;
 use App\Http\Controllers\Tenant\TenantThemeController;
 use App\Http\Controllers\Tenant\TenantTrackController;
 use Illuminate\Support\Facades\Route;
@@ -122,6 +125,30 @@ Route::middleware('tenant')->prefix('dashboard')->group(function () {
 
         // Analytics (gated by the analytics_pro add-on inside the controller)
         Route::get('analytics', [\App\Http\Controllers\Tenant\TenantAnalyticsController::class, 'index'])->name('tenant.analytics');
+
+        // Services (portfolio/business tenants)
+        Route::get('services', [TenantServiceController::class, 'index'])->name('tenant.services');
+        Route::get('services/create', [TenantServiceController::class, 'create'])->name('tenant.services.create');
+        Route::post('services', [TenantServiceController::class, 'store'])->name('tenant.services.store');
+        Route::get('services/{id}/edit', [TenantServiceController::class, 'edit'])->name('tenant.services.edit');
+        Route::put('services/{id}', [TenantServiceController::class, 'update'])->name('tenant.services.update');
+        Route::delete('services/{id}', [TenantServiceController::class, 'destroy'])->name('tenant.services.destroy');
+
+        // Testimonials (portfolio/business tenants)
+        Route::get('testimonials', [TenantTestimonialController::class, 'index'])->name('tenant.testimonials');
+        Route::get('testimonials/create', [TenantTestimonialController::class, 'create'])->name('tenant.testimonials.create');
+        Route::post('testimonials', [TenantTestimonialController::class, 'store'])->name('tenant.testimonials.store');
+        Route::get('testimonials/{id}/edit', [TenantTestimonialController::class, 'edit'])->name('tenant.testimonials.edit');
+        Route::put('testimonials/{id}', [TenantTestimonialController::class, 'update'])->name('tenant.testimonials.update');
+        Route::delete('testimonials/{id}', [TenantTestimonialController::class, 'destroy'])->name('tenant.testimonials.destroy');
+
+        // Blog (portfolio/business tenants)
+        Route::get('blog', [TenantBlogController::class, 'index'])->name('tenant.blog');
+        Route::get('blog/create', [TenantBlogController::class, 'create'])->name('tenant.blog.create');
+        Route::post('blog', [TenantBlogController::class, 'store'])->name('tenant.blog.store');
+        Route::get('blog/{id}/edit', [TenantBlogController::class, 'edit'])->name('tenant.blog.edit');
+        Route::put('blog/{id}', [TenantBlogController::class, 'update'])->name('tenant.blog.update');
+        Route::delete('blog/{id}', [TenantBlogController::class, 'destroy'])->name('tenant.blog.destroy');
 
         // Theme customizer
         Route::get('customize', [TenantThemeController::class, 'edit'])->name('tenant.theme');
