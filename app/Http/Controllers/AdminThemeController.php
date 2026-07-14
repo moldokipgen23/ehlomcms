@@ -6,7 +6,7 @@ use App\Models\Tenant;
 use App\Models\Theme;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -266,7 +266,7 @@ class AdminThemeController extends Controller
         return redirect()->route('themes.index')->with('success', 'Theme deleted.');
     }
 
-    public function downloadAsZip(Theme $theme): Response
+    public function downloadAsZip(Theme $theme): BinaryFileResponse
     {
         $zip = new ZipArchive;
         $zipPath = tempnam(sys_get_temp_dir(), 'theme_') . '.zip';
