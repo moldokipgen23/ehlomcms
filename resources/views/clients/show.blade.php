@@ -58,24 +58,26 @@
                             </div>
                             <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">
                                 {{ ucfirst($client->tenant->site_type) }} site &middot; {{ ucfirst($client->tenant->status) }}
+                                @if ($client->tenant->onboarding_step > 0 && $client->tenant->onboarding_step < 5)
+                                    &middot; Onboarding step {{ $client->tenant->onboarding_step }}/5
+                                @endif
                             </div>
                         </div>
-                        <div class="eos-actions">
+                        <div class="eos-actions" style="flex-wrap:wrap;">
                             <a href="https://{{ $client->tenant->subdomain }}.{{ config('app.tenant_domain', 'ehlom.com') }}" target="_blank" rel="noopener" class="eos-btn eos-btn-secondary" style="font-size:11px;padding:5px 12px;">
-                                <i class="ti ti-external-link"></i> Visit Site
+                                <i class="ti ti-external-link"></i> View Site
                             </a>
-                            <a href="{{ route('tenants.index') }}" class="eos-btn eos-btn-secondary" style="font-size:11px;padding:5px 12px;">
+                            <form method="POST" action="{{ route('tenants.impersonate', $client->tenant) }}" style="display:inline;">
+                                @csrf
+                                <button type="submit" class="eos-btn eos-btn-primary" style="font-size:11px;padding:5px 12px;">
+                                    <i class="ti ti-login"></i> Login to Dashboard
+                                </button>
+                            </form>
+                            <a href="{{ route('tenants.edit', $client->tenant) }}" class="eos-btn eos-btn-secondary" style="font-size:11px;padding:5px 12px;">
                                 <i class="ti ti-settings"></i> Manage
                             </a>
                         </div>
                     </div>
-                    {{-- This is the tenant site's own custom domain + SSL
-                         status (Products > Custom Domains) - a completely
-                         separate system from the manual domain records
-                         below (registrar/expiry notes, tied to this Client
-                         directly). Shown here so the two don't stay
-                         invisible to each other when both exist for the
-                         same business. --}}
                     @if ($client->tenant->custom_domain)
                         <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11.5px;color:var(--text-secondary);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
                             <span>
@@ -272,23 +274,57 @@
     </div>
 
     {{-- Subscriptions --}}
-    <div x-show="tab === 'subscriptions'" x-cloak class="eos-card" style="padding:0;">
-        <table class="eos-table">
-            <thead><tr><th>Product</th><th>Start</th><th>Expiry</th><th>Renewal</th><th>Status</th></tr></thead>
-            <tbody>
-                @forelse ($client->subscriptions as $sub)
-                    <tr>
-                        <td>{{ $sub->product->name ?? '—' }}</td>
-                        <td>{{ $sub->start_date?->format('M j, Y') }}</td>
-                        <td>{{ $sub->expiry_date?->format('M j, Y') }}</td>
-                        <td>₹{{ number_format($sub->renewal_amount, 0) }}</td>
-                        <td><span class="eos-badge badge-{{ $sub->status }}">{{ strtoupper($sub->status) }}</span></td>
-                    </tr>
-                @empty
-                    <tr><td colspan="5"><div class="eos-empty">No subscriptions.</div></td></tr>
-                @endforelse
-            </tbody>
-        </table>
+    <div x-show="tab === 'subscriptions'" x-cloak>
+        @if ($client->subscriptions->count() || $tenantAddons->count())
+            {{-- Regular Subscriptions --}}
+            @if ($client->subscriptions->count())
+                <div class="eos-card" style="padding:0;margin-bottom:12px;">
+                    <div class="eos-card-header">
+                        <div class="eos-card-title" style="font-size:12px;"><i class="ti ti-repeat"></i> Product Subscriptions</div>
+                    </div>
+                    <table class="eos-table">
+                        <thead><tr><th>Product</th><th>Start</th><th>Expiry</th><th>Renewal</th><th>Status</th></tr></thead>
+                        <tbody>
+                            @foreach ($client->subscriptions as $sub)
+                                <tr>
+                                    <td>{{ $sub->product->name ?? '—' }}</td>
+                                    <td>{{ $sub->start_date?->format('M j, Y') }}</td>
+                                    <td>{{ $sub->expiry_date?->format('M j, Y') }}</td>
+                                    <td>₹{{ number_format($sub->renewal_amount, 0) }}</td>
+                                    <td><span class="eos-badge badge-{{ $sub->status }}">{{ strtoupper($sub->status) }}</span></td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+
+            {{-- Tenant Add-on Subscriptions --}}
+            @if ($tenantAddons->count())
+                <div class="eos-card" style="padding:0;">
+                    <div class="eos-card-header">
+                        <div class="eos-card-title" style="font-size:12px;"><i class="ti ti-puzzle"></i> Add-on Subscriptions</div>
+                    </div>
+                    <table class="eos-table">
+                        <thead><tr><th>Add-on</th><th>Status</th><th>Activated</th><th>Price</th></tr></thead>
+                        <tbody>
+                            @foreach ($tenantAddons as $addon)
+                                <tr>
+                                    <td style="font-weight:600;">{{ $addon->addonMeta->name ?? $addon->addon_key }}</td>
+                                    <td><span class="eos-badge badge-{{ $addon->status }}">{{ strtoupper($addon->status) }}</span></td>
+                                    <td>{{ $addon->activated_at?->format('M j, Y') ?? '—' }}</td>
+                                    <td>{{ $addon->addonMeta->price ? '₹' . number_format($addon->addonMeta->price, 0) . '/mo' : '—' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        @else
+            <div class="eos-card">
+                <div class="eos-empty">No subscriptions or add-ons.</div>
+            </div>
+        @endif
     </div>
 
     {{-- Projects --}}

@@ -26,6 +26,11 @@ class TenantAddon extends Model
         return $this->belongsTo(Tenant::class);
     }
 
+    public function addonMeta(): BelongsTo
+    {
+        return $this->belongsTo(AddonProduct::class, 'addon_key', 'key');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');

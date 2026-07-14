@@ -54,7 +54,11 @@ class ClientController extends Controller
             'invoices', 'domains', 'activities', 'agreements', 'tenant',
         ]);
 
-        return view('clients.show', compact('client'));
+        $tenantAddons = $client->tenant
+            ? \App\Models\TenantAddon::where('tenant_id', $client->tenant->id)->with('addonMeta')->get()
+            : collect();
+
+        return view('clients.show', compact('client', 'tenantAddons'));
     }
 
     public function edit(Client $client)
