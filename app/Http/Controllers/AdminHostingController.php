@@ -28,7 +28,12 @@ class AdminHostingController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        $validated['features'] = $validated['features'] ? json_decode($validated['features'], true) : [];
+        // validate() omits 'features' from the array entirely when it's
+        // absent from the request (nullable fields aren't added as null) -
+        // accessing $validated['features'] directly throws "Undefined array
+        // key" the moment a plan is created without one. Confirmed live:
+        // creating a plan with no features field 500'd before this fix.
+        $validated['features'] = !empty($validated['features']) ? json_decode($validated['features'], true) : [];
 
         HostingPlan::create($validated);
 

@@ -33,7 +33,11 @@ class AdminEmailTemplateController extends Controller
             'variables' => 'nullable|json',
         ]);
 
-        $validated['variables'] = $validated['variables'] ? json_decode($validated['variables'], true) : [];
+        // validate() omits 'variables' from the array when absent from the
+        // request (nullable fields aren't added as null) - direct access
+        // throws "Undefined array key" the moment a template is
+        // saved with no variables field. Confirmed live (500 error).
+        $validated['variables'] = !empty($validated['variables']) ? json_decode($validated['variables'], true) : [];
 
         EmailTemplate::create($validated);
 
@@ -56,7 +60,11 @@ class AdminEmailTemplateController extends Controller
             'variables' => 'nullable|json',
         ]);
 
-        $validated['variables'] = $validated['variables'] ? json_decode($validated['variables'], true) : [];
+        // validate() omits 'variables' from the array when absent from the
+        // request (nullable fields aren't added as null) - direct access
+        // throws "Undefined array key" the moment a template is
+        // saved with no variables field. Confirmed live (500 error).
+        $validated['variables'] = !empty($validated['variables']) ? json_decode($validated['variables'], true) : [];
 
         $emailTemplate->update($validated);
 
