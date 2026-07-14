@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminAddonProductController;
 use App\Http\Controllers\AdminTenantAddonController;
 use App\Http\Controllers\AdminTenantController;
 use App\Http\Controllers\AdminModuleController;
+use App\Http\Controllers\AdminRevenueController;
 use App\Http\Controllers\AdminThemeController;
 use App\Http\Controllers\AgreementController;
 use App\Http\Controllers\ClientController;
@@ -56,6 +57,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('domains', DomainController::class)->except(['show', 'index']);
     Route::post('clients/{client}/activities', [ActivityController::class, 'store'])->name('activities.store');
     Route::delete('activities/{activity}', [ActivityController::class, 'destroy'])->name('activities.destroy');
+    Route::get('revenue', [AdminRevenueController::class, 'index'])->name('revenue.index');
+
     Route::resource('invoices', InvoiceController::class);
     Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoices.pdf');
     Route::patch('invoices/{invoice}/mark-paid', [InvoiceController::class, 'markPaid'])->name('invoices.markPaid');

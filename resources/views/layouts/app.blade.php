@@ -49,6 +49,7 @@
                         ['infrastructure.index', 'Domains & Hosting', 'ti-world', \App\Models\Domain::whereDate('expiry_date', '<=', now()->addDays(30))->count() ?: null],
                     ],
                     'Finance' => [
+                        ['revenue.index', 'Revenue', 'ti-chart-line', null],
                         ['invoices.index', 'Invoices', 'ti-file-invoice', \App\Models\Invoice::where('status', 'unpaid')->count() ?: null],
                         ['products.index', 'Products & Services', 'ti-box', null],
                     ],
