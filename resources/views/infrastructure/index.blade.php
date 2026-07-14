@@ -7,7 +7,7 @@
     <div x-data="{ tab: '{{ $tab }}' }">
         <div class="eos-tabs">
             <button type="button" class="eos-tab" :class="{ active: tab === 'hosting' }" @click="tab = 'hosting'">
-                <i class="ti ti-server"></i> Hosting Plans
+                <i class="ti ti-server"></i> Hosting Pricing
             </button>
             <button type="button" class="eos-tab" :class="{ active: tab === 'domain' }" @click="tab = 'domain'">
                 <i class="ti ti-world"></i> Domain Pricing
@@ -19,6 +19,11 @@
 
         {{-- ── HOSTING PLANS ── --}}
         <div x-show="tab === 'hosting'" x-cloak>
+            <div style="font-size:11px;color:var(--text-dim);background:var(--bg-hover);border-radius:6px;padding:8px 10px;margin-bottom:10px;">
+                These are billing line items for your existing manually-hosted clients (Service
+                Catalog, category=hosting). For assigning a hosting plan to a tenant SaaS site, see
+                <a href="{{ route('hosting.index') }}" style="color:var(--accent-blue);">Hosting</a> under Products.
+            </div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                 <p style="font-size:11.5px;color:var(--text-dim);margin:0;">Your hosting plans &amp; their prices — shared, managed, or anything you offer.</p>
                 <a href="{{ route('products.create', ['category' => 'hosting']) }}" class="eos-icon-btn primary"><i class="ti ti-plus"></i> Add Hosting Plan</a>

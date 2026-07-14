@@ -19,6 +19,7 @@ class AdminDomainController extends Controller
         // ones without one yet and the existing verify/SSL actions for ones
         // that do.
         $tenants = Tenant::where('status', 'active')
+            ->with('client')
             ->orderByRaw("domain_status = 'none'")
             ->orderBy('name')
             ->get();

@@ -69,6 +69,22 @@
                             </a>
                         </div>
                     </div>
+                    {{-- This is the tenant site's own custom domain + SSL
+                         status (Products > Custom Domains) - a completely
+                         separate system from the manual domain records
+                         below (registrar/expiry notes, tied to this Client
+                         directly). Shown here so the two don't stay
+                         invisible to each other when both exist for the
+                         same business. --}}
+                    @if ($client->tenant->custom_domain)
+                        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11.5px;color:var(--text-secondary);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                            <span>
+                                Custom domain: <code>{{ $client->tenant->custom_domain }}</code>
+                                <span class="eos-badge badge-{{ $client->tenant->domain_status === 'verified' ? 'active' : 'draft' }}" style="margin-left:4px;">{{ $client->tenant->domain_status }}</span>
+                            </span>
+                            <a href="{{ route('domains.admin.index') }}" style="color:var(--accent-blue);text-decoration:none;">Manage domain/SSL &rarr;</a>
+                        </div>
+                    @endif
                 @else
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
                         <div style="font-size:12.5px;color:var(--text-secondary);">

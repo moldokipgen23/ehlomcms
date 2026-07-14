@@ -4,6 +4,12 @@
 @section('subtitle', 'Hosting plans and domain management')
 
 @section('content')
+<div style="font-size:11px;color:var(--text-dim);background:var(--bg-hover);border-radius:6px;padding:8px 10px;margin-bottom:14px;">
+    These plans assign directly to tenant SaaS sites (see the Hosting Plan column on
+    <a href="{{ route('tenants.index') }}" style="color:var(--accent-blue);">Tenants</a>). For your
+    existing manually-hosted clients' billing line items, see
+    <a href="{{ route('infrastructure.index', ['tab' => 'hosting']) }}" style="color:var(--accent-blue);">Domains &amp; Hosting</a> instead.
+</div>
 <div class="eos-row" style="display:flex;gap:16px;flex-wrap:wrap;">
     <div class="eos-card" style="flex:1;min-width:300px;">
         <div class="eos-card-header">

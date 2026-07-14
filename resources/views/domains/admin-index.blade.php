@@ -12,6 +12,7 @@
     <thead>
         <tr>
             <th>Tenant</th>
+            <th>Client</th>
             <th>Custom Domain</th>
             <th>Status</th>
             <th>Verified At</th>
@@ -22,6 +23,13 @@
         @forelse ($tenants as $tenant)
             <tr>
                 <td style="font-weight:600;">{{ $tenant->name }}</td>
+                <td style="font-size:12px;">
+                    @if ($tenant->client)
+                        <a href="{{ route('clients.show', $tenant->client) }}" style="color:var(--accent-blue);text-decoration:none;">{{ $tenant->client->name }}</a>
+                    @else
+                        <span style="color:var(--text-dim);">—</span>
+                    @endif
+                </td>
                 <td>
                     @if ($tenant->custom_domain)
                         <code>{{ $tenant->custom_domain }}</code>
@@ -66,7 +74,7 @@
                 </td>
             </tr>
         @empty
-            <tr><td colspan="5"><div class="eos-empty">No custom domains configured.</div></td></tr>
+            <tr><td colspan="6"><div class="eos-empty">No custom domains configured.</div></td></tr>
         @endforelse
     </tbody>
 </table>
