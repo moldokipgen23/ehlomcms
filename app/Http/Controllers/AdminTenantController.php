@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BusinessTypeModule;
 use App\Models\Client;
+use App\Models\HostingPlan;
 use App\Models\Tenant;
 use App\Models\Theme;
 use App\Models\User;
@@ -18,11 +19,12 @@ class AdminTenantController extends Controller
 {
     public function index(): View
     {
-        $tenants = Tenant::with('client', 'activeAddons')
+        $tenants = Tenant::with('client', 'activeAddons', 'hostingPlan')
             ->orderBy('created_at', 'desc')
             ->get();
+        $hostingPlans = HostingPlan::orderBy('price')->get();
 
-        return view('tenants.index', compact('tenants'));
+        return view('tenants.index', compact('tenants', 'hostingPlans'));
     }
 
     public function create(Request $request): View
@@ -31,6 +33,7 @@ class AdminTenantController extends Controller
         $themes = Theme::orderBy('name')->get()->keyBy('key');
         $modules = config('modules');
         $businessTypes = config('business_types');
+        $hostingPlans = HostingPlan::orderBy('price')->get();
 
         // Free-module defaults per business type, admin-edited from the
         // Business Modules page (business_type_modules table) - used to
@@ -48,7 +51,7 @@ class AdminTenantController extends Controller
             ? Client::find($request->integer('client_id'))
             : null;
 
-        return view('tenants.form', compact('clients', 'themes', 'modules', 'businessTypes', 'freeByType', 'prefillClient'));
+        return view('tenants.form', compact('clients', 'themes', 'modules', 'businessTypes', 'freeByType', 'prefillClient', 'hostingPlans'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -59,6 +62,7 @@ class AdminTenantController extends Controller
             'site_type' => ['required', Rule::in(array_keys(config('business_types')))],
             'template_id' => ['nullable', Rule::in(Theme::pluck('key'))],
             'plan' => ['nullable', 'string', 'max:255'],
+            'hosting_plan_id' => ['nullable', 'integer', 'exists:hosting_plans,id'],
             'client_id' => ['nullable', 'integer', 'exists:clients,id'],
             'action_type' => ['nullable', Rule::in(['whatsapp', 'razorpay'])],
             'modules' => ['nullable', 'array'],
@@ -108,5 +112,26 @@ class AdminTenantController extends Controller
         $label = $tenant->status === 'active' ? 'activated' : 'suspended';
 
         return redirect()->route('tenants.index')->with('success', "{$tenant->name} {$label}.");
+    }
+
+    /**
+     * Inline hosting-plan assignment from the Tenants list - the same
+     * pattern as toggleStatus above. This is what actually connects the
+     * Hosting Plans catalog (previously just a standalone price list with
+     * no foreign key pointing at it from anywhere) to a real tenant.
+     */
+    public function updateHostingPlan(Request $request, Tenant $tenant): RedirectResponse
+    {
+        $validated = $request->validate([
+            'hosting_plan_id' => ['nullable', 'integer', 'exists:hosting_plans,id'],
+        ]);
+
+        $tenant->update(['hosting_plan_id' => $validated['hosting_plan_id'] ?? null]);
+
+        $label = $validated['hosting_plan_id']
+            ? HostingPlan::find($validated['hosting_plan_id'])->name
+            : 'None';
+
+        return redirect()->route('tenants.index')->with('success', "{$tenant->name}'s hosting plan set to {$label}.");
     }
 }

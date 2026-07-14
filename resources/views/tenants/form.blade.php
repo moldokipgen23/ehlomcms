@@ -50,9 +50,19 @@
                         @error('action_type') <div class="eos-error">{{ $message }}</div> @enderror
                     </div>
                     <div class="eos-field">
-                        <label class="eos-label">Plan</label>
+                        <label class="eos-label">Plan (legacy free-text label)</label>
                         <input type="text" name="plan" value="{{ old('plan') }}" class="eos-input" placeholder="e.g. Basic, Pro">
                         @error('plan') <div class="eos-error">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="eos-field">
+                        <label class="eos-label">Hosting Plan</label>
+                        <select name="hosting_plan_id" class="eos-select">
+                            <option value="">— None —</option>
+                            @foreach ($hostingPlans as $plan)
+                                <option value="{{ $plan->id }}" @selected(old('hosting_plan_id') == $plan->id)>{{ $plan->name }} (₹{{ number_format($plan->price, 0) }})</option>
+                            @endforeach
+                        </select>
+                        @error('hosting_plan_id') <div class="eos-error">{{ $message }}</div> @enderror
                     </div>
                 </div>
             </div>

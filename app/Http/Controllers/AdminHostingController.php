@@ -13,7 +13,7 @@ class AdminHostingController extends Controller
 {
     public function index(): View
     {
-        $plans = HostingPlan::orderBy('price')->get();
+        $plans = HostingPlan::withCount('tenants')->orderBy('price')->get();
         $domains = Domain::with('client')->orderByDesc('created_at')->get();
         return view('hosting.index', compact('plans', 'domains'));
     }

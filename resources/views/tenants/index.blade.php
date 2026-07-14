@@ -42,7 +42,7 @@
             <th>Name</th>
             <th>Site Type</th>
             <th>Template</th>
-            <th>Plan</th>
+            <th>Hosting Plan</th>
             <th>Status</th>
             <th>Add-ons</th>
             <th>Client</th>
@@ -60,7 +60,20 @@
                 <td style="font-weight:600;">{{ $tenant->name }}</td>
                 <td><span class="eos-badge {{ $tenant->site_type === 'shopping' ? 'badge-paid' : 'badge-draft' }}">{{ $tenant->site_type ?? '—' }}</span></td>
                 <td>{{ $tenant->template_id ?? '—' }}</td>
-                <td>{{ $tenant->plan ?? '—' }}</td>
+                <td>
+                    <form method="POST" action="{{ route('tenants.hosting-plan', $tenant) }}">
+                        @csrf
+                        <select name="hosting_plan_id" onchange="this.form.submit()" class="eos-select" style="font-size:11px;padding:3px 6px;border-radius:5px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);cursor:pointer;">
+                            <option value="">— None —</option>
+                            @foreach ($hostingPlans as $plan)
+                                <option value="{{ $plan->id }}" {{ $tenant->hosting_plan_id === $plan->id ? 'selected' : '' }}>{{ $plan->name }} (₹{{ number_format($plan->price, 0) }})</option>
+                            @endforeach
+                        </select>
+                    </form>
+                    @if ($tenant->plan)
+                        <div style="font-size:10px;color:var(--text-dim);margin-top:2px;" title="Legacy free-text plan field, predates the Hosting Plans catalog">{{ $tenant->plan }}</div>
+                    @endif
+                </td>
                 <td>
                     <span class="eos-badge {{ $tenant->status === 'active' ? 'badge-active' : ($tenant->status === 'suspended' ? 'badge-suspended' : 'badge-pending') }}">
                         {{ $tenant->status }}

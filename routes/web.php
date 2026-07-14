@@ -93,6 +93,7 @@ Route::middleware('auth')->group(function () {
     Route::get('tenants/create', [AdminTenantController::class, 'create'])->name('tenants.create');
     Route::post('tenants', [AdminTenantController::class, 'store'])->name('tenants.store');
     Route::post('tenants/{tenant}/toggle-status', [AdminTenantController::class, 'toggleStatus'])->name('tenants.toggle-status');
+    Route::post('tenants/{tenant}/hosting-plan', [AdminTenantController::class, 'updateHostingPlan'])->name('tenants.hosting-plan');
 
     Route::get('business-modules', [AdminModuleController::class, 'index'])->name('modules.index');
     Route::post('business-modules/{businessType}', [AdminModuleController::class, 'updateAssignments'])->name('modules.update-assignments');

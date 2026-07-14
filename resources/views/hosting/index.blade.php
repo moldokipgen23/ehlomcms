@@ -41,11 +41,12 @@
                         ₹{{ number_format($plan->price, 2) }}
                         @if ($plan->provider) &middot; {{ $plan->provider }} @endif
                         @if ($plan->features) &middot; {{ count($plan->features) }} features @endif
+                        &middot; <span title="Tenants assigned this plan on the Tenants page">{{ $plan->tenants_count }} tenant{{ $plan->tenants_count !== 1 ? 's' : '' }}</span>
                     </div>
                 </div>
                 <form method="POST" action="{{ route('hosting.plans.destroy', $plan) }}" style="display:inline;">
                     @csrf @method('DELETE')
-                    <button type="submit" class="eos-btn" style="font-size:11px;padding:4px 10px;border:1px solid #ef4444;border-radius:6px;color:#ef4444;background:none;cursor:pointer;" onclick="return confirm('Delete this plan?');"><i class="ti ti-trash"></i></button>
+                    <button type="submit" class="eos-btn" style="font-size:11px;padding:4px 10px;border:1px solid #ef4444;border-radius:6px;color:#ef4444;background:none;cursor:pointer;" onclick="return confirm($plan->tenants_count > 0 ? 'This plan is assigned to {{ $plan->tenants_count }} tenant(s) - they will show None afterward. Delete anyway?' : 'Delete this plan?');"><i class="ti ti-trash"></i></button>
                 </form>
             </div>
         @empty

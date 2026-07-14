@@ -24,6 +24,7 @@ class Tenant extends Model
         'template_id',
         'status',
         'plan',
+        'hosting_plan_id',
         'logo',
         'banner_image',
         'whatsapp_number',
@@ -50,6 +51,11 @@ class Tenant extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function hostingPlan(): BelongsTo
+    {
+        return $this->belongsTo(HostingPlan::class);
     }
 
     public function users(): HasMany
