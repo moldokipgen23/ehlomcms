@@ -24,7 +24,7 @@
 
             <div class="eos-field">
                 <label class="eos-label">Site Name <span class="text-red-500">*</span></label>
-                <input type="text" name="name" value="{{ old('name', $tenant->name ?? '') }}" class="eos-input" required>
+                <input type="text" name="name" value="{{ old('name', $tenant->name ?? ($prefillClient->business_name ?? $prefillClient->name ?? '')) }}" class="eos-input" required>
                 @error('name') <div class="eos-error">{{ $message }}</div> @enderror
             </div>
 
@@ -81,13 +81,13 @@
             @if (!$tenant)
                 <div class="eos-field" style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px;">
                     <label class="eos-label">Owner Name <span class="text-red-500">*</span></label>
-                    <input type="text" name="owner_name" value="{{ old('owner_name') }}" class="eos-input" required>
+                    <input type="text" name="owner_name" value="{{ old('owner_name', $prefillClient->name ?? '') }}" class="eos-input" required>
                     @error('owner_name') <div class="eos-error">{{ $message }}</div> @enderror
                 </div>
 
                 <div class="eos-field">
                     <label class="eos-label">Owner Email <span class="text-red-500">*</span></label>
-                    <input type="email" name="owner_email" value="{{ old('owner_email') }}" class="eos-input" required>
+                    <input type="email" name="owner_email" value="{{ old('owner_email', $prefillClient->email ?? '') }}" class="eos-input" required>
                     @error('owner_email') <div class="eos-error">{{ $message }}</div> @enderror
                 </div>
             @endif

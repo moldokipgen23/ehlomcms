@@ -90,8 +90,26 @@ Route::middleware('auth')->group(function () {
     Route::get('tenants', [AdminTenantController::class, 'index'])->name('tenants.index');
     Route::get('tenants/create', [AdminTenantController::class, 'create'])->name('tenants.create');
     Route::post('tenants', [AdminTenantController::class, 'store'])->name('tenants.store');
+    Route::get('tenants/{tenant}/edit', [AdminTenantController::class, 'edit'])->name('tenants.edit');
+    Route::put('tenants/{tenant}', [AdminTenantController::class, 'update'])->name('tenants.update');
     Route::post('tenants/{tenant}/toggle-status', [AdminTenantController::class, 'toggleStatus'])->name('tenants.toggle-status');
     Route::post('tenants/{tenant}/hosting-plan', [AdminTenantController::class, 'updateHostingPlan'])->name('tenants.hosting-plan');
+
+    // Onboarding wizard
+    Route::get('onboarding/{tenant}/{step}', [\App\Http\Controllers\AdminOnboardingController::class, 'show'])->name('onboarding.step');
+    Route::post('onboarding/{tenant}/{step}', [\App\Http\Controllers\AdminOnboardingController::class, 'update'])->name('onboarding.update');
+    Route::get('onboarding/{tenant}/skip', [\App\Http\Controllers\AdminOnboardingController::class, 'skip'])->name('onboarding.skip');
+
+    // Theme preview
+    Route::get('themes/{theme}/preview', [\App\Http\Controllers\AdminThemeController::class, 'preview'])->name('themes.preview');
+
+    // Theme Builder AI
+    Route::get('theme-builder', [\App\Http\Controllers\AdminThemeBuilderController::class, 'index'])->name('theme-builder.index');
+    Route::post('theme-builder/analyze', [\App\Http\Controllers\AdminThemeBuilderController::class, 'analyze'])->name('theme-builder.analyze');
+    Route::post('theme-builder/generate', [\App\Http\Controllers\AdminThemeBuilderController::class, 'generate'])->name('theme-builder.generate');
+    Route::get('theme-builder/{theme}/preview', [\App\Http\Controllers\AdminThemeBuilderController::class, 'preview'])->name('theme-builder.preview');
+    Route::post('theme-builder/{theme}/install', [\App\Http\Controllers\AdminThemeBuilderController::class, 'install'])->name('theme-builder.install');
+    Route::get('theme-builder/{theme}/download', [\App\Http\Controllers\AdminThemeBuilderController::class, 'download'])->name('theme-builder.download');
 
     Route::get('business-modules', [AdminModuleController::class, 'index'])->name('modules.index');
     Route::post('business-modules/{businessType}', [AdminModuleController::class, 'updateAssignments'])->name('modules.update-assignments');

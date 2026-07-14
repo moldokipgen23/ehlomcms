@@ -12,6 +12,7 @@ class Client extends Model
     protected $fillable = [
         'name', 'business_name', 'phone', 'whatsapp', 'email',
         'address', 'notes', 'status', 'logo',
+        'project_type', 'budget_min', 'budget_max', 'timeline', 'source', 'features',
     ];
 
     public function projects(): HasMany

@@ -95,6 +95,9 @@
                     @endif
                 </td>
                 <td>
+                    <a href="{{ route('tenants.edit', $tenant) }}" class="eos-btn eos-btn-secondary" style="font-size:10px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--text-secondary);cursor:pointer;text-decoration:none;" title="Edit tenant">
+                        <i class="ti ti-pencil"></i>
+                    </a>
                     <form method="POST" action="{{ route('tenants.impersonate', $tenant) }}" style="display:inline;">
                         @csrf
                         <button type="submit" class="eos-btn eos-btn-secondary" style="font-size:10px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:none;color:var(--text-secondary);cursor:pointer;" title="Login as this tenant">

@@ -113,8 +113,15 @@ class LeadController extends Controller
             'email' => $lead->email,
             'phone' => $lead->phone ?: '0000000000',
             'business_name' => $lead->business_name,
+            'whatsapp' => $lead->phone,
             'notes' => 'Converted from lead.' . ($lead->description ? "\n\nRequirements:\n" . $lead->description : ''),
             'status' => 'active',
+            'project_type' => $lead->project_type,
+            'budget_min' => $lead->budget_min,
+            'budget_max' => $lead->budget_max,
+            'timeline' => $lead->timeline,
+            'source' => $lead->source,
+            'features' => $lead->features,
         ]);
 
         $lead->update([
@@ -124,6 +131,6 @@ class LeadController extends Controller
 
         return redirect()
             ->route('clients.show', $client)
-            ->with('success', 'Lead converted to client successfully.');
+            ->with('success', 'Lead converted to client successfully. All lead data has been transferred.');
     }
 }

@@ -64,27 +64,40 @@ class AdminTenantController extends Controller
             'plan' => ['nullable', 'string', 'max:255'],
             'hosting_plan_id' => ['nullable', 'integer', Rule::exists('products', 'id')->where('category', 'hosting')],
             'client_id' => ['nullable', 'integer', 'exists:clients,id'],
-            'action_type' => ['nullable', Rule::in(['whatsapp', 'razorpay', 'offline'])],
+            'action_type' => ['nullable', Rule::in(['whatsapp', 'razorpay', 'stripe', 'paypal', 'offline', 'custom'])],
             'modules' => ['nullable', 'array'],
             'modules.*' => ['string', Rule::in(array_keys(config('modules')))],
             'owner_name' => ['required', 'string', 'max:255'],
             'owner_email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'custom_gateway_name' => ['nullable', 'string', 'max:255'],
+            'custom_gateway_url' => ['nullable', 'url', 'max:255'],
+            'custom_gateway_key' => ['nullable', 'string', 'max:255'],
+            'custom_gateway_secret' => ['nullable', 'string', 'max:255'],
+            'custom_gateway_callback' => ['nullable', 'url', 'max:255'],
         ]);
 
         $ownerName = $data['owner_name'];
         $ownerEmail = $data['owner_email'];
         unset($data['owner_name'], $data['owner_email']);
 
-        $data['modules'] = $data['modules'] ?? [];
+        // Auto-apply default theme and modules from business type config
+        $siteType = $data['site_type'];
+        $businessTypes = config('business_types');
+
+        if (empty($data['template_id']) && isset($businessTypes[$siteType]['template'])) {
+            $data['template_id'] = $businessTypes[$siteType]['template'];
+        }
+
+        if (empty($data['modules']) && isset($businessTypes[$siteType]['default_modules'])) {
+            $data['modules'] = $businessTypes[$siteType]['default_modules'];
+        } else {
+            $data['modules'] = $data['modules'] ?? [];
+        }
+
         $data['status'] = 'active';
 
         $tenant = Tenant::create($data);
 
-        // The tenant's owner account is created here, by the agency, rather
-        // than through public self-registration - see routes/tenant.php for
-        // why open registration was removed. The generated password is only
-        // ever available in this one post-redirect flash message; it isn't
-        // stored anywhere in plaintext or logged.
         $generatedPassword = Str::password(14);
 
         User::create([
@@ -94,12 +107,55 @@ class AdminTenantController extends Controller
             'tenant_id' => $tenant->id,
         ]);
 
-        return redirect()->route('tenants.index')->with('success', "Tenant created.")
+        return redirect()->route('onboarding.step', ['tenant' => $tenant, 'step' => 'info'])
+            ->with('success', "Tenant created.")
             ->with('generated_login', [
                 'subdomain' => $tenant->subdomain,
                 'email' => $ownerEmail,
                 'password' => $generatedPassword,
             ]);
+    }
+
+    public function edit(Tenant $tenant): View
+    {
+        $clients = Client::orderBy('name')->get(['id', 'name']);
+        $themes = Theme::orderBy('name')->get()->keyBy('key');
+        $modules = config('modules');
+        $businessTypes = config('business_types');
+        $hostingPlans = Product::where('category', 'hosting')->where('status', 'active')->orderBy('price')->get();
+
+        $freeByType = [];
+        foreach ($businessTypes as $typeKey => $type) {
+            $freeByType[$typeKey] = BusinessTypeModule::modulesFor($typeKey);
+        }
+
+        return view('tenants.form', compact('tenant', 'clients', 'themes', 'modules', 'businessTypes', 'freeByType', 'hostingPlans'));
+    }
+
+    public function update(Request $request, Tenant $tenant): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'site_type' => ['required', Rule::in(array_keys(config('business_types')))],
+            'template_id' => ['nullable', Rule::in(Theme::pluck('key'))],
+            'plan' => ['nullable', 'string', 'max:255'],
+            'hosting_plan_id' => ['nullable', 'integer', Rule::exists('products', 'id')->where('category', 'hosting')],
+            'client_id' => ['nullable', 'integer', 'exists:clients,id'],
+            'action_type' => ['nullable', Rule::in(['whatsapp', 'razorpay', 'stripe', 'paypal', 'offline', 'custom'])],
+            'modules' => ['nullable', 'array'],
+            'modules.*' => ['string', Rule::in(array_keys(config('modules')))],
+            'custom_gateway_name' => ['nullable', 'string', 'max:255'],
+            'custom_gateway_url' => ['nullable', 'url', 'max:255'],
+            'custom_gateway_key' => ['nullable', 'string', 'max:255'],
+            'custom_gateway_secret' => ['nullable', 'string', 'max:255'],
+            'custom_gateway_callback' => ['nullable', 'url', 'max:255'],
+        ]);
+
+        $data['modules'] = $data['modules'] ?? [];
+
+        $tenant->update($data);
+
+        return redirect()->route('tenants.index')->with('success', 'Tenant updated.');
     }
 
     public function toggleStatus(int $id): RedirectResponse

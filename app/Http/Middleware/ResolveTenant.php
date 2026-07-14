@@ -21,12 +21,27 @@ class ResolveTenant
         // production bare domain, portal subdomain — passes through.
         $suffix = '.' . $baseDomain;
         if (!str_ends_with($host, $suffix)) {
+            // Custom domain resolution: check if the host matches a tenant's custom_domain.
+            $tenant = Tenant::where('custom_domain', $host)
+                ->where('domain_status', 'verified')
+                ->first();
+
+            if ($tenant) {
+                URL::defaults(['subdomain' => $tenant->subdomain]);
+                URL::forceRootUrl("https://{$host}");
+                URL::forceScheme('https');
+
+                if ($tenant->status === 'suspended') {
+                    return response('This site is currently unavailable.', 503);
+                }
+
+                app(TenantContext::class)->set($tenant);
+
+                return $next($request);
+            }
+
             // Covers the bare domain itself (host === $baseDomain) and any
             // non-matching host (e.g. localhost during local testing).
-            // web.php's agency-only routes are domain-scoped to a
-            // {portalHost} parameter — fill it in here so every
-            // route('dashboard')-style call elsewhere in the app doesn't
-            // need to pass it explicitly.
             URL::defaults(['portalHost' => $host]);
 
             return $next($request);

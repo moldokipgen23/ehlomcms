@@ -5,7 +5,24 @@
 
 @section('content')
 <div style="font-size:11.5px;color:var(--text-secondary);background:var(--bg-hover);border-radius:8px;padding:12px;margin-bottom:16px;line-height:1.6;">
-    Point a CNAME record from the custom domain to <code>{{ config('app.tenant_domain') }}</code>, then click Verify. After verification, issue an SSL certificate via Let's Encrypt.
+    <div style="font-weight:600;color:var(--text-primary);margin-bottom:6px;"><i class="ti ti-world"></i> Custom Domain Setup</div>
+    <div style="margin-bottom:8px;">To point a custom domain to a tenant's site:</div>
+    <ol style="margin:0;padding-left:18px;line-height:1.8;">
+        <li>Log in to your domain registrar (GoDaddy, Namecheap, etc.)</li>
+        <li>Go to DNS Management for the domain</li>
+        <li>Add a <strong>CNAME Record</strong>:
+            <ul style="margin:2px 0;padding-left:16px;">
+                <li><strong>Host/Name:</strong> <code>@</code> (or the subdomain, e.g. <code>shop</code>)</li>
+                <li><strong>Value/Target:</strong> <code id="cnameTarget">{{ config('app.tenant_domain', 'ehlom.com') }}</code>
+                    <button onclick="navigator.clipboard.writeText('{{ config('app.tenant_domain', 'ehlom.com') }}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)" style="font-size:10px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;background:none;color:var(--accent-teal);cursor:pointer;margin-left:4px;">Copy</button>
+                </li>
+                <li><strong>TTL:</strong> <code>300</code> (5 minutes)</li>
+            </ul>
+        </li>
+        <li>Wait 5-30 minutes for DNS propagation</li>
+        <li>Click <strong>Verify</strong> next to the tenant below</li>
+    </ol>
+    <div style="margin-top:8px;font-size:10px;color:var(--text-dim);">After verification, click <strong>SSL</strong> to issue a certificate, then the site will be live on the custom domain.</div>
 </div>
 
 <table class="eos-table">

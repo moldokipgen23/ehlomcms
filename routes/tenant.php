@@ -41,15 +41,11 @@ use App\Http\Controllers\Tenant\TenantTrackController;
 use App\Http\Controllers\Tenant\TenantImpersonateController;
 use Illuminate\Support\Facades\Route;
 
-// Domain-scoped to genuine tenant subdomains only. Without this, these routes
-// share literal URIs ('/', '/dashboard') with agency-only routes in web.php,
-// and Laravel's route collection would evict whichever was registered second
-// for a given method+uri — this domain constraint gives tenant routes a
-// distinct collection key AND stops them from ever matching portal.ehlom.com,
-// www.ehlom.com, or the bare domain, regardless of registration order.
-Route::domain('{subdomain}.' . config('app.tenant_domain', 'ehlom.com'))
-    ->where(['subdomain' => '(?!portal$|www$)[a-z0-9-]+'])
-    ->group(function () {
+// Tenant routes are resolved by ResolveTenant middleware which handles both
+// subdomain (*.ehlom.com) and custom domain resolution. The middleware sets
+// URL::defaults(['subdomain' => ...]) so the {subdomain} parameter is always
+// available regardless of which domain the request arrives on.
+Route::group([], function () {
 
 Route::middleware('tenant')->group(function () {
     Route::get('/', [TenantHomeController::class, 'index'])->name('tenant.home');

@@ -315,6 +315,25 @@ class AdminThemeController extends Controller
         return response()->download($zipPath, Str::slug($theme->name) . '-theme.zip')->deleteFileAfterSend(true);
     }
 
+    public function preview(Theme $theme): View
+    {
+        // Build a fake tenant with demo data for preview
+        $demoTenant = new Tenant([
+            'name' => 'Demo Store',
+            'subdomain' => 'demo',
+            'site_type' => $theme->industries[0] ?? 'info',
+            'template_id' => $theme->key,
+            'theme_settings' => $theme->default_settings ?? [],
+            'about_text' => 'Welcome to our demo store. This is a preview of how your site will look with this theme.',
+            'contact_email' => 'demo@example.com',
+            'contact_phone' => '+91 98765 43210',
+            'contact_address' => '123 Demo Street, Demo City',
+            'contact_hours' => 'Mon-Sat 9AM-6PM',
+        ]);
+
+        return view('onboarding.theme-preview', ['theme' => $theme, 'demoTenant' => $demoTenant]);
+    }
+
     private function uniqueKey(string $name): string
     {
         $base = Str::slug($name);

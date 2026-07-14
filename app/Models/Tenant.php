@@ -34,8 +34,14 @@ class Tenant extends Model
         'contact_address',
         'contact_hours',
         'action_type',
+        'custom_gateway_name',
+        'custom_gateway_url',
+        'custom_gateway_key',
+        'custom_gateway_secret',
+        'custom_gateway_callback',
         'theme_settings',
         'modules',
+        'onboarding_step',
     ];
 
     protected function casts(): array
