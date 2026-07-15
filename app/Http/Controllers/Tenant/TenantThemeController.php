@@ -18,6 +18,10 @@ class TenantThemeController extends Controller
         '#e8a930' => 'Amber',
         '#e84f4f' => 'Rose',
         '#4db83d' => 'Emerald',
+        '#1e40af' => 'Royal Blue',
+        '#0f766e' => 'Dark Teal',
+        '#7c3aed' => 'Violet',
+        '#dc2626' => 'Red',
     ];
 
     public function edit(): View
@@ -35,20 +39,35 @@ class TenantThemeController extends Controller
 
         $data = $request->validate([
             'accent_color' => ['required', Rule::in(array_keys(self::PRESET_COLORS))],
-            'show_gallery' => ['nullable', 'boolean'],
-            'show_about' => ['nullable', 'boolean'],
-            'show_contact' => ['nullable', 'boolean'],
         ]);
 
-        $tenant->theme_settings = [
-            'accent_color' => $data['accent_color'],
-            'show_gallery' => (bool) ($data['show_gallery'] ?? true),
-            'show_about' => (bool) ($data['show_about'] ?? true),
-            'show_contact' => (bool) ($data['show_contact'] ?? true),
-        ];
+        // Accept ALL theme_settings fields — no whitelist needed
+        // This allows the school template to read any field the client fills in
+        $existing = $tenant->theme_settings ?? [];
+        $newSettings = $request->except(['_token', 'accent_color']);
 
+        // Merge: keep existing fields, overwrite with new values
+        foreach ($newSettings as $key => $value) {
+            $existing[$key] = $value;
+        }
+        $existing['accent_color'] = $data['accent_color'];
+
+        // Clean up empty string values to null
+        foreach ($existing as $key => $value) {
+            if ($value === '') {
+                $existing[$key] = null;
+            }
+        }
+
+        $tenant->theme_settings = $existing;
         $tenant->save();
 
-        return redirect()->route('tenant.theme')->with('success', 'Theme customised.');
+        // Save about_text to tenant record directly if provided
+        if ($request->has('about_text_raw')) {
+            $tenant->about_text = $request->input('about_text_raw') ?: null;
+            $tenant->save();
+        }
+
+        return redirect()->route('tenant.theme')->with('success', 'Theme settings saved successfully.');
     }
 }
