@@ -33,13 +33,7 @@
 
             <div class="eos-field">
                 <label class="eos-label">Business Type <span class="text-red-500">*</span></label>
-                <select name="site_type" class="eos-input" required id="siteTypeSelect">
-                    @foreach ($businessTypes as $key => $type)
-                        <option value="{{ $key }}" {{ (old('site_type', $tenant->site_type ?? '') === $key) ? 'selected' : '' }}>
-                            {{ $type['label'] }}
-                        </option>
-                    @endforeach
-                </select>
+                <div style="font-size:12px;color:var(--text-dim);padding:6px 0;" id="siteTypeLabel">Select a type from the cards →</div>
                 @error('site_type') <div class="eos-error">{{ $message }}</div> @enderror
             </div>
 
@@ -111,7 +105,7 @@
                     $paidCount = count($type['default_modules'] ?? []) - $freeCount;
                     $themeCount = collect($themes)->filter(fn($t) => in_array($typeKey, $t['industries'] ?? []))->count();
                 @endphp
-                <label class="business-type-card" data-type="{{ $typeKey }}" style="display:block;border:2px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;background:var(--bg-card);position:relative;">
+                <label class="business-type-card" data-type="{{ $typeKey }}" data-color="{{ $typeColors[$typeKey] ?? '#10b981' }}" style="display:block;border:2px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;background:var(--bg-card);position:relative;">
                     <input type="radio" name="site_type" value="{{ $typeKey }}" {{ (old('site_type', $tenant->site_type ?? '') === $typeKey) ? 'checked' : '' }} style="position:absolute;top:12px;right:12px;width:16px;height:16px;accent-color:{{ $typeColors[$typeKey] ?? 'var(--accent-teal)' }};">
                     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
                         <div style="width:38px;height:38px;border-radius:8px;background:{{ $typeColors[$typeKey] ?? 'var(--accent-teal)' }}15;display:flex;align-items:center;justify-content:center;">
@@ -138,9 +132,6 @@
     </div>
 </div>
 
-{{-- HIDDEN site_type input for form submission --}}
-<input type="hidden" name="site_type" id="siteTypeHidden" value="{{ old('site_type', $tenant->site_type ?? '') }}">
-
 {{-- BOTTOM ACTIONS --}}
 <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
     @if (!$tenant)
@@ -164,19 +155,20 @@
     </div>
 @endif
 
-@endsection
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const siteTypeHidden = document.getElementById('siteTypeHidden');
     const typeCards = document.querySelectorAll('.business-type-card');
 
     function updateTypeCards(selectedType) {
+        const label = document.getElementById('siteTypeLabel');
         typeCards.forEach(card => {
             if (card.dataset.type === selectedType) {
-                card.style.borderColor = '{{ $typeColors[$typeKey] ?? "var(--accent-teal)" }}';
+                card.style.borderColor = card.dataset.color || 'var(--accent-teal)';
+                card.style.background = (card.dataset.color || '#10b981') + '0a';
+                if (label) label.textContent = card.querySelector('div > div > div:first-child')?.textContent || '';
             } else {
                 card.style.borderColor = 'var(--border)';
+                card.style.background = 'var(--bg-card)';
             }
         });
     }
@@ -186,7 +178,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const radio = this.querySelector('input[type=radio][name=site_type]');
             if (radio) {
                 radio.checked = true;
-                siteTypeHidden.value = radio.value;
                 updateTypeCards(radio.value);
             }
         });
@@ -195,7 +186,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.business-type-card input[type=radio][name=site_type]').forEach(radio => {
         radio.addEventListener('change', function() {
             if (this.checked) {
-                siteTypeHidden.value = this.value;
                 updateTypeCards(this.value);
             }
         });
@@ -212,8 +202,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const checkedRadio = document.querySelector('.business-type-card input[type=radio][name=site_type]:checked');
     if (checkedRadio) {
-        siteTypeHidden.value = checkedRadio.value;
         updateTypeCards(checkedRadio.value);
     }
 });
 </script>
+
+@endsection
