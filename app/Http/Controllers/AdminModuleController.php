@@ -20,6 +20,7 @@ class AdminModuleController extends Controller
 
         // How many live tenants use each business type
         $tenantCounts = Tenant::select('site_type')
+            ->selectRaw('COUNT(*) as count')
             ->where('status', 'active')
             ->groupBy('site_type')
             ->pluck('count', 'site_type');
