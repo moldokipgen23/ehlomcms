@@ -10,8 +10,7 @@
         @php
             $count = $tenantCounts[$typeKey] ?? 0;
             $freeCount = count($bundle['free'] ?? []);
-            $proCount = count($bundle['pro'] ?? []);
-            $premiumCount = count($bundle['premium'] ?? []);
+            $paidCount = count($bundle['pro'] ?? []) + count($bundle['premium'] ?? []);
         @endphp
         <a href="{{ route('modules.show', $typeKey) }}" style="text-decoration:none;">
             <div class="eos-card" style="padding:0;overflow:hidden;cursor:pointer;transition:all .2s;border:2px solid transparent;" onmouseover="this.style.borderColor='var(--accent-teal)'" onmouseout="this.style.borderColor='transparent'">
@@ -38,17 +37,11 @@
                             <div style="font-size:10px;color:#16a34a;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Free</div>
                             <div style="font-size:9px;color:#94a3b8;margin-top:2px;">Included</div>
                         </div>
-                        {{-- Pro --}}
+                        {{-- Paid --}}
                         <div style="flex:1;text-align:center;padding:12px 8px;background:#fffbeb;border-radius:8px;">
-                            <div style="font-size:22px;font-weight:800;color:#d97706;">{{ $proCount }}</div>
-                            <div style="font-size:10px;color:#d97706;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Pro</div>
-                            <div style="font-size:9px;color:#94a3b8;margin-top:2px;">Add-on</div>
-                        </div>
-                        {{-- Premium --}}
-                        <div style="flex:1;text-align:center;padding:12px 8px;background:#faf5ff;border-radius:8px;">
-                            <div style="font-size:22px;font-weight:800;color:#9333ea;">{{ $premiumCount }}</div>
-                            <div style="font-size:10px;color:#9333ea;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Premium</div>
-                            <div style="font-size:9px;color:#94a3b8;margin-top:2px;">Add-on</div>
+                            <div style="font-size:22px;font-weight:800;color:#d97706;">{{ $paidCount }}</div>
+                            <div style="font-size:10px;color:#d97706;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Paid</div>
+                            <div style="font-size:9px;color:#94a3b8;margin-top:2px;">Add-ons</div>
                         </div>
                     </div>
 

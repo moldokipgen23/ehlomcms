@@ -24,15 +24,15 @@
 </div>
 
 {{-- Tenant Selector --}}
-<div class="eos-card" style="margin-bottom:20px;padding:16px 20px;">
+<div class="eos-card" style="margin-bottom:20px;padding:16px 20px;border:2px solid var(--accent-teal);">
     <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
         <div style="display:flex;align-items:center;gap:8px;">
             <i class="ti ti-user" style="font-size:18px;color:var(--accent-teal);"></i>
             <span style="font-size:13px;font-weight:600;color:var(--text-primary);">Select Tenant to Manage:</span>
         </div>
         <div style="flex:1;min-width:200px;">
-            <select id="tenantSelect" onchange="window.location.href='?tenant='+this.value" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border-card);background:var(--bg-card);color:var(--text-primary);font-size:13px;font-weight:500;cursor:pointer;">
-                <option value="">-- Select a tenant --</option>
+            <select id="tenantSelect" onchange="window.location.href='?tenant='+this.value" style="width:100%;padding:12px 16px;border-radius:8px;border:2px solid var(--accent-teal);background:var(--bg-card);color:var(--text-primary);font-size:14px;font-weight:600;cursor:pointer;">
+                <option value="">-- Select a tenant to toggle features --</option>
                 @foreach ($tenants as $t)
                     <option value="{{ $t->id }}" {{ ($selectedTenant && $selectedTenant->id === $t->id) ? 'selected' : '' }}>
                         {{ $t->name }} ({{ $t->client->name ?? 'No client' }})
@@ -58,6 +58,10 @@
                         <i class="ti ti-x"></i> Disable All
                     </button>
                 </form>
+            </div>
+        @else
+            <div style="padding:8px 14px;background:#fef3c7;border-radius:6px;font-size:12px;font-weight:600;color:#d97706;">
+                <i class="ti ti-alert-triangle"></i> Select a tenant above to enable/disable features
             </div>
         @endif
     </div>
@@ -105,73 +109,32 @@
     </div>
 </div>
 
-{{-- ═══════════════ PRO TIER ═══════════════ --}}
+{{-- ═══════════════ PAID ADD-ONS (Pro + Premium merged) ═══════════════ --}}
+@php
+    $paidFeatures = array_merge($bundle['pro'] ?? [], $bundle['premium'] ?? []);
+@endphp
+@if (count($paidFeatures))
 <div style="margin-bottom:24px;">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
         <div style="width:32px;height:32px;border-radius:8px;background:#fef3c7;display:flex;align-items:center;justify-content:center;">
             <i class="ti ti-star" style="font-size:16px;color:#d97706;"></i>
         </div>
         <div>
-            <div style="font-size:16px;font-weight:700;color:#d97706;">Pro Add-ons</div>
-            <div style="font-size:11px;color:var(--text-dim);">Paid monthly upgrades — purchasable from the Add-on Marketplace</div>
+            <div style="font-size:16px;font-weight:700;color:#d97706;">Paid Add-ons</div>
+            <div style="font-size:11px;color:var(--text-dim);">Premium features with monthly pricing</div>
         </div>
-        <span style="margin-left:auto;font-size:12px;font-weight:700;color:#d97706;background:#fef3c7;padding:4px 12px;border-radius:20px;">{{ count($bundle['pro'] ?? []) }} features</span>
+        <span style="margin-left:auto;font-size:12px;font-weight:700;color:#d97706;background:#fef3c7;padding:4px 12px;border-radius:20px;">{{ count($paidFeatures) }} features</span>
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
-        @foreach ($bundle['pro'] ?? [] as $feat)
-            @php
-                $isOn = $selectedTenant && in_array($feat['key'], $selectedTenant->modules ?? []);
-            @endphp
-            <div class="eos-card" style="padding:16px;display:flex;gap:12px;align-items:center;border-left:3px solid #d97706;">
-                <div style="width:36px;height:36px;border-radius:8px;background:#fffbeb;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                    <i class="ti {{ $feat['icon'] }}" style="font-size:16px;color:#d97706;"></i>
-                </div>
-                <div style="flex:1;min-width:0;">
-                    <div style="font-weight:600;font-size:13px;color:var(--text-primary);display:flex;align-items:center;gap:6px;">
-                        {{ $feat['name'] }}
-                        <span style="font-size:10px;font-weight:700;color:#d97706;background:#fffbeb;padding:2px 8px;border-radius:10px;">₹{{ number_format($feat['price'] ?? 0, 0) }}/mo</span>
-                    </div>
-                    <div style="font-size:11px;color:var(--text-secondary);line-height:1.5;margin-top:2px;">{{ $feat['description'] }}</div>
-                </div>
-                @if ($selectedTenant)
-                    <form method="POST" action="{{ route('modules.toggle', $selectedTenant) }}">
-                        @csrf
-                        <input type="hidden" name="feature_key" value="{{ $feat['key'] }}">
-                        <button type="submit" title="{{ $isOn ? 'Disable' : 'Enable' }}" style="width:44px;height:24px;border-radius:12px;border:none;cursor:pointer;position:relative;transition:background .2s;background:{{ $isOn ? '#d97706' : '#cbd5e1' }};flex-shrink:0;">
-                            <span style="position:absolute;top:2px;left:{{ $isOn ? '22px' : '2px' }};width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></span>
-                        </button>
-                    </form>
-                @else
-                    <div style="width:44px;height:24px;border-radius:12px;background:#e2e8f0;flex-shrink:0;"></div>
-                @endif
-            </div>
-        @endforeach
-    </div>
-</div>
-
-{{-- ═══════════════ PREMIUM TIER ═══════════════ --}}
-<div style="margin-bottom:24px;">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-        <div style="width:32px;height:32px;border-radius:8px;background:#f3e8ff;display:flex;align-items:center;justify-content:center;">
-            <i class="ti ti-crown" style="font-size:16px;color:#9333ea;"></i>
-        </div>
-        <div>
-            <div style="font-size:16px;font-weight:700;color:#9333ea;">Premium Add-ons</div>
-            <div style="font-size:11px;color:var(--text-dim);">Advanced features — higher tier, some coming soon</div>
-        </div>
-        <span style="margin-left:auto;font-size:12px;font-weight:700;color:#9333ea;background:#f3e8ff;padding:4px 12px;border-radius:20px;">{{ count($bundle['premium'] ?? []) }} features</span>
-    </div>
-
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
-        @foreach ($bundle['premium'] ?? [] as $feat)
+        @foreach ($paidFeatures as $feat)
             @php
                 $isOn = $selectedTenant && in_array($feat['key'], $selectedTenant->modules ?? []);
                 $isFuture = $feat['future'] ?? false;
             @endphp
-            <div class="eos-card" style="padding:16px;display:flex;gap:12px;align-items:center;border-left:3px solid #9333ea;{{ $isFuture ? 'opacity:0.7;' : '' }}">
-                <div style="width:36px;height:36px;border-radius:8px;background:#faf5ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                    <i class="ti {{ $feat['icon'] }}" style="font-size:16px;color:#9333ea;"></i>
+            <div class="eos-card" style="padding:16px;display:flex;gap:12px;align-items:center;border-left:3px solid #d97706;{{ $isFuture ? 'opacity:0.6;' : '' }}">
+                <div style="width:36px;height:36px;border-radius:8px;background:#fffbeb;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <i class="ti {{ $feat['icon'] }}" style="font-size:16px;color:#d97706;"></i>
                 </div>
                 <div style="flex:1;min-width:0;">
                     <div style="font-weight:600;font-size:13px;color:var(--text-primary);display:flex;align-items:center;gap:6px;">
@@ -179,7 +142,7 @@
                         @if ($isFuture)
                             <span style="font-size:9px;background:#f3e8ff;color:#9333ea;padding:1px 6px;border-radius:3px;font-weight:600;">COMING SOON</span>
                         @endif
-                        <span style="font-size:10px;font-weight:700;color:#9333ea;background:#faf5ff;padding:2px 8px;border-radius:10px;">₹{{ number_format($feat['price'] ?? 0, 0) }}/mo</span>
+                        <span style="font-size:10px;font-weight:700;color:#d97706;background:#fffbeb;padding:2px 8px;border-radius:10px;">₹{{ number_format($feat['price'] ?? 0, 0) }}/mo</span>
                     </div>
                     <div style="font-size:11px;color:var(--text-secondary);line-height:1.5;margin-top:2px;">{{ $feat['description'] }}</div>
                 </div>
@@ -187,7 +150,7 @@
                     <form method="POST" action="{{ route('modules.toggle', $selectedTenant) }}">
                         @csrf
                         <input type="hidden" name="feature_key" value="{{ $feat['key'] }}">
-                        <button type="submit" title="{{ $isOn ? 'Disable' : 'Enable' }}" style="width:44px;height:24px;border-radius:12px;border:none;cursor:pointer;position:relative;transition:background .2s;background:{{ $isOn ? '#9333ea' : '#cbd5e1' }};flex-shrink:0;">
+                        <button type="submit" title="{{ $isOn ? 'Disable' : 'Enable' }}" style="width:44px;height:24px;border-radius:12px;border:none;cursor:pointer;position:relative;transition:background .2s;background:{{ $isOn ? '#d97706' : '#cbd5e1' }};flex-shrink:0;">
                             <span style="position:absolute;top:2px;left:{{ $isOn ? '22px' : '2px' }};width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></span>
                         </button>
                     </form>
@@ -200,6 +163,7 @@
         @endforeach
     </div>
 </div>
+@endif
 
 {{-- ═══════════════ ACTIVE TENANTS ═══════════════ --}}
 @if ($tenants->count())
