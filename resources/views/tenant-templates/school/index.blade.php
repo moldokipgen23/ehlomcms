@@ -517,13 +517,21 @@
         <div style="margin-top:24px;">
             @foreach (['download_1', 'download_2', 'download_3', 'download_4', 'download_5'] as $dKey)
                 @if ($s[$dKey . '_name'] ?? null)
+                    @php
+                        $fileUrl = null;
+                        if ($s[$dKey . '_file'] ?? null) {
+                            $fileUrl = Storage::url($s[$dKey . '_file']);
+                        } elseif ($s[$dKey . '_url'] ?? null) {
+                            $fileUrl = $s[$dKey . '_url'];
+                        }
+                    @endphp
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;background:white;">
                         <div style="display:flex;align-items:center;gap:10px;">
                             <i class="ti ti-file-download" style="font-size:20px;color:var(--sc-accent);"></i>
                             <span style="font-weight:600;font-size:14px;">{{ $s[$dKey . '_name'] }}</span>
                         </div>
-                        @if ($s[$dKey . '_url'] ?? null)
-                            <a href="{{ $s[$dKey . '_url'] }}" target="_blank" class="sc-btn sc-btn-outline" style="padding:6px 16px;font-size:12px;">Download</a>
+                        @if ($fileUrl)
+                            <a href="{{ $fileUrl }}" target="_blank" class="sc-btn sc-btn-outline" style="padding:6px 16px;font-size:12px;">Download</a>
                         @endif
                     </div>
                 @endif

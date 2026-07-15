@@ -5,7 +5,7 @@
 
 @section('content')
 
-<form method="POST" action="{{ route('tenant.theme.update') }}" x-data="{ activeTab: 'hero' }">
+<form method="POST" action="{{ route('tenant.theme.update') }}" x-data="{ activeTab: 'hero' }" enctype="multipart/form-data">
     @csrf
 
     {{-- Tab Navigation --}}
@@ -97,6 +97,15 @@
                 </div>
             </div>
             <div class="eos-field">
+                <label class="eos-label">Principal Photo</label>
+                @if ($settings['principal_photo'] ?? null)
+                    <div style="margin-bottom:8px;">
+                        <img src="{{ Storage::url($settings['principal_photo']) }}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--border-card);">
+                    </div>
+                @endif
+                <input type="file" name="principal_photo_file" accept="image/*" class="eos-input" style="padding:8px;">
+            </div>
+            <div class="eos-field">
                 <label class="eos-label">Principal Message</label>
                 <textarea name="principal_message" class="eos-input" rows="4" placeholder="Dear parents and students...">{{ $settings['principal_message'] ?? '' }}</textarea>
             </div>
@@ -177,7 +186,18 @@
             <input type="text" name="faculty_title" value="{{ $settings['faculty_title'] ?? '' }}" class="eos-input" placeholder="Our Team">
         </div>
         @for ($i = 1; $i <= 8; $i++)
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px;padding:12px;background:var(--bg-secondary);border-radius:8px;">
+            <div style="display:grid;grid-template-columns:60px 1fr 1fr 1fr;gap:12px;margin-top:12px;padding:12px;background:var(--bg-secondary);border-radius:8px;align-items:start;">
+                <div class="eos-field" style="margin:0;">
+                    <label class="eos-label">Photo</label>
+                    @if ($settings["faculty_{$i}_photo"] ?? null)
+                        <img src="{{ Storage::url($settings["faculty_{$i}_photo"]) }}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--border-card);">
+                    @else
+                        <div style="width:48px;height:48px;border-radius:50%;background:var(--bg-card);border:2px dashed var(--border-card);display:flex;align-items:center;justify-content:center;">
+                            <i class="ti ti-camera" style="font-size:16px;color:var(--text-dim);"></i>
+                        </div>
+                    @endif
+                    <input type="file" name="faculty_{{ $i }}_photo_file" accept="image/*" class="eos-input" style="padding:4px;font-size:11px;margin-top:4px;">
+                </div>
                 <div class="eos-field" style="margin:0;">
                     <label class="eos-label">Faculty {{ $i }} Name</label>
                     <input type="text" name="faculty_{{ $i }}_name" value="{{ $settings["faculty_{$i}_name"] ?? '' }}" class="eos-input" placeholder="Full name">
@@ -367,15 +387,22 @@
             <input type="text" name="downloads_title" value="{{ $settings['downloads_title'] ?? '' }}" class="eos-input" placeholder="Important Downloads">
         </div>
         @for ($i = 1; $i <= 5; $i++)
-            <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-top:12px;padding:12px;background:var(--bg-secondary);border-radius:8px;">
+            <div style="display:grid;grid-template-columns:1fr 2fr auto;gap:12px;margin-top:12px;padding:12px;background:var(--bg-secondary);border-radius:8px;align-items:end;">
                 <div class="eos-field" style="margin:0;">
                     <label class="eos-label">Download {{ $i }} Name</label>
                     <input type="text" name="download_{{ $i }}_name" value="{{ $settings["download_{$i}_name"] ?? '' }}" class="eos-input" placeholder="Admission Form">
                 </div>
                 <div class="eos-field" style="margin:0;">
-                    <label class="eos-label">Download URL</label>
-                    <input type="url" name="download_{{ $i }}_url" value="{{ $settings["download_{$i}_url"] ?? '' }}" class="eos-input" placeholder="https://... file link">
+                    <label class="eos-label">File Upload or URL</label>
+                    @if ($settings["download_{$i}_file"] ?? null)
+                        <div style="font-size:12px;color:var(--accent-teal);margin-bottom:4px;">
+                            <i class="ti ti-file-check"></i> {{ basename($settings["download_{$i}_file"]) }}
+                        </div>
+                    @endif
+                    <input type="file" name="download_{{ $i }}_file" class="eos-input" style="padding:6px;font-size:12px;">
+                    <input type="text" name="download_{{ $i }}_url" value="{{ $settings["download_{$i}_url"] ?? '' }}" class="eos-input" placeholder="Or paste URL: https://..." style="margin-top:6px;">
                 </div>
+                <div style="font-size:11px;color:var(--text-muted);padding-bottom:8px;">Upload file OR paste URL</div>
             </div>
         @endfor
     </div>

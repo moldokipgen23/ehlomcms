@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -41,12 +42,34 @@ class TenantThemeController extends Controller
             'accent_color' => ['required', Rule::in(array_keys(self::PRESET_COLORS))],
         ]);
 
-        // Accept ALL theme_settings fields — no whitelist needed
-        // This allows the school template to read any field the client fills in
         $existing = $tenant->theme_settings ?? [];
         $newSettings = $request->except(['_token', 'accent_color']);
 
-        // Merge: keep existing fields, overwrite with new values
+        // Handle file uploads
+        $fileFields = ['principal_photo'];
+        for ($i = 1; $i <= 8; $i++) {
+            $fileFields[] = "faculty_{$i}_photo";
+        }
+        for ($i = 1; $i <= 5; $i++) {
+            $fileFields[] = "download_{$i}_file";
+        }
+
+        foreach ($fileFields as $field) {
+            $fileKey = $field . '_file';
+            if ($request->hasFile($fileKey)) {
+                // Delete old file if exists
+                if (!empty($existing[$field])) {
+                    Storage::disk('public')->delete($existing[$field]);
+                }
+                $path = $request->file($fileKey)->store('theme-uploads/' . $tenant->id, 'public');
+                $existing[$field] = $path;
+                unset($newSettings[$fileKey]);
+            } else {
+                unset($newSettings[$fileKey]);
+            }
+        }
+
+        // Merge text fields
         foreach ($newSettings as $key => $value) {
             $existing[$key] = $value;
         }
