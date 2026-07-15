@@ -94,17 +94,11 @@ class AdminTenantController extends Controller
             'template_id' => ['nullable', 'string'],
             'plan' => ['nullable', 'string', 'max:255'],
             'hosting_plan_id' => ['nullable', 'integer', Rule::exists('products', 'id')->where('category', 'hosting')],
-            'client_id' => ['nullable', 'integer', 'exists:clients,id'],
             'action_type' => ['nullable', Rule::in(['whatsapp', 'razorpay', 'stripe', 'paypal', 'offline', 'custom'])],
             'modules' => ['nullable', 'array'],
             'modules.*' => ['string', Rule::in(array_keys(config('modules')))],
             'owner_name' => ['required', 'string', 'max:255'],
             'owner_email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'custom_gateway_name' => ['nullable', 'string', 'max:255'],
-            'custom_gateway_url' => ['nullable', 'url', 'max:255'],
-            'custom_gateway_key' => ['nullable', 'string', 'max:255'],
-            'custom_gateway_secret' => ['nullable', 'string', 'max:255'],
-            'custom_gateway_callback' => ['nullable', 'url', 'max:255'],
         ]);
 
         $ownerName = $data['owner_name'];

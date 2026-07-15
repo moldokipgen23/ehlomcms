@@ -51,40 +51,7 @@
             </div>
 
             <div class="eos-field">
-                <label class="eos-label">Payment Mode</label>
-                <select name="action_type" class="eos-input" id="actionTypeSelect">
-                    <option value="offline" {{ (old('action_type', $tenant->action_type ?? 'offline') === 'offline') ? 'selected' : '' }}>Offline / Manual</option>
-                    <option value="razorpay" {{ (old('action_type', $tenant->action_type ?? '') === 'razorpay') ? 'selected' : '' }}>Razorpay (Online)</option>
-                    <option value="stripe" {{ (old('action_type', $tenant->action_type ?? '') === 'stripe') ? 'selected' : '' }}>Stripe (Online)</option>
-                    <option value="paypal" {{ (old('action_type', $tenant->action_type ?? '') === 'paypal') ? 'selected' : '' }}>PayPal (Online)</option>
-                    <option value="custom" {{ (old('action_type', $tenant->action_type ?? '') === 'custom') ? 'selected' : '' }}>Custom Gateway</option>
-                </select>
-            </div>
-
-            {{-- CUSTOM GATEWAY FIELDS --}}
-            <div class="eos-field custom-gateway-fields" id="customGatewayFields" style="display:none;">
-                <label class="eos-label">Gateway Name</label>
-                <input type="text" name="custom_gateway_name" value="{{ old('custom_gateway_name', $tenant->custom_gateway_name ?? '') }}" class="eos-input" placeholder="e.g. PhonePe, Paytm, BillDesk">
-            </div>
-            <div class="eos-field custom-gateway-fields" id="customGatewayFields2" style="display:none;">
-                <label class="eos-label">Gateway URL / Endpoint</label>
-                <input type="url" name="custom_gateway_url" value="{{ old('custom_gateway_url', $tenant->custom_gateway_url ?? '') }}" class="eos-input" placeholder="https://api.gateway.com/checkout">
-            </div>
-            <div class="eos-field custom-gateway-fields" id="customGatewayFields3" style="display:none;">
-                <label class="eos-label">API Key / Merchant ID</label>
-                <input type="text" name="custom_gateway_key" value="{{ old('custom_gateway_key', $tenant->custom_gateway_key ?? '') }}" class="eos-input" placeholder="Your merchant ID or API key">
-            </div>
-            <div class="eos-field custom-gateway-fields" id="customGatewayFields4" style="display:none;">
-                <label class="eos-label">Secret Key / Salt</label>
-                <input type="password" name="custom_gateway_secret" value="{{ old('custom_gateway_secret', $tenant->custom_gateway_secret ?? '') }}" class="eos-input" placeholder="Secret key (stored encrypted)">
-            </div>
-            <div class="eos-field custom-gateway-fields" id="customGatewayFields5" style="display:none;">
-                <label class="eos-label">Callback / Webhook URL</label>
-                <input type="url" name="custom_gateway_callback" value="{{ old('custom_gateway_callback', $tenant->custom_gateway_callback ?? '') }}" class="eos-input" placeholder="https://yoursite.com/payment/callback">
-            </div>
-
-            <div class="eos-field">
-                <label class="eos-label">Plan (legacy free-text)</label>
+                <label class="eos-label">Plan</label>
                 <input type="text" name="plan" value="{{ old('plan', $tenant->plan ?? '') }}" class="eos-input" placeholder="e.g. Pro, Enterprise">
             </div>
 
@@ -203,15 +170,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-
-    const actionTypeSelect = document.getElementById('actionTypeSelect');
-    const customFields = document.querySelectorAll('.custom-gateway-fields');
-    function toggleCustomGatewayFields() {
-        const show = actionTypeSelect.value === 'custom';
-        customFields.forEach(f => f.style.display = show ? 'block' : 'none');
-    }
-    actionTypeSelect.addEventListener('change', toggleCustomGatewayFields);
-    toggleCustomGatewayFields();
 
     const checkedRadio = document.querySelector('.business-type-card input[type=radio][name=site_type]:checked');
     if (checkedRadio) {
