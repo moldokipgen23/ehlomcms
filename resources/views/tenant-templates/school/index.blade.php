@@ -43,6 +43,8 @@
 @php
     $s = $tenant->theme_settings ?? [];
     $accent = $s['accent_color'] ?? '#1e40af';
+    $modules = $tenant->modules ?? [];
+    $m = function($key) use ($modules) { return in_array($key, $modules); };
 @endphp
 
 {{-- ═══════════════ NAVIGATION ═══════════════ --}}
@@ -64,6 +66,8 @@
             <a href="#student-life" style="color:#475569;text-decoration:none;">Student Life</a>
             <a href="#gallery" style="color:#475569;text-decoration:none;">Gallery</a>
             <a href="#news" style="color:#475569;text-decoration:none;">News</a>
+            <a href="#downloads" style="color:#475569;text-decoration:none;">Downloads</a>
+            <a href="#achievements" style="color:#475569;text-decoration:none;">Achievements</a>
             <a href="#contact" style="color:#475569;text-decoration:none;">Contact</a>
         </div>
     </div>
@@ -71,7 +75,7 @@
 @endif
 
 {{-- ═══════════════ HERO BANNER ═══════════════ --}}
-@if ($s['show_hero'] ?? true)
+@if ($m('hero'))
 <section id="home" style="position:relative;min-height:520px;display:flex;align-items:center;overflow:hidden;background:linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);">
     @if ($tenant->banner_image)
         <img src="{{ Storage::url($tenant->banner_image) }}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
@@ -99,7 +103,7 @@
 @endif
 
 {{-- ═══════════════ SCHOOL HIGHLIGHTS ═══════════════ --}}
-@if ($s['show_highlights'] ?? true)
+@if ($m('stats'))
 <section class="sc-section sc-section-alt">
     <div class="sc-container">
         <div class="sc-grid sc-grid-4" style="text-align:center;">
@@ -118,7 +122,6 @@
 @endif
 
 {{-- ═══════════════ PRINCIPAL'S WELCOME ═══════════════ --}}
-@if ($s['show_principal'] ?? true)
 @if ($s['principal_name'] ?? null)
 <section class="sc-section">
     <div class="sc-container" style="display:flex;align-items:center;gap:40px;max-width:900px;">
@@ -138,10 +141,9 @@
     </div>
 </section>
 @endif
-@endif
 
 {{-- ═══════════════ WHY CHOOSE US ═══════════════ --}}
-@if ($s['show_why_choose'] ?? true)
+@if ($m('why_choose'))
 <section class="sc-section sc-section-alt">
     <div class="sc-container">
         <div class="sc-badge" style="text-align:center;display:block;">Why Choose Us</div>
@@ -162,7 +164,7 @@
 @endif
 
 {{-- ═══════════════ STATISTICS ═══════════════ --}}
-@if ($s['show_stats'] ?? true)
+@if ($m('stats'))
 <section class="sc-section" style="background:linear-gradient(135deg,#1e3a5f,#0f172a);color:white;">
     <div class="sc-container">
         <div class="sc-grid sc-grid-5" style="text-align:center;grid-template-columns:repeat(5,1fr);">
@@ -180,7 +182,7 @@
 @endif
 
 {{-- ═══════════════ ABOUT ═══════════════ --}}
-@if ($s['show_about'] ?? true)
+@if ($m('about'))
 <section id="about" class="sc-section sc-section-alt">
     <div class="sc-container" style="max-width:900px;text-align:center;">
         <div class="sc-badge">About Us</div>
@@ -216,7 +218,7 @@
 @endif
 
 {{-- ═══════════════ ACADEMICS ═══════════════ --}}
-@if ($s['show_academics'] ?? true)
+@if ($m('academics'))
 <section id="academics" class="sc-section">
     <div class="sc-container">
         <div class="sc-badge" style="text-align:center;display:block;">Academics</div>
@@ -244,7 +246,7 @@
 @endif
 
 {{-- ═══════════════ ADMISSIONS ═══════════════ --}}
-@if ($s['show_admissions'] ?? true)
+@if ($m('admissions'))
 <section id="admissions" class="sc-section sc-section-alt">
     <div class="sc-container" style="max-width:900px;">
         <div class="sc-badge" style="text-align:center;display:block;">Admissions</div>
@@ -253,6 +255,12 @@
             <div style="margin-top:24px;">
                 <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;">Admission Process</h3>
                 <p style="font-size:14px;color:#475569;line-height:1.8;white-space:pre-wrap;">{{ $s['admission_process'] }}</p>
+            </div>
+        @endif
+        @if ($s['eligibility'] ?? null)
+            <div style="margin-top:24px;">
+                <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;">Eligibility</h3>
+                <p style="font-size:14px;color:#475569;line-height:1.8;white-space:pre-wrap;">{{ $s['eligibility'] }}</p>
             </div>
         @endif
         @if ($s['fee_structure'] ?? null)
@@ -265,6 +273,12 @@
             <div style="margin-top:24px;">
                 <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;">Required Documents</h3>
                 <p style="font-size:14px;color:#475569;line-height:1.8;white-space:pre-wrap;">{{ $s['required_documents'] }}</p>
+            </div>
+        @endif
+        @if ($s['admission_schedule'] ?? null)
+            <div style="margin-top:24px;">
+                <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;">Admission Schedule</h3>
+                <p style="font-size:14px;color:#475569;line-height:1.8;white-space:pre-wrap;">{{ $s['admission_schedule'] }}</p>
             </div>
         @endif
         @if ($s['admission_faq'] ?? null)
@@ -283,7 +297,7 @@
 @endif
 
 {{-- ═══════════════ FACULTY ═══════════════ --}}
-@if ($s['show_faculty'] ?? true)
+@if ($m('faculty'))
 <section id="faculty" class="sc-section">
     <div class="sc-container">
         <div class="sc-badge" style="text-align:center;display:block;">Our Team</div>
@@ -313,7 +327,7 @@
 @endif
 
 {{-- ═══════════════ STUDENT LIFE ═══════════════ --}}
-@if ($s['show_student_life'] ?? true)
+@if ($m('student_life'))
 <section id="student-life" class="sc-section sc-section-alt">
     <div class="sc-container">
         <div class="sc-badge" style="text-align:center;display:block;">Student Life</div>
@@ -334,7 +348,7 @@
 @endif
 
 {{-- ═══════════════ FACILITIES ═══════════════ --}}
-@if ($s['show_facilities'] ?? true)
+@if ($m('facilities'))
 <section class="sc-section">
     <div class="sc-container">
         <div class="sc-badge" style="text-align:center;display:block;">Infrastructure</div>
@@ -354,8 +368,7 @@
 @endif
 
 {{-- ═══════════════ GALLERY ═══════════════ --}}
-@if ($s['show_gallery'] ?? true)
-@if ($tenant->galleryImages->count())
+@if ($m('gallery') && $tenant->galleryImages->count())
 <section id="gallery" class="sc-section sc-section-alt">
     <div class="sc-container">
         <div class="sc-badge" style="text-align:center;display:block;">Gallery</div>
@@ -370,10 +383,9 @@
     </div>
 </section>
 @endif
-@endif
 
 {{-- ═══════════════ NEWS & EVENTS ═══════════════ --}}
-@if ($s['show_news'] ?? true)
+@if ($m('news'))
 <section id="news" class="sc-section">
     <div class="sc-container">
         <div class="sc-grid sc-grid-2" style="max-width:900px;margin:0 auto;">
@@ -416,8 +428,8 @@
 @endif
 
 {{-- ═══════════════ ACHIEVEMENTS ═══════════════ --}}
-@if ($s['show_achievements'] ?? true)
-<section class="sc-section sc-section-alt">
+@if ($m('achievements'))
+<section id="achievements" class="sc-section sc-section-alt">
     <div class="sc-container">
         <div class="sc-badge" style="text-align:center;display:block;">Achievements</div>
         <h2 class="sc-title">{{ $s['achievements_title'] ?? 'Our Achievements' }}</h2>
@@ -437,7 +449,7 @@
 @endif
 
 {{-- ═══════════════ TESTIMONIALS ═══════════════ --}}
-@if ($s['show_testimonials'] ?? true)
+@if ($m('testimonials'))
 <section class="sc-section">
     <div class="sc-container">
         <div class="sc-badge" style="text-align:center;display:block;">Testimonials</div>
@@ -446,7 +458,7 @@
             @foreach (['testimonial_1', 'testimonial_2', 'testimonial_3'] as $tKey)
                 @if ($s[$tKey . '_name'] ?? null)
                     <div class="sc-card" style="text-align:center;">
-                        <div style="color:#f59e0b;font-size:14px;margin-bottom:8px;">★★★★★</div>
+                        <div style="color:#f59e0b;font-size:14px;margin-bottom:8px;">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
                         <p style="font-size:13px;color:#475569;line-height:1.7;font-style:italic;margin-bottom:12px;">"{{ $s[$tKey . '_quote'] ?? '' }}"</p>
                         <div style="font-weight:700;font-size:13px;">{{ $s[$tKey . '_name'] }}</div>
                         <div style="font-size:11px;color:#94a3b8;">{{ $s[$tKey . '_role'] ?? 'Parent' }}</div>
@@ -459,8 +471,8 @@
 @endif
 
 {{-- ═══════════════ DOWNLOADS ═══════════════ --}}
-@if ($s['show_downloads'] ?? true)
-<section class="sc-section sc-section-alt">
+@if ($m('downloads'))
+<section id="downloads" class="sc-section sc-section-alt">
     <div class="sc-container" style="max-width:800px;">
         <div class="sc-badge" style="text-align:center;display:block;">Downloads</div>
         <h2 class="sc-title">{{ $s['downloads_title'] ?? 'Important Downloads' }}</h2>
@@ -484,7 +496,7 @@
 @endif
 
 {{-- ═══════════════ CERTIFICATES ═══════════════ --}}
-@if ($s['show_certificates'] ?? true)
+@if ($m('certificates'))
 <section class="sc-section">
     <div class="sc-container" style="max-width:800px;text-align:center;">
         <div class="sc-badge" style="display:block;">Recognition</div>
@@ -504,7 +516,7 @@
 @endif
 
 {{-- ═══════════════ CONTACT ═══════════════ --}}
-@if ($s['show_contact'] ?? true)
+@if ($m('contact'))
 <section id="contact" class="sc-section sc-section-alt">
     <div class="sc-container" style="max-width:900px;">
         <div class="sc-badge" style="text-align:center;display:block;">Contact Us</div>
@@ -531,8 +543,8 @@
                         <div><i class="ti ti-id" style="width:20px;color:var(--sc-accent);"></i> Affiliation: {{ $s['affiliation_number'] }}</div>
                     @endif
                 </div>
-                @if ($s['whatsapp_number'] ?? null)
-                    <a href="https://wa.me/{{ $s['whatsapp_number'] }}" target="_blank" class="sc-btn sc-btn-primary" style="margin-top:20px;background:#25d366;">
+                @if ($tenant->whatsapp_number ?? $s['whatsapp_number'] ?? null)
+                    <a href="https://wa.me/{{ $tenant->whatsapp_number ?? $s['whatsapp_number'] }}" target="_blank" class="sc-btn sc-btn-primary" style="margin-top:20px;background:#25d366;">
                         <i class="ti ti-brand-whatsapp"></i> WhatsApp Us
                     </a>
                 @endif

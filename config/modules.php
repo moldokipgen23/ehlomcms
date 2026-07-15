@@ -1,8 +1,7 @@
 <?php
 
 /**
- * Business Feature Bundles — defines what features each business type gets
- * at each tier (free / pro / premium).
+ * Business Feature Bundles — defines what features each business type gets.
  *
  * Each feature has:
  *   toggleable = true  → admin can toggle on/off per tenant
@@ -12,12 +11,6 @@
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Feature Bundles per Business Type
-    |--------------------------------------------------------------------------
-    */
-
     'bundles' => [
 
         'school' => [
@@ -25,25 +18,25 @@ return [
             'icon' => 'ti-school',
             'description' => 'Professional school website with all essential sections included free.',
             'free' => [
-                ['key' => 'hero', 'name' => 'Hero Banner', 'icon' => 'ti-photo', 'description' => 'Full-width banner with school name, motto, and admission call-to-action.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'hero', 'name' => 'Hero Banner', 'icon' => 'ti-photo', 'description' => 'Full-width banner with school name, motto, and admission CTA.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'stats', 'name' => 'School Highlights', 'icon' => 'ti-star', 'description' => 'Quick highlight cards — Experienced Faculty, Quality Education, etc.', 'toggleable' => true, 'price' => 0],
                 ['key' => 'about', 'name' => 'About School', 'icon' => 'ti-info-circle', 'description' => 'School history, vision, mission, core values, and principal message.', 'toggleable' => true, 'price' => 0],
                 ['key' => 'academics', 'name' => 'Academics', 'icon' => 'ti-book', 'description' => 'Curriculum, classes, subjects, school timings, and examination system.', 'toggleable' => true, 'price' => 0],
-                ['key' => 'admissions', 'name' => 'Admissions', 'icon' => 'ti-clipboard', 'description' => 'Admission process, eligibility, fee structure, and required documents.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'admissions', 'name' => 'Admissions', 'icon' => 'ti-clipboard', 'description' => 'Admission process, eligibility, fee structure, documents, FAQs.', 'toggleable' => true, 'price' => 0],
                 ['key' => 'faculty', 'name' => 'Faculty & Staff', 'icon' => 'ti-users', 'description' => 'Principal, teachers, and staff profiles with photos and qualifications.', 'toggleable' => true, 'price' => 0],
                 ['key' => 'student_life', 'name' => 'Student Life', 'icon' => 'ti-mood-happy', 'description' => 'Clubs, sports, cultural activities, competitions, and events.', 'toggleable' => true, 'price' => 0],
-                ['key' => 'gallery', 'name' => 'Gallery', 'icon' => 'ti-photo', 'description' => 'Photo albums — campus, classrooms, events, and activities.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'facilities', 'name' => 'Facilities', 'icon' => 'ti-building', 'description' => 'Smart classrooms, library, computer lab, science lab, playground, transport.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'gallery', 'name' => 'Gallery', 'icon' => 'ti-photo', 'description' => 'Photo albums — campus, classrooms, events, sports, cultural.', 'toggleable' => true, 'price' => 0],
                 ['key' => 'news', 'name' => 'News & Events', 'icon' => 'ti-news', 'description' => 'School news, circulars, holiday notices, and upcoming events.', 'toggleable' => true, 'price' => 0],
-                ['key' => 'contact', 'name' => 'Contact', 'icon' => 'ti-map-pin', 'description' => 'Address, phone, email, office hours, and WhatsApp button.', 'toggleable' => true, 'price' => 0],
-                ['key' => 'footer', 'name' => 'Footer', 'icon' => 'ti-layout-sidebar', 'description' => 'Quick links, important links, social media, and copyright.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'achievements', 'name' => 'Achievements', 'icon' => 'ti-trophy', 'description' => 'Student toppers, sports winners, board results, awards.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'testimonials', 'name' => 'Testimonials', 'icon' => 'ti-quote', 'description' => 'Parent and student reviews with ratings.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'downloads', 'name' => 'Downloads', 'icon' => 'ti-file-download', 'description' => 'Admission forms, fee structure, prospectus, calendar, circulars.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'certificates', 'name' => 'Certificates & Recognition', 'icon' => 'ti-certificate', 'description' => 'Government recognition, affiliation, safety certificates.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'contact', 'name' => 'Contact', 'icon' => 'ti-map-pin', 'description' => 'Address, phone, email, office hours, Google Map, WhatsApp button.', 'toggleable' => true, 'price' => 0],
             ],
             'pro' => [
-                ['key' => 'stats', 'name' => 'School Statistics', 'icon' => 'ti-chart-bar', 'description' => 'Animated counters — years, students, teachers, classrooms, awards.', 'toggleable' => true, 'price' => 499],
                 ['key' => 'why_choose', 'name' => 'Why Choose Us', 'icon' => 'ti-star', 'description' => '6 reason cards highlighting school strengths.', 'toggleable' => true, 'price' => 499],
-                ['key' => 'achievements', 'name' => 'Achievements', 'icon' => 'ti-trophy', 'description' => 'Student toppers, sports winners, board results, awards.', 'toggleable' => true, 'price' => 499],
-                ['key' => 'testimonials', 'name' => 'Testimonials', 'icon' => 'ti-quote', 'description' => 'Parent and student reviews with ratings.', 'toggleable' => true, 'price' => 499],
-                ['key' => 'downloads', 'name' => 'Downloads', 'icon' => 'ti-file-download', 'description' => 'Admission forms, fee structure, prospectus, calendar, circulars.', 'toggleable' => true, 'price' => 499],
-                ['key' => 'certificates', 'name' => 'Certificates & Recognition', 'icon' => 'ti-certificate', 'description' => 'Government recognition, affiliation, safety certificates.', 'toggleable' => true, 'price' => 499],
-                ['key' => 'map', 'name' => 'Google Map', 'icon' => 'ti-map', 'description' => 'Embedded Google Map on contact section.', 'toggleable' => true, 'price' => 299],
+                ['key' => 'map', 'name' => 'Google Map Embed', 'icon' => 'ti-map', 'description' => 'Embedded Google Map on contact section.', 'toggleable' => true, 'price' => 299],
                 ['key' => 'enquiry_form', 'name' => 'Online Enquiry Form', 'icon' => 'ti-edit', 'description' => 'Admission enquiry form with email notifications.', 'toggleable' => true, 'price' => 799],
             ],
             'premium' => [
@@ -132,7 +125,6 @@ return [
     |--------------------------------------------------------------------------
     | Module Keys (backward compatibility with Tenant::hasModule)
     |--------------------------------------------------------------------------
-    | Maps module keys to their routes and labels for tenant dashboard gating.
     */
     'content' => [
         'label' => 'Content / Pages',
