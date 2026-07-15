@@ -10,22 +10,45 @@ use Illuminate\View\View;
 class AdminModuleController extends Controller
 {
     /**
-     * Show all tenants grouped by business type, with feature toggle grid.
+     * Show all business type bundles with tier summary.
      */
-    public function index(Request $request): View
+    public function index(): View
     {
-        $businessTypes = config('modules.business_types');
+        $bundles = config('modules.bundles');
+        $businessTypes = config('business_types');
 
-        // Which business type tab we're on (default: first)
-        $activeType = $request->query('type', array_key_first($businessTypes));
+        $tenantCounts = Tenant::select('site_type')
+            ->selectRaw('COUNT(*) as count')
+            ->where('status', 'active')
+            ->groupBy('site_type')
+            ->pluck('count', 'site_type');
 
-        // Tenants for this business type
-        $tenants = Tenant::where('site_type', $activeType)
+        return view('modules.index', compact('bundles', 'businessTypes', 'tenantCounts'));
+    }
+
+    /**
+     * Show feature breakdown for a business type with toggle switches.
+     */
+    public function show(Request $request, string $businessType): View
+    {
+        abort_unless(array_key_exists($businessType, config('business_types')), 404);
+
+        $bundles = config('modules.bundles');
+        $bundle = $bundles[$businessType] ?? null;
+        $businessTypes = config('business_types');
+
+        $tenants = Tenant::where('site_type', $businessType)
+            ->where('status', 'active')
             ->with('client')
             ->orderBy('name')
             ->get();
 
-        return view('modules.index', compact('businessTypes', 'activeType', 'tenants'));
+        $selectedTenant = null;
+        if ($request->query('tenant')) {
+            $selectedTenant = $tenants->firstWhere('id', $request->query('tenant'));
+        }
+
+        return view('modules.show', compact('bundle', 'businessType', 'businessTypes', 'tenants', 'selectedTenant'));
     }
 
     /**
@@ -41,17 +64,17 @@ class AdminModuleController extends Controller
         $modules = $tenant->modules ?? [];
 
         if (in_array($featureKey, $modules)) {
-            // Turn off
             $modules = array_values(array_diff($modules, [$featureKey]));
         } else {
-            // Turn on
             $modules[] = $featureKey;
         }
 
         $tenant->modules = $modules;
         $tenant->save();
 
-        return redirect()->back()->with('success', 'Feature "' . $featureKey . '" ' . (in_array($featureKey, $modules) ? 'enabled' : 'disabled') . ' for ' . $tenant->name);
+        $status = in_array($featureKey, $modules) ? 'enabled' : 'disabled';
+
+        return redirect()->back()->with('success', 'Feature "' . str_replace('_', ' ', $featureKey) . '" ' . $status . ' for ' . $tenant->name);
     }
 
     /**
@@ -66,22 +89,21 @@ class AdminModuleController extends Controller
 
         $businessType = $request->input('business_type');
         $action = $request->input('action');
-        $allFeatures = config("modules.business_types.{$businessType}.features", []);
+        $allFeatures = config("modules.bundles.{$businessType}.free", []);
+        $allFeatures = array_merge($allFeatures, config("modules.bundles.{$businessType}.pro", []));
 
         if ($action === 'on') {
-            // Enable all toggleable features
             $tenant->modules = array_unique(array_merge(
                 $tenant->modules ?? [],
-                array_column(array_filter($allFeatures, fn ($f) => $f['toggleable'] ?? false), 'key')
+                array_column($allFeatures, 'key')
             ));
         } else {
-            // Disable all features for this type
             $featureKeys = array_column($allFeatures, 'key');
             $tenant->modules = array_values(array_diff($tenant->modules ?? [], $featureKeys));
         }
 
         $tenant->save();
 
-        return redirect()->back()->with('success', ucfirst($action === 'on' ? 'enabled' : 'disabled') . ' all features for ' . $tenant->name);
+        return redirect()->back()->with('success', ucfirst($action === 'on' ? 'Enabled' : 'Disabled') . ' all features for ' . $tenant->name);
     }
 }
