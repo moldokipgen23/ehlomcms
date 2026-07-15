@@ -26,8 +26,21 @@
             </div>
 
             <div class="eos-field">
+                <label class="eos-label">Client</label>
+                <select name="client_id" class="eos-input" id="clientIdSelect">
+                    <option value="">— No client (standalone) —</option>
+                    @foreach ($clients as $c)
+                        <option value="{{ $c->id }}" {{ (old('client_id', $prefillClient?->id ?? $tenant->client_id ?? '') == $c->id) ? 'selected' : '' }}>
+                            {{ $c->name }}
+                        </option>
+                    @endforeach
+                </select>
+                <div style="font-size:10px;color:var(--text-dim);margin-top:3px;">Link this site to an existing client</div>
+            </div>
+
+            <div class="eos-field">
                 <label class="eos-label">Site Name <span class="text-red-500">*</span></label>
-                <input type="text" name="name" value="{{ old('name', $tenant->name ?? ($prefillClient->business_name ?? $prefillClient->name ?? '')) }}" class="eos-input" required>
+                <input type="text" name="name" value="{{ old('name', $tenant->name ?? ($prefillClient?->business_name ?? $prefillClient?->name ?? '')) }}" class="eos-input" required>
                 @error('name') <div class="eos-error">{{ $message }}</div> @enderror
             </div>
 
@@ -78,13 +91,13 @@
             @if (!$tenant)
                 <div class="eos-field" style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px;">
                     <label class="eos-label">Owner Name <span class="text-red-500">*</span></label>
-                    <input type="text" name="owner_name" value="{{ old('owner_name', $prefillClient->name ?? '') }}" class="eos-input" required>
+                    <input type="text" name="owner_name" value="{{ old('owner_name', $prefillClient?->name ?? '') }}" class="eos-input" required>
                     @error('owner_name') <div class="eos-error">{{ $message }}</div> @enderror
                 </div>
 
                 <div class="eos-field">
                     <label class="eos-label">Owner Email <span class="text-red-500">*</span></label>
-                    <input type="email" name="owner_email" value="{{ old('owner_email', $prefillClient->email ?? '') }}" class="eos-input" required>
+                    <input type="email" name="owner_email" value="{{ old('owner_email', $prefillClient?->email ?? '') }}" class="eos-input" required>
                     @error('owner_email') <div class="eos-error">{{ $message }}</div> @enderror
                 </div>
             @endif
@@ -203,6 +216,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const checkedRadio = document.querySelector('.business-type-card input[type=radio][name=site_type]:checked');
     if (checkedRadio) {
         updateTypeCards(checkedRadio.value);
+    }
+
+    const clientIdSelect = document.getElementById('clientIdSelect');
+    const clientsData = @json($clients->keyBy('id'));
+    if (clientIdSelect) {
+        clientIdSelect.addEventListener('change', function() {
+            const client = clientsData[this.value];
+            if (!client) return;
+            const subdomainInput = document.querySelector('input[name=subdomain]');
+            if (subdomainInput && !subdomainInput.value) {
+                subdomainInput.value = client.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+            }
+        });
     }
 });
 </script>

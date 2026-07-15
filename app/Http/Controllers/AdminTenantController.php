@@ -90,6 +90,7 @@ class AdminTenantController extends Controller
             'subdomain' => ['required', 'string', 'max:255', 'unique:tenants,subdomain', 'regex:/^[a-z0-9-]+$/'],
             'name' => ['required', 'string', 'max:255'],
             'site_type' => ['required', Rule::in(array_keys(config('business_types')))],
+            'client_id' => ['nullable', 'integer', 'exists:clients,id'],
             'template_id' => ['nullable', 'string'],
             'plan' => ['nullable', 'string', 'max:255'],
             'hosting_plan_id' => ['nullable', 'integer', Rule::exists('products', 'id')->where('category', 'hosting')],
