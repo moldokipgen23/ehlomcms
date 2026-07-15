@@ -129,6 +129,12 @@ class LeadController extends Controller
             'converted_client_id' => $client->id,
         ]);
 
+        if (request()->input('create_tenant')) {
+            return redirect()
+                ->route('tenants.create', ['client_id' => $client->id])
+                ->with('success', 'Lead converted to client. Now create the tenant site.');
+        }
+
         return redirect()
             ->route('clients.show', $client)
             ->with('success', 'Lead converted to client successfully. All lead data has been transferred.');

@@ -94,8 +94,16 @@
         @if ($lead->status !== 'won' && $lead->status !== 'lost')
             <form method="POST" action="{{ route('leads.convert', $lead) }}" onsubmit="return confirm('Convert this lead to a client? A new client record will be created.');">
                 @csrf
-                <button class="eos-btn eos-btn-primary" style="border-color:var(--accent-teal);color:var(--accent-teal);">
+                <button class="eos-btn eos-btn-secondary" style="border-color:var(--accent-teal);color:var(--accent-teal);">
                     <i class="ti ti-users"></i> Convert to Client
+                </button>
+            </form>
+
+            <form method="POST" action="{{ route('leads.convert', $lead) }}" onsubmit="return confirm('Convert this lead to a client AND create a tenant site?');">
+                @csrf
+                <input type="hidden" name="create_tenant" value="1">
+                <button class="eos-btn eos-btn-primary" style="border-color:var(--accent-blue);color:var(--accent-blue);">
+                    <i class="ti ti-rocket"></i> Convert &amp; Create Tenant
                 </button>
             </form>
         @endif

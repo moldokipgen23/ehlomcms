@@ -41,6 +41,35 @@
                         <div style="font-size:12.5px;color:var(--text-secondary);">{{ $value }}</div>
                     </div>
                 @endforeach
+                @if ($client->convertedLead)
+                    <div>
+                        <div class="eos-label">Converted From</div>
+                        <div style="font-size:12.5px;color:var(--text-secondary);">
+                            <a href="{{ route('leads.show', $client->convertedLead) }}" style="color:var(--accent-blue);text-decoration:none;">
+                                <i class="ti ti-file-text" style="font-size:11px;"></i> {{ $client->convertedLead->name }}
+                            </a>
+                            @if ($client->convertedLead->business_name)
+                                <span style="color:var(--text-dim);"> — {{ $client->convertedLead->business_name }}</span>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+                @if ($client->project_type || $client->budget_min || $client->budget_max)
+                    <div>
+                        <div class="eos-label">Project Type</div>
+                        <div style="font-size:12.5px;color:var(--text-secondary);">{{ ucfirst(str_replace('_', ' ', $client->project_type)) ?: '—' }}</div>
+                    </div>
+                    <div>
+                        <div class="eos-label">Budget</div>
+                        <div style="font-size:12.5px;color:var(--text-secondary);">
+                            @if ($client->budget_min || $client->budget_max)
+                                ₹{{ number_format($client->budget_min ?: 0) }} – ₹{{ number_format($client->budget_max ?: 0) }}
+                            @else
+                                —
+                            @endif
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
 

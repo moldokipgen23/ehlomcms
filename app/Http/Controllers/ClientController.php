@@ -51,7 +51,7 @@ class ClientController extends Controller
     {
         $client->load([
             'products', 'subscriptions.product', 'projects.products', 'projects.invoice',
-            'invoices', 'domains', 'activities', 'agreements', 'tenant',
+            'invoices', 'domains', 'activities', 'agreements', 'tenant', 'convertedLead',
         ]);
 
         $tenantAddons = $client->tenant
@@ -97,6 +97,12 @@ class ClientController extends Controller
             'address' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'status' => 'nullable|in:active,inactive,suspended',
+            'project_type' => 'nullable|string|max:255',
+            'budget_min' => 'nullable|numeric|min:0',
+            'budget_max' => 'nullable|numeric|min:0',
+            'timeline' => 'nullable|string|max:255',
+            'source' => 'nullable|string|max:255',
+            'features' => 'nullable|string',
             'products' => 'nullable|array',
             'products.*.product_id' => 'nullable|exists:products,id',
             'products.*.custom_price' => 'nullable|numeric|min:0',
