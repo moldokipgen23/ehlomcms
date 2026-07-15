@@ -74,7 +74,7 @@ class AdminModuleController extends Controller
 
         $status = in_array($featureKey, $modules) ? 'enabled' : 'disabled';
 
-        return redirect()->back()->with('success', 'Feature "' . str_replace('_', ' ', $featureKey) . '" ' . $status . ' for ' . $tenant->name);
+        return redirect()->route('modules.show', ['businessType' => $tenant->site_type, 'tenant' => $tenant->id])->with('success', 'Feature "' . str_replace('_', ' ', $featureKey) . '" ' . $status . ' for ' . $tenant->name);
     }
 
     /**
@@ -104,6 +104,6 @@ class AdminModuleController extends Controller
 
         $tenant->save();
 
-        return redirect()->back()->with('success', ucfirst($action === 'on' ? 'Enabled' : 'Disabled') . ' all features for ' . $tenant->name);
+        return redirect()->route('modules.show', ['businessType' => $tenant->site_type, 'tenant' => $tenant->id])->with('success', ucfirst($action === 'on' ? 'Enabled' : 'Disabled') . ' all features for ' . $tenant->name);
     }
 }

@@ -296,6 +296,44 @@
 </section>
 @endif
 
+{{-- ═══════════════ ONLINE ENQUIRY FORM ═══════════════ --}}
+@if ($m('enquiry_form'))
+<section class="sc-section">
+    <div class="sc-container" style="max-width:600px;">
+        <div class="sc-badge" style="text-align:center;display:block;">Enquiry</div>
+        <h2 class="sc-title">{{ $s['enquiry_title'] ?? 'Online Enquiry Form' }}</h2>
+        <p style="text-align:center;color:#64748b;font-size:14px;margin-bottom:24px;">{{ $s['enquiry_subtitle'] ?? 'Fill out the form below and we will get back to you shortly.' }}</p>
+        <form action="{{ route('tenant.content') }}" method="POST" class="sc-card" style="display:flex;flex-direction:column;gap:16px;">
+            @csrf
+            <input type="hidden" name="enquiry_submitted" value="1">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                    <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Full Name *</label>
+                    <input type="text" name="enquiry_name" required style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;" placeholder="Enter full name">
+                </div>
+                <div>
+                    <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Phone Number *</label>
+                    <input type="tel" name="enquiry_phone" required style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;" placeholder="Enter phone number">
+                </div>
+            </div>
+            <div>
+                <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Email Address</label>
+                <input type="email" name="enquiry_email" style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;" placeholder="Enter email address">
+            </div>
+            <div>
+                <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Class Applying For</label>
+                <input type="text" name="enquiry_class" style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;" placeholder="e.g. Class 5, Class 8">
+            </div>
+            <div>
+                <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Your Message</label>
+                <textarea name="enquiry_message" rows="4" style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;resize:vertical;" placeholder="Type your enquiry here..."></textarea>
+            </div>
+            <button type="submit" class="sc-btn sc-btn-primary" style="justify-content:center;">Submit Enquiry <i class="ti ti-send"></i></button>
+        </form>
+    </div>
+</section>
+@endif
+
 {{-- ═══════════════ FACULTY ═══════════════ --}}
 @if ($m('faculty'))
 <section id="faculty" class="sc-section">
@@ -516,7 +554,7 @@
 @endif
 
 {{-- ═══════════════ CONTACT ═══════════════ --}}
-@if ($m('contact'))
+@if ($m('contact') || $m('map'))
 <section id="contact" class="sc-section sc-section-alt">
     <div class="sc-container" style="max-width:900px;">
         <div class="sc-badge" style="text-align:center;display:block;">Contact Us</div>
@@ -555,6 +593,24 @@
                 </div>
             @endif
         </div>
+    </div>
+</section>
+@endif
+
+{{-- ═══════════════ GOOGLE MAP (standalone) ═══════════════ --}}
+@if ($m('map') && ($s['google_map_embed'] ?? null) && !$m('contact'))
+<section id="contact" class="sc-section sc-section-alt">
+    <div class="sc-container">
+        <div class="sc-badge" style="text-align:center;display:block;">Location</div>
+        <h2 class="sc-title">{{ $s['map_title'] ?? 'Find Us on Map' }}</h2>
+        <div style="margin-top:24px;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;max-width:800px;margin-left:auto;margin-right:auto;">
+            {!! $s['google_map_embed'] !!}
+        </div>
+        @if ($tenant->contact_address)
+            <div style="text-align:center;margin-top:16px;font-size:14px;color:#475569;">
+                <i class="ti ti-map-pin" style="color:var(--sc-accent);"></i> {{ $tenant->contact_address }}
+            </div>
+        @endif
     </div>
 </section>
 @endif
