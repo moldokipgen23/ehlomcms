@@ -112,7 +112,8 @@ Route::middleware('auth')->group(function () {
     Route::get('theme-builder/{theme}/download', [\App\Http\Controllers\AdminThemeBuilderController::class, 'download'])->name('theme-builder.download');
 
     Route::get('business-modules', [AdminModuleController::class, 'index'])->name('modules.index');
-    Route::get('business-modules/{businessType}', [AdminModuleController::class, 'show'])->name('modules.show');
+    Route::post('business-modules/{tenant}/toggle', [AdminModuleController::class, 'toggle'])->name('modules.toggle');
+    Route::post('business-modules/{tenant}/bulk-toggle', [AdminModuleController::class, 'bulkToggle'])->name('modules.bulk-toggle');
 
     Route::get('themes', [AdminThemeController::class, 'index'])->name('themes.index');
     Route::get('themes/create', [AdminThemeController::class, 'create'])->name('themes.create');

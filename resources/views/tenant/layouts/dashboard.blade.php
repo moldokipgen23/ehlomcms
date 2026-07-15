@@ -35,6 +35,7 @@
                     ],
                 ];
                 foreach ($modules as $key => $m) {
+                    if (!is_array($m) || !isset($m['nav_section'])) continue;
                     if ($t && $t->hasModule($key)) {
                         $links[$m['nav_section']][] = [$m['route'], $m['label'], $m['icon']];
                     }
@@ -126,6 +127,7 @@
                 ['tenant.dashboard', 'Dashboard', 'ti-layout-dashboard'],
             ];
             foreach ($modules as $key => $m) {
+                if (!is_array($m) || !isset($m['route'])) continue;
                 if ($t && $t->hasModule($key)) {
                     $bottomLinks[] = [$m['route'], $m['label'], $m['icon']];
                 }
