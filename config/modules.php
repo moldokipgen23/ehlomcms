@@ -1,48 +1,52 @@
 <?php
 
 /**
- * Business Features — flat feature list per business type.
+ * Business Feature Bundles — defines what features each business type gets
+ * at each tier (free / pro / premium).
  *
- * toggleable = true  → admin can toggle on/off for any tenant
- * toggleable = false → paid or coming soon — not freely toggleable
- *
- * price = 0      → free feature
- * price > 0      → paid add-on (monthly)
- * future = true  → feature not built yet, shows "Coming Soon"
+ * Each feature has:
+ *   toggleable = true  → admin can toggle on/off per tenant
+ *   price > 0          → paid add-on
+ *   future = true      → not built yet, shows "Coming Soon"
  */
 
 return [
 
     /*
     |--------------------------------------------------------------------------
-    | Business Type Features
+    | Feature Bundles per Business Type
     |--------------------------------------------------------------------------
     */
 
-    'business_types' => [
+    'bundles' => [
 
         'school' => [
             'label' => 'School',
             'icon' => 'ti-school',
-            'features' => [
-                ['key' => 'hero', 'name' => 'Hero Banner', 'icon' => 'ti-photo', 'description' => 'Full-width banner with school name, motto, and CTA.', 'toggleable' => true, 'price' => 0],
-                ['key' => 'about', 'name' => 'About School', 'icon' => 'ti-info-circle', 'description' => 'School history, vision, mission, and principal message.', 'toggleable' => true, 'price' => 0],
-                ['key' => 'academics', 'name' => 'Academics', 'icon' => 'ti-book', 'description' => 'Curriculum, classes, subjects, and examination system.', 'toggleable' => true, 'price' => 0],
-                ['key' => 'admissions', 'name' => 'Admissions', 'icon' => 'ti-clipboard', 'description' => 'Admission process, eligibility, fee structure, and documents.', 'toggleable' => true, 'price' => 0],
-                ['key' => 'faculty', 'name' => 'Faculty & Staff', 'icon' => 'ti-users', 'description' => 'Principal, teachers, and staff profiles.', 'toggleable' => true, 'price' => 0],
-                ['key' => 'student_life', 'name' => 'Student Life', 'icon' => 'ti-mood-happy', 'description' => 'Clubs, sports, cultural activities, and events.', 'toggleable' => true, 'price' => 0],
-                ['key' => 'gallery', 'name' => 'Gallery', 'icon' => 'ti-photo', 'description' => 'Photo albums — campus, classrooms, events.', 'toggleable' => true, 'price' => 0],
-                ['key' => 'news', 'name' => 'News & Events', 'icon' => 'ti-news', 'description' => 'School news, circulars, and upcoming events.', 'toggleable' => true, 'price' => 0],
-                ['key' => 'contact', 'name' => 'Contact', 'icon' => 'ti-map-pin', 'description' => 'Address, phone, email, office hours, and WhatsApp.', 'toggleable' => true, 'price' => 0],
-                ['key' => 'footer', 'name' => 'Footer', 'icon' => 'ti-layout-sidebar', 'description' => 'Quick links, social media, and copyright.', 'toggleable' => true, 'price' => 0],
-                ['key' => 'stats', 'name' => 'School Statistics', 'icon' => 'ti-chart-bar', 'description' => 'Animated counters — years, students, teachers, classrooms.', 'toggleable' => true, 'price' => 499],
+            'description' => 'Professional school website with all essential sections included free.',
+            'free' => [
+                ['key' => 'hero', 'name' => 'Hero Banner', 'icon' => 'ti-photo', 'description' => 'Full-width banner with school name, motto, and admission call-to-action.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'about', 'name' => 'About School', 'icon' => 'ti-info-circle', 'description' => 'School history, vision, mission, core values, and principal message.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'academics', 'name' => 'Academics', 'icon' => 'ti-book', 'description' => 'Curriculum, classes, subjects, school timings, and examination system.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'admissions', 'name' => 'Admissions', 'icon' => 'ti-clipboard', 'description' => 'Admission process, eligibility, fee structure, and required documents.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'faculty', 'name' => 'Faculty & Staff', 'icon' => 'ti-users', 'description' => 'Principal, teachers, and staff profiles with photos and qualifications.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'student_life', 'name' => 'Student Life', 'icon' => 'ti-mood-happy', 'description' => 'Clubs, sports, cultural activities, competitions, and events.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'gallery', 'name' => 'Gallery', 'icon' => 'ti-photo', 'description' => 'Photo albums — campus, classrooms, events, and activities.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'news', 'name' => 'News & Events', 'icon' => 'ti-news', 'description' => 'School news, circulars, holiday notices, and upcoming events.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'contact', 'name' => 'Contact', 'icon' => 'ti-map-pin', 'description' => 'Address, phone, email, office hours, and WhatsApp button.', 'toggleable' => true, 'price' => 0],
+                ['key' => 'footer', 'name' => 'Footer', 'icon' => 'ti-layout-sidebar', 'description' => 'Quick links, important links, social media, and copyright.', 'toggleable' => true, 'price' => 0],
+            ],
+            'pro' => [
+                ['key' => 'stats', 'name' => 'School Statistics', 'icon' => 'ti-chart-bar', 'description' => 'Animated counters — years, students, teachers, classrooms, awards.', 'toggleable' => true, 'price' => 499],
                 ['key' => 'why_choose', 'name' => 'Why Choose Us', 'icon' => 'ti-star', 'description' => '6 reason cards highlighting school strengths.', 'toggleable' => true, 'price' => 499],
-                ['key' => 'achievements', 'name' => 'Achievements', 'icon' => 'ti-trophy', 'description' => 'Student toppers, sports winners, board results.', 'toggleable' => true, 'price' => 499],
+                ['key' => 'achievements', 'name' => 'Achievements', 'icon' => 'ti-trophy', 'description' => 'Student toppers, sports winners, board results, awards.', 'toggleable' => true, 'price' => 499],
                 ['key' => 'testimonials', 'name' => 'Testimonials', 'icon' => 'ti-quote', 'description' => 'Parent and student reviews with ratings.', 'toggleable' => true, 'price' => 499],
-                ['key' => 'downloads', 'name' => 'Downloads', 'icon' => 'ti-file-download', 'description' => 'Admission forms, fee structure, prospectus, calendar.', 'toggleable' => true, 'price' => 499],
+                ['key' => 'downloads', 'name' => 'Downloads', 'icon' => 'ti-file-download', 'description' => 'Admission forms, fee structure, prospectus, calendar, circulars.', 'toggleable' => true, 'price' => 499],
                 ['key' => 'certificates', 'name' => 'Certificates & Recognition', 'icon' => 'ti-certificate', 'description' => 'Government recognition, affiliation, safety certificates.', 'toggleable' => true, 'price' => 499],
                 ['key' => 'map', 'name' => 'Google Map', 'icon' => 'ti-map', 'description' => 'Embedded Google Map on contact section.', 'toggleable' => true, 'price' => 299],
                 ['key' => 'enquiry_form', 'name' => 'Online Enquiry Form', 'icon' => 'ti-edit', 'description' => 'Admission enquiry form with email notifications.', 'toggleable' => true, 'price' => 799],
+            ],
+            'premium' => [
                 ['key' => 'admission_form', 'name' => 'Online Admission Form', 'icon' => 'ti-forms', 'description' => 'Full admission form with document upload and payment.', 'toggleable' => false, 'price' => 1999, 'future' => true],
                 ['key' => 'fee_calculator', 'name' => 'Fee Calculator', 'icon' => 'ti-calculator', 'description' => 'Interactive fee breakdown by class and stream.', 'toggleable' => false, 'price' => 1499, 'future' => true],
                 ['key' => 'student_portal', 'name' => 'Student Portal', 'icon' => 'ti-user', 'description' => 'Student login with results, attendance, and homework.', 'toggleable' => false, 'price' => 2999, 'future' => true],
@@ -54,17 +58,22 @@ return [
         'shopping' => [
             'label' => 'Shopping / Store',
             'icon' => 'ti-shopping-cart',
-            'features' => [
+            'description' => 'Full e-commerce storefront with catalog, cart, and checkout.',
+            'free' => [
                 ['key' => 'catalog', 'name' => 'Product Catalog', 'icon' => 'ti-box', 'description' => 'Product listings with photos, pricing, and descriptions.', 'toggleable' => true, 'price' => 0],
                 ['key' => 'cart', 'name' => 'Shopping Cart', 'icon' => 'ti-shopping-cart', 'description' => 'Session-based cart with quantity management.', 'toggleable' => true, 'price' => 0],
                 ['key' => 'checkout', 'name' => 'Checkout', 'icon' => 'ti-credit-card', 'description' => 'Razorpay / COD / Custom gateway checkout flow.', 'toggleable' => true, 'price' => 0],
                 ['key' => 'orders', 'name' => 'Order Management', 'icon' => 'ti-truck-delivery', 'description' => 'View orders, update status, tracking.', 'toggleable' => true, 'price' => 0],
                 ['key' => 'payments', 'name' => 'Payment Settings', 'icon' => 'ti-credit-card', 'description' => 'Razorpay, Stripe, PayPal, or custom gateway config.', 'toggleable' => true, 'price' => 0],
                 ['key' => 'content', 'name' => 'Content Pages', 'icon' => 'ti-file-text', 'description' => 'About text, gallery images, and contact details.', 'toggleable' => true, 'price' => 0],
-                ['key' => 'wishlist', 'name' => 'Wishlist', 'icon' => 'ti-heart', 'description' => 'Save products for later.', 'toggleable' => true, 'price' => 799],
+            ],
+            'pro' => [
+                ['key' => 'wishlist', 'name' => 'Wishlist', 'icon' => 'ti-heart', 'description' => 'Save products for later with wishlist feature.', 'toggleable' => true, 'price' => 799],
                 ['key' => 'filters', 'name' => 'Product Filters', 'icon' => 'ti-filter', 'description' => 'Filter by category, price range, size, color.', 'toggleable' => true, 'price' => 999],
                 ['key' => 'reviews', 'name' => 'Product Reviews', 'icon' => 'ti-star', 'description' => 'Customer ratings and reviews on product pages.', 'toggleable' => true, 'price' => 799],
                 ['key' => 'coupons', 'name' => 'Coupons & Discounts', 'icon' => 'ti-ticket', 'description' => 'Create discount codes and promotional offers.', 'toggleable' => true, 'price' => 1299],
+            ],
+            'premium' => [
                 ['key' => 'multi_vendor', 'name' => 'Multi-Vendor', 'icon' => 'ti-building-store', 'description' => 'Multiple sellers with independent dashboards.', 'toggleable' => false, 'price' => 4999, 'future' => true],
                 ['key' => 'subscription', 'name' => 'Subscription Billing', 'icon' => 'ti-repeat', 'description' => 'Recurring payments and subscription products.', 'toggleable' => false, 'price' => 3999],
                 ['key' => 'pos', 'name' => 'POS Integration', 'icon' => 'ti-device-desktop', 'description' => 'Sync with Square, Toast, Clover POS systems.', 'toggleable' => false, 'price' => 4999, 'future' => true],
@@ -74,16 +83,21 @@ return [
         'restaurant' => [
             'label' => 'Restaurant',
             'icon' => 'ti-utensils',
-            'features' => [
+            'description' => 'Menu-focused site with online ordering and table reservations.',
+            'free' => [
                 ['key' => 'menu', 'name' => 'Menu / Catalog', 'icon' => 'ti-book', 'description' => 'Menu items with photos, prices, and categories.', 'toggleable' => true, 'price' => 0],
                 ['key' => 'reservations', 'name' => 'Table Reservations', 'icon' => 'ti-calendar-event', 'description' => 'Online table booking requests from storefront.', 'toggleable' => true, 'price' => 0],
                 ['key' => 'orders', 'name' => 'Orders', 'icon' => 'ti-truck-delivery', 'description' => 'Incoming orders with status management.', 'toggleable' => true, 'price' => 0],
                 ['key' => 'payments', 'name' => 'Payment Settings', 'icon' => 'ti-credit-card', 'description' => 'Razorpay, COD, or custom gateway config.', 'toggleable' => true, 'price' => 0],
                 ['key' => 'gallery', 'name' => 'Gallery', 'icon' => 'ti-photo', 'description' => 'Food photos, ambiance, and event images.', 'toggleable' => true, 'price' => 0],
                 ['key' => 'content', 'name' => 'Content Pages', 'icon' => 'ti-file-text', 'description' => 'About, contact details, and opening hours.', 'toggleable' => true, 'price' => 0],
+            ],
+            'pro' => [
                 ['key' => 'online_ordering', 'name' => 'Online Ordering', 'icon' => 'ti-shopping-cart', 'description' => 'Full food ordering with cart and delivery options.', 'toggleable' => true, 'price' => 1499],
                 ['key' => 'table_booking', 'name' => 'Advanced Table Booking', 'icon' => 'ti-calendar', 'description' => 'Time slots, party size, special requests.', 'toggleable' => true, 'price' => 999],
                 ['key' => 'events', 'name' => 'Events & Offers', 'icon' => 'ti-speakerphone', 'description' => 'Promote events, happy hours, and special offers.', 'toggleable' => true, 'price' => 799],
+            ],
+            'premium' => [
                 ['key' => 'delivery', 'name' => 'Delivery Tracking', 'icon' => 'ti-route', 'description' => 'Real-time order tracking for customers.', 'toggleable' => false, 'price' => 2999, 'future' => true],
                 ['key' => 'loyalty', 'name' => 'Loyalty Program', 'icon' => 'ti-gift', 'description' => 'Points, rewards, and referral system.', 'toggleable' => false, 'price' => 2999],
                 ['key' => 'multi_branch', 'name' => 'Multi-Branch', 'icon' => 'ti-map-pin', 'description' => 'Manage multiple locations with centralized menu.', 'toggleable' => false, 'price' => 4999, 'future' => true],
@@ -93,15 +107,20 @@ return [
         'business' => [
             'label' => 'Portfolio / Business',
             'icon' => 'ti-briefcase-2',
-            'features' => [
+            'description' => 'Professional site with services, testimonials, and blog.',
+            'free' => [
                 ['key' => 'services', 'name' => 'Services', 'icon' => 'ti-briefcase-2', 'description' => 'Service listings with descriptions and pricing.', 'toggleable' => true, 'price' => 0],
                 ['key' => 'testimonials', 'name' => 'Testimonials', 'icon' => 'ti-quote', 'description' => 'Client quotes and reviews with ratings.', 'toggleable' => true, 'price' => 0],
                 ['key' => 'blog', 'name' => 'Blog', 'icon' => 'ti-news', 'description' => 'Articles and news posts for SEO and updates.', 'toggleable' => true, 'price' => 0],
                 ['key' => 'content', 'name' => 'Content Pages', 'icon' => 'ti-file-text', 'description' => 'About text, gallery images, and contact details.', 'toggleable' => true, 'price' => 0],
+            ],
+            'pro' => [
                 ['key' => 'case_studies', 'name' => 'Case Studies', 'icon' => 'ti-file-text', 'description' => 'Detailed project showcases with results.', 'toggleable' => true, 'price' => 999],
                 ['key' => 'team', 'name' => 'Team Profiles', 'icon' => 'ti-users', 'description' => 'Team grid with roles and bios.', 'toggleable' => true, 'price' => 799],
                 ['key' => 'careers', 'name' => 'Careers', 'icon' => 'ti-badge', 'description' => 'Job listings and application form.', 'toggleable' => true, 'price' => 999],
                 ['key' => 'newsletter', 'name' => 'Newsletter Signup', 'icon' => 'ti-mail', 'description' => 'Email capture form for marketing.', 'toggleable' => true, 'price' => 499],
+            ],
+            'premium' => [
                 ['key' => 'client_portal', 'name' => 'Client Portal', 'icon' => 'ti-login', 'description' => 'Client login with project tracking.', 'toggleable' => false, 'price' => 3999, 'future' => true],
                 ['key' => 'project_mgmt', 'name' => 'Project Management', 'icon' => 'ti-list', 'description' => 'Task boards and project timelines.', 'toggleable' => false, 'price' => 4999, 'future' => true],
                 ['key' => 'crm', 'name' => 'CRM', 'icon' => 'ti-users', 'description' => 'Lead tracking and customer management.', 'toggleable' => false, 'price' => 4999, 'future' => true],
