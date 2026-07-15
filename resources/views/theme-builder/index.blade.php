@@ -74,7 +74,6 @@
     @endif
 </div>
 
-@section('scripts')
 <script>
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
@@ -96,5 +95,4 @@ function updateFileList() {
     list.innerHTML = Array.from(files).map(f => `<div style="padding:4px 0;"><i class="ti ti-file"></i> ${f.name} (${(f.size/1024).toFixed(1)}KB)</div>`).join('');
 }
 </script>
-@endsection
 @endsection
