@@ -103,16 +103,17 @@ Route::middleware('tenant')->prefix('dashboard')->group(function () {
         Route::get('reset-password/{token}', [TenantNewPasswordController::class, 'create'])->name('tenant.password.reset');
         Route::post('reset-password', [TenantNewPasswordController::class, 'store'])->name('tenant.password.update');
 
-        // Cross-domain impersonation handoff (see AdminImpersonateController
-        // ::loginAsTenant). 'signed' rejects the request outright if the
-        // signature/expiry (2 min) don't check out - that signature is the
-        // entire authorization for this route, since it's otherwise a
-        // guest/unauthenticated endpoint by necessity (there is no session
-        // to be authenticated with yet).
-        Route::get('impersonate/consume', [TenantImpersonateController::class, 'consume'])
-            ->middleware('signed')
-            ->name('tenant.impersonate.consume');
     });
+
+    // Cross-domain impersonation handoff (see AdminImpersonateController
+    // ::loginAsTenant). NOT inside the 'guest' group — if the admin already
+    // has a session on this subdomain from a prior impersonation, the guest
+    // middleware's RedirectIfAuthenticated would try route('dashboard') which
+    // needs portalHost and crashes. The 'signed' middleware alone is
+    // sufficient — it rejects invalid/expired URLs outright.
+    Route::get('impersonate/consume', [TenantImpersonateController::class, 'consume'])
+        ->middleware('signed')
+        ->name('tenant.impersonate.consume');
 
     // Authenticated tenant routes
     Route::middleware('tenant.auth')->group(function () {
@@ -183,9 +184,6 @@ Route::middleware('tenant')->prefix('dashboard')->group(function () {
         // Add-on marketplace
         Route::get('addons', [\App\Http\Controllers\Tenant\TenantAddonController::class, 'index'])->name('tenant.addons');
         Route::post('addons/toggle/{addonKey}', [\App\Http\Controllers\Tenant\TenantAddonController::class, 'toggle'])->name('tenant.addons.toggle');
-        Route::get('addons/{addon}/checkout', [\App\Http\Controllers\Tenant\TenantAddonCheckoutController::class, 'create'])->name('tenant.addons.checkout');
-        Route::post('addons/{addon}/checkout', [\App\Http\Controllers\Tenant\TenantAddonCheckoutController::class, 'checkout'])->name('tenant.addons.pay');
-        Route::get('addons/success', [\App\Http\Controllers\Tenant\TenantAddonCheckoutController::class, 'success'])->name('tenant.addons.success');
     });
 
     // Support tickets

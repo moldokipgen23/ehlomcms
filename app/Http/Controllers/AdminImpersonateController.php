@@ -36,15 +36,24 @@ class AdminImpersonateController extends Controller
             return back()->with('error', 'No owner account found for this tenant.');
         }
 
-        $signedUrl = URL::temporarySignedRoute(
-            'tenant.impersonate.consume',
-            now()->addMinutes(2),
-            [
-                'subdomain' => $tenant->subdomain,
-                'user_id' => $user->id,
-                'admin_id' => auth()->id(),
-            ]
-        );
+        $tenantDomain = config('app.tenant_domain', 'ehlom.com');
+        $tenantHost = $tenant->subdomain . '.' . $tenantDomain;
+
+        $expires = now()->addMinutes(2)->getTimestamp();
+
+        $params = [
+            'subdomain' => $tenant->subdomain,
+            'user_id' => $user->id,
+            'admin_id' => auth()->id(),
+            'expires' => $expires,
+        ];
+
+        $baseUrl = "https://{$tenantHost}/dashboard/impersonate/consume";
+        $queryString = http_build_query($params);
+        $urlToSign = $baseUrl . '?' . $queryString;
+
+        $signature = hash_hmac('sha256', $urlToSign, config('app.key'));
+        $signedUrl = $urlToSign . '&signature=' . $signature;
 
         AuditLog::log('impersonation_started', "Impersonated tenant {$tenant->name}", 'tenant', $tenant->id);
 

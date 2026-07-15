@@ -67,7 +67,7 @@
                             <a href="https://{{ $client->tenant->subdomain }}.{{ config('app.tenant_domain', 'ehlom.com') }}" target="_blank" rel="noopener" class="eos-btn eos-btn-secondary" style="font-size:11px;padding:5px 12px;">
                                 <i class="ti ti-external-link"></i> View Site
                             </a>
-                            <form method="POST" action="{{ route('tenants.impersonate', $client->tenant) }}" style="display:inline;">
+                            <form method="POST" action="{{ route('tenants.impersonate', $client->tenant) }}" style="display:inline;" target="_blank">
                                 @csrf
                                 <button type="submit" class="eos-btn eos-btn-primary" style="font-size:11px;padding:5px 12px;">
                                     <i class="ti ti-login"></i> Login to Dashboard

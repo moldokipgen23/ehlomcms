@@ -30,10 +30,38 @@ class AdminTenantController extends Controller
     public function create(Request $request): View
     {
         $clients = Client::orderBy('name')->get(['id', 'name']);
-        $themes = Theme::orderBy('name')->get()->keyBy('key');
         $modules = config('modules');
         $businessTypes = config('business_types');
         $hostingPlans = Product::where('category', 'hosting')->where('status', 'active')->orderBy('price')->get();
+
+        // Build themes from config + DB. Each theme needs 'industries' array
+        // so the form can group them by business type.
+        $dbThemes = Theme::orderBy('name')->get()->keyBy('key');
+        $themes = collect();
+        foreach (config('themes') as $typeKey => $typeGroup) {
+            foreach ($typeGroup['themes'] ?? [] as $themeKey => $themeData) {
+                $compositeKey = $typeKey . '/' . $themeKey;
+                $db = $dbThemes->get($compositeKey) ?? $dbThemes->get($themeKey);
+                $themes->put($compositeKey, [
+                    'name' => $themeData['name'] ?? ($db?->name ?? $themeKey),
+                    'description' => $themeData['description'] ?? ($db?->description ?? ''),
+                    'industries' => $db?->industries ?? [$typeKey],
+                    'free' => $themeData['free'] ?? true,
+                    'price' => $themeData['price'] ?? 0,
+                ]);
+            }
+        }
+        foreach ($dbThemes as $key => $db) {
+            if (!$themes->has($key)) {
+                $themes->put($key, [
+                    'name' => $db->name,
+                    'description' => $db->description ?? '',
+                    'industries' => $db->industries ?? [],
+                    'free' => true,
+                    'price' => 0,
+                ]);
+            }
+        }
 
         // Free-module defaults per business type, admin-edited from the
         // Business Modules page (business_type_modules table) - used to
@@ -51,7 +79,9 @@ class AdminTenantController extends Controller
             ? Client::find($request->integer('client_id'))
             : null;
 
-        return view('tenants.form', compact('clients', 'themes', 'modules', 'businessTypes', 'freeByType', 'prefillClient', 'hostingPlans'));
+        $tenant = null;
+
+        return view('tenants.form', compact('clients', 'themes', 'modules', 'businessTypes', 'freeByType', 'prefillClient', 'hostingPlans', 'tenant'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -60,7 +90,7 @@ class AdminTenantController extends Controller
             'subdomain' => ['required', 'string', 'max:255', 'unique:tenants,subdomain', 'regex:/^[a-z0-9-]+$/'],
             'name' => ['required', 'string', 'max:255'],
             'site_type' => ['required', Rule::in(array_keys(config('business_types')))],
-            'template_id' => ['nullable', Rule::in(Theme::pluck('key'))],
+            'template_id' => ['nullable', 'string'],
             'plan' => ['nullable', 'string', 'max:255'],
             'hosting_plan_id' => ['nullable', 'integer', Rule::exists('products', 'id')->where('category', 'hosting')],
             'client_id' => ['nullable', 'integer', 'exists:clients,id'],
@@ -107,7 +137,7 @@ class AdminTenantController extends Controller
             'tenant_id' => $tenant->id,
         ]);
 
-        return redirect()->route('onboarding.step', ['tenant' => $tenant, 'step' => 'info'])
+        return redirect()->route('tenants.edit', $tenant)
             ->with('success', "Tenant created.")
             ->with('generated_login', [
                 'subdomain' => $tenant->subdomain,
@@ -119,10 +149,36 @@ class AdminTenantController extends Controller
     public function edit(Tenant $tenant): View
     {
         $clients = Client::orderBy('name')->get(['id', 'name']);
-        $themes = Theme::orderBy('name')->get()->keyBy('key');
         $modules = config('modules');
         $businessTypes = config('business_types');
         $hostingPlans = Product::where('category', 'hosting')->where('status', 'active')->orderBy('price')->get();
+
+        $dbThemes = Theme::orderBy('name')->get()->keyBy('key');
+        $themes = collect();
+        foreach (config('themes') as $typeKey => $typeGroup) {
+            foreach ($typeGroup['themes'] ?? [] as $themeKey => $themeData) {
+                $compositeKey = $typeKey . '/' . $themeKey;
+                $db = $dbThemes->get($compositeKey) ?? $dbThemes->get($themeKey);
+                $themes->put($compositeKey, [
+                    'name' => $themeData['name'] ?? ($db?->name ?? $themeKey),
+                    'description' => $themeData['description'] ?? ($db?->description ?? ''),
+                    'industries' => $db?->industries ?? [$typeKey],
+                    'free' => $themeData['free'] ?? true,
+                    'price' => $themeData['price'] ?? 0,
+                ]);
+            }
+        }
+        foreach ($dbThemes as $key => $db) {
+            if (!$themes->has($key)) {
+                $themes->put($key, [
+                    'name' => $db->name,
+                    'description' => $db->description ?? '',
+                    'industries' => $db->industries ?? [],
+                    'free' => true,
+                    'price' => 0,
+                ]);
+            }
+        }
 
         $freeByType = [];
         foreach ($businessTypes as $typeKey => $type) {
@@ -137,7 +193,7 @@ class AdminTenantController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'site_type' => ['required', Rule::in(array_keys(config('business_types')))],
-            'template_id' => ['nullable', Rule::in(Theme::pluck('key'))],
+            'template_id' => ['nullable', 'string'],
             'plan' => ['nullable', 'string', 'max:255'],
             'hosting_plan_id' => ['nullable', 'integer', Rule::exists('products', 'id')->where('category', 'hosting')],
             'client_id' => ['nullable', 'integer', 'exists:clients,id'],

@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Services\InvoiceAutoGenerator;
 use App\Services\TenantContext;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class TenantInfrastructureCheckoutController extends Controller
@@ -22,7 +23,7 @@ class TenantInfrastructureCheckoutController extends Controller
         return view('tenant.infrastructure.index', compact('tenant', 'domains', 'hosting'));
     }
 
-    public function create(Product $product): View
+    public function create(Product $product): View|RedirectResponse
     {
         if (!in_array($product->category, ['domain', 'hosting'])) {
             abort(404);
@@ -32,13 +33,13 @@ class TenantInfrastructureCheckoutController extends Controller
 
         $paymentSetting = PaymentSetting::where('tenant_id', $tenant->id)->first();
 
-        if (!$paymentSetting || !$paymentSetting->razorpay_key_id || !$paymentSetting->razorpay_key_secret) {
+        if (!$paymentSetting || !$paymentSetting->api_key || !$paymentSetting->api_secret) {
             return back()->with('error', 'Payment not configured. Please contact support.');
         }
 
         $amount = (int) ($product->price * 1.18 * 100);
 
-        $rzp = new \Razorpay\Api\Api($paymentSetting->razorpay_key_id, $paymentSetting->razorpay_key_secret);
+        $rzp = new \Razorpay\Api\Api($paymentSetting->api_key, $paymentSetting->api_secret);
         $order = $rzp->order->create([
             'amount' => $amount,
             'currency' => 'INR',
@@ -47,6 +48,34 @@ class TenantInfrastructureCheckoutController extends Controller
         ]);
 
         return view('tenant.infrastructure.payment', compact('tenant', 'product', 'paymentSetting', 'order'));
+    }
+
+    public function checkout(Request $request, Product $product): RedirectResponse
+    {
+        if (!in_array($product->category, ['domain', 'hosting'])) {
+            abort(404);
+        }
+
+        $tenant = app(TenantContext::class)->get();
+        $paymentSetting = PaymentSetting::where('tenant_id', $tenant->id)->first();
+
+        if (!$paymentSetting || !$paymentSetting->api_key || !$paymentSetting->api_secret) {
+            return back()->with('error', 'Payment not configured.');
+        }
+
+        $amount = (int) ($product->price * 1.18 * 100);
+
+        $rzp = new \Razorpay\Api\Api($paymentSetting->api_key, $paymentSetting->api_secret);
+        $order = $rzp->order->create([
+            'amount' => $amount,
+            'currency' => 'INR',
+            'receipt' => "infra_{$product->category}_{$product->id}_{$tenant->id}_" . time(),
+            'payment_capture' => 1,
+        ]);
+
+        return redirect()->route('tenant.infrastructure.checkout', $product)
+            ->with('order_id', $order->id)
+            ->with('amount', $amount);
     }
 
     public function success(Request $request): View

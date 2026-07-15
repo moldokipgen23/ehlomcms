@@ -29,13 +29,13 @@ class TenantAddonCheckoutController extends Controller
 
         $paymentSetting = PaymentSetting::where('tenant_id', $tenant->id)->first();
 
-        if (!$paymentSetting || !$paymentSetting->razorpay_key_id || !$paymentSetting->razorpay_key_secret) {
+        if (!$paymentSetting || !$paymentSetting->api_key || !$paymentSetting->api_secret) {
             return back()->with('error', 'Payment not configured. Please contact support.');
         }
 
         $amount = (int) ($addon->price * 1.18 * 100);
 
-        $rzp = new \Razorpay\Api\Api($paymentSetting->razorpay_key_id, $paymentSetting->razorpay_key_secret);
+        $rzp = new \Razorpay\Api\Api($paymentSetting->api_key, $paymentSetting->api_secret);
         $order = $rzp->order->create([
             'amount' => $amount,
             'currency' => 'INR',
@@ -44,6 +44,39 @@ class TenantAddonCheckoutController extends Controller
         ]);
 
         return view('tenant.addons.payment', compact('tenant', 'addon', 'paymentSetting', 'order'));
+    }
+
+    public function checkout(Request $request, AddonProduct $addon): RedirectResponse
+    {
+        $tenant = app(TenantContext::class)->get();
+
+        $existing = TenantAddon::where('tenant_id', $tenant->id)
+            ->where('addon_key', $addon->key)
+            ->first();
+
+        if ($existing && in_array($existing->status, ['active', 'pending'], true)) {
+            return back()->with('error', 'You already have this add-on requested or active.');
+        }
+
+        $paymentSetting = PaymentSetting::where('tenant_id', $tenant->id)->first();
+
+        if (!$paymentSetting || !$paymentSetting->api_key || !$paymentSetting->api_secret) {
+            return back()->with('error', 'Payment not configured.');
+        }
+
+        $amount = (int) ($addon->price * 1.18 * 100);
+
+        $rzp = new \Razorpay\Api\Api($paymentSetting->api_key, $paymentSetting->api_secret);
+        $order = $rzp->order->create([
+            'amount' => $amount,
+            'currency' => 'INR',
+            'receipt' => "addon_{$addon->key}_{$tenant->id}_" . time(),
+            'payment_capture' => 1,
+        ]);
+
+        return redirect()->route('tenant.addons.checkout', $addon)
+            ->with('order_id', $order->id)
+            ->with('amount', $amount);
     }
 
     public function success(Request $request): View
@@ -68,7 +101,8 @@ class TenantAddonCheckoutController extends Controller
                 ]);
             } else {
                 return view('tenant.addons.success', [
-                    'addon' => (object) ['addon_key' => $addonKey, 'status' => 'unknown'],
+                    'addonRecord' => (object) ['addon_key' => $addonKey, 'status' => 'unknown', 'addonMeta' => null],
+                    'invoice' => null,
                 ]);
             }
         } elseif ($addonRecord->status !== 'active') {

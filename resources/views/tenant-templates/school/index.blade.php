@@ -9,6 +9,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @php
+        $s = $tenant->theme_settings ?? [];
+        $accent = $s['accent_color'] ?? '#1e40af';
+        $modules = $tenant->modules ?? [];
+        $m = function($key) use ($modules) { return in_array($key, $modules); };
+    @endphp
     <style>
         :root { --sc-accent: {{ $accent }}; --sc-accent-light: {{ $accent }}15; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -40,12 +46,6 @@
     @yield('school-styles')
 </head>
 <body>
-@php
-    $s = $tenant->theme_settings ?? [];
-    $accent = $s['accent_color'] ?? '#1e40af';
-    $modules = $tenant->modules ?? [];
-    $m = function($key) use ($modules) { return in_array($key, $modules); };
-@endphp
 
 {{-- ═══════════════ NAVIGATION ═══════════════ --}}
 @if ($s['show_nav'] ?? true)

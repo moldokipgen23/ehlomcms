@@ -126,7 +126,6 @@ class TenantWebhookController extends Controller
                     $addonRecord->update([
                         'status' => 'active',
                         'activated_at' => now(),
-                        'razorpay_payment_id' => $payment['id'],
                     ]);
                     Log::info('Add-on activated via webhook', ['tenant_id' => $tenantId, 'addon_key' => $addonKey]);
                 }

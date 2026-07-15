@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant' => \App\Http\Middleware\EnsureTenantResolved::class,
             'tenant.auth' => \App\Http\Middleware\TenantAuthenticate::class,
             'admin.role' => \App\Http\Middleware\AdminRole::class,
+            'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

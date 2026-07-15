@@ -14,14 +14,14 @@ class AdminModuleController extends Controller
      */
     public function index(): View
     {
-        $bundles = config('modules.bundles');
-        $businessTypes = config('business_types');
+        $bundles = config('modules.bundles') ?? [];
+        $businessTypes = config('business_types') ?? [];
 
         $tenantCounts = Tenant::select('site_type')
-            ->selectRaw('COUNT(*) as count')
+            ->selectRaw('COUNT(*) as cnt')
             ->where('status', 'active')
             ->groupBy('site_type')
-            ->pluck('count', 'site_type');
+            ->pluck('cnt', 'site_type');
 
         return view('modules.index', compact('bundles', 'businessTypes', 'tenantCounts'));
     }
