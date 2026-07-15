@@ -112,7 +112,7 @@ Route::middleware('auth')->group(function () {
     Route::get('theme-builder/{theme}/download', [\App\Http\Controllers\AdminThemeBuilderController::class, 'download'])->name('theme-builder.download');
 
     Route::get('business-modules', [AdminModuleController::class, 'index'])->name('modules.index');
-    Route::post('business-modules/{businessType}', [AdminModuleController::class, 'updateAssignments'])->name('modules.update-assignments');
+    Route::get('business-modules/{businessType}', [AdminModuleController::class, 'show'])->name('modules.show');
 
     Route::get('themes', [AdminThemeController::class, 'index'])->name('themes.index');
     Route::get('themes/create', [AdminThemeController::class, 'create'])->name('themes.create');

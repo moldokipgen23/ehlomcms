@@ -1,84 +1,69 @@
 @extends('layouts.app')
 
-@section('title', 'Business Modules')
-
-@section('subtitle', 'Every feature the platform offers, set per business type as Free, Paid, or Off')
+@section('title', 'Feature Bundles')
+@section('subtitle', 'What each business type includes — Free, Pro, and Premium tiers')
 
 @section('content')
 
-<div class="eos-page-sub" style="margin-bottom:20px;max-width:760px;">
-    Each card below is a <strong>business type</strong>. For every module, choose
-    <strong>Free</strong> (bundled by default for new tenants of this type),
-    <strong>Paid</strong> (sold as an add-on — automatically listed on the
-    <a href="{{ route('addon-marketplace.index') }}" style="color:var(--accent-blue);">Add-on Marketplace</a>
-    at the price you set here, and unlocks the moment a tenant buys it), or
-    <strong>Off</strong> (not available for this type by default — you can still switch it
-    on for one specific tenant from that tenant's edit page). A module itself only exists
-    once a developer has built its dashboard screen — this page controls who gets it and
-    how, not whether it exists.
-</div>
-
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;">
-    @foreach ($businessTypes as $typeKey => $type)
-        <div class="eos-card" style="padding:16px;display:flex;flex-direction:column;gap:12px;">
-            <div>
-                <div style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:2px;">{{ $type['label'] }}</div>
-                <div style="font-size:11px;color:var(--text-dim);">Template: {{ $type['template'] }}</div>
-            </div>
-
-            <form method="POST" action="{{ route('modules.update-assignments', $typeKey) }}"
-                  x-data="{ status: { @foreach ($modules as $moduleKey => $m){{ Illuminate\Support\Js::from($moduleKey) }}: {{ Illuminate\Support\Js::from($assignmentsByType[$typeKey][$moduleKey]['status'] ?? 'off') }}, @endforeach } }">
-                @csrf
-                <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px;">
-                    @foreach ($modules as $moduleKey => $m)
-                        @php $assignment = $assignmentsByType[$typeKey][$moduleKey] ?? null; @endphp
-                        <div style="border-bottom:1px solid var(--border);padding-bottom:8px;">
-                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                                <i class="ti {{ $m['icon'] }}" style="color:var(--text-muted);font-size:14px;flex:none;"></i>
-                                <span style="font-size:12px;color:var(--text-secondary);">{{ $m['label'] }}</span>
-                                <span style="color:var(--text-dim);font-size:11px;margin-left:auto;white-space:nowrap;">{{ $liveCounts[$moduleKey] ?? 0 }} live</span>
-                            </div>
-                            <div style="display:flex;align-items:center;gap:12px;padding-left:22px;flex-wrap:wrap;">
-                                <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--accent-green);cursor:pointer;">
-                                    <input type="radio" name="status[{{ $moduleKey }}]" value="free" x-model="status.{{ $moduleKey }}" style="accent-color:var(--accent-green);">
-                                    Free
-                                </label>
-                                <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--accent-amber);cursor:pointer;">
-                                    <input type="radio" name="status[{{ $moduleKey }}]" value="paid" x-model="status.{{ $moduleKey }}" style="accent-color:var(--accent-amber);">
-                                    Paid
-                                </label>
-                                <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-dim);cursor:pointer;">
-                                    <input type="radio" name="status[{{ $moduleKey }}]" value="off" x-model="status.{{ $moduleKey }}" style="accent-color:var(--text-dim);">
-                                    Off
-                                </label>
-                                <div x-show="status.{{ $moduleKey }} === 'paid'" style="display:flex;align-items:center;gap:4px;margin-left:auto;">
-                                    <span style="font-size:11px;color:var(--text-dim);">₹</span>
-                                    <input type="number" name="price[{{ $moduleKey }}]" value="{{ $assignment['price'] ?? '' }}" min="0" step="1" placeholder="/mo"
-                                           style="width:64px;padding:2px 6px;font-size:11px;background:var(--bg-hover);border:1px solid var(--border-card);border-radius:4px;color:var(--text-primary);">
-                                </div>
-                            </div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;">
+    @foreach ($bundles as $typeKey => $bundle)
+        @php
+            $count = $tenantCounts[$typeKey] ?? 0;
+            $freeCount = count($bundle['free'] ?? []);
+            $proCount = count($bundle['pro'] ?? []);
+            $premiumCount = count($bundle['premium'] ?? []);
+        @endphp
+        <a href="{{ route('modules.show', $typeKey) }}" style="text-decoration:none;">
+            <div class="eos-card" style="padding:0;overflow:hidden;cursor:pointer;transition:all .2s;border:2px solid transparent;" onmouseover="this.style.borderColor='var(--accent-teal)'" onmouseout="this.style.borderColor='transparent'">
+                {{-- Header --}}
+                <div style="background:linear-gradient(135deg,#0f172a,#1e293b);padding:20px;color:white;">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                        <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;">
+                            <i class="ti {{ $bundle['icon'] }}" style="font-size:22px;color:var(--accent-teal);"></i>
                         </div>
-                    @endforeach
+                        <div>
+                            <div style="font-size:17px;font-weight:700;">{{ $bundle['label'] }}</div>
+                            <div style="font-size:11px;opacity:0.7;">{{ $count }} active tenant{{ $count !== 1 ? 's' : '' }}</div>
+                        </div>
+                    </div>
+                    <div style="font-size:12px;opacity:0.8;line-height:1.5;">{{ $bundle['description'] }}</div>
                 </div>
-                <button type="submit" class="eos-btn eos-btn-secondary" style="font-size:11px;padding:5px 12px;">
-                    <i class="ti ti-check"></i> Save
-                </button>
-            </form>
 
-            @if (($otherAddonsByType[$typeKey] ?? collect())->isNotEmpty())
-                <div style="border-top:1px solid var(--border);padding-top:10px;">
-                    <div style="font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--text-dim);font-weight:600;margin-bottom:8px;">Other add-ons for this type</div>
-                    <div style="display:flex;flex-direction:column;gap:5px;">
-                        @foreach ($otherAddonsByType[$typeKey] as $addon)
-                            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;">
-                                <span style="color:var(--text-secondary);"><i class="ti {{ $addon->icon }}" style="color:var(--text-muted);margin-right:4px;"></i>{{ $addon->name }}</span>
-                                <span style="color:var(--text-dim);white-space:nowrap;">₹{{ number_format($addon->price, 0) }}/mo</span>
-                            </div>
+                {{-- Tier Summary --}}
+                <div style="padding:16px 20px;">
+                    <div style="display:flex;gap:16px;">
+                        {{-- Free --}}
+                        <div style="flex:1;text-align:center;padding:12px 8px;background:#f0fdf4;border-radius:8px;">
+                            <div style="font-size:22px;font-weight:800;color:#16a34a;">{{ $freeCount }}</div>
+                            <div style="font-size:10px;color:#16a34a;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Free</div>
+                            <div style="font-size:9px;color:#94a3b8;margin-top:2px;">Included</div>
+                        </div>
+                        {{-- Pro --}}
+                        <div style="flex:1;text-align:center;padding:12px 8px;background:#fffbeb;border-radius:8px;">
+                            <div style="font-size:22px;font-weight:800;color:#d97706;">{{ $proCount }}</div>
+                            <div style="font-size:10px;color:#d97706;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Pro</div>
+                            <div style="font-size:9px;color:#94a3b8;margin-top:2px;">Add-on</div>
+                        </div>
+                        {{-- Premium --}}
+                        <div style="flex:1;text-align:center;padding:12px 8px;background:#faf5ff;border-radius:8px;">
+                            <div style="font-size:22px;font-weight:800;color:#9333ea;">{{ $premiumCount }}</div>
+                            <div style="font-size:10px;color:#9333ea;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Premium</div>
+                            <div style="font-size:9px;color:#94a3b8;margin-top:2px;">Add-on</div>
+                        </div>
+                    </div>
+
+                    {{-- Preview features --}}
+                    <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:4px;">
+                        @foreach (array_slice($bundle['free'] ?? [], 0, 5) as $feat)
+                            <span style="font-size:10px;padding:3px 8px;background:#f1f5f9;border-radius:4px;color:#475569;">{{ $feat['name'] }}</span>
                         @endforeach
+                        @if ($freeCount > 5)
+                            <span style="font-size:10px;padding:3px 8px;background:#f1f5f9;border-radius:4px;color:#94a3b8;">+{{ $freeCount - 5 }} more</span>
+                        @endif
                     </div>
                 </div>
-            @endif
-        </div>
+            </div>
+        </a>
     @endforeach
 </div>
 
