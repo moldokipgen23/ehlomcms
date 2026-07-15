@@ -21,6 +21,9 @@
             <button type="button" class="eos-tab" :class="{ active: tab === 'templates' }" @click="tab = 'templates'">
                 <i class="ti ti-template"></i> Email Templates
             </button>
+            <button type="button" class="eos-tab" :class="{ active: tab === 'payments' }" @click="tab = 'payments'">
+                <i class="ti ti-credit-card"></i> Payments
+            </button>
         </div>
 
         <form method="POST" action="{{ route('settings.update') }}" enctype="multipart/form-data">
@@ -211,6 +214,42 @@
                         <code>{product_name}</code> <code>{expiry_date}</code> <code>{renewal_amount}</code>
                         <code>{project_title}</code> <code>{completed_at}</code><br>
                         <code>{items}</code> lists the invoice line items &amp; charges. <code>{payment_date}</code> is for the payment confirmation. <code>{project_title}</code> &amp; <code>{completed_at}</code> are for the project completion email.
+                    </div>
+                </div>
+            </div>
+
+            {{-- ── PAYMENTS ── --}}
+            <div x-show="tab === 'payments'" x-cloak>
+                <div class="eos-card" style="margin-bottom:14px;">
+                    <div class="eos-card-header"><div class="eos-card-title">Agency Razorpay Account</div></div>
+                    <p style="font-size:11.5px;color:var(--text-dim);margin-bottom:14px;line-height:1.7;">
+                        Your own Razorpay account — used to charge tenants for Marketplace add-on purchases
+                        (Shopping upgrades, WhatsApp Automation, AI Agent, etc). This is separate from each
+                        tenant's own Razorpay keys, which they enter themselves to accept payments from their
+                        own customers. Without this configured, no tenant can complete an add-on purchase.
+                    </p>
+                    <div class="eos-form-grid">
+                        <div class="eos-field">
+                            <label class="eos-label">Key ID</label>
+                            <input type="text" name="platform_razorpay_key_id" value="{{ old('platform_razorpay_key_id', $platform_razorpay_key_id) }}" class="eos-input" placeholder="rzp_live_...">
+                            @error('platform_razorpay_key_id') <div class="eos-error">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="eos-field">
+                            <label class="eos-label">Key Secret {{ $platform_razorpay_key_secret_set ? '(saved — leave blank to keep)' : '' }}</label>
+                            <input type="password" name="platform_razorpay_key_secret" value="" class="eos-input" autocomplete="new-password" placeholder="{{ $platform_razorpay_key_secret_set ? '••••••••' : 'Enter secret key' }}">
+                            @if ($platform_razorpay_key_secret_preview)
+                                <div style="font-size:11px;margin-top:6px;color:var(--accent-teal, #10b981);font-family:ui-monospace,monospace;">
+                                    ✓ Stored in DB: <strong>{{ $platform_razorpay_key_secret_preview }}</strong>
+                                </div>
+                            @else
+                                <div style="font-size:11px;margin-top:6px;color:var(--text-dim);">Not saved in DB yet.</div>
+                            @endif
+                            @error('platform_razorpay_key_secret') <div class="eos-error">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+                    <div class="eos-alert-bar" style="margin-top:14px;">
+                        <i class="ti ti-shield-lock"></i> Also set the webhook secret on Razorpay's dashboard to point at
+                        <code>{{ url('/webhook/razorpay/addon') }}</code> so purchases activate automatically after payment.
                     </div>
                 </div>
             </div>

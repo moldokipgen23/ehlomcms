@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
-use App\Models\AddonProduct;
-use App\Models\PaymentSetting;
+use App\Models\Setting;
 use App\Models\TenantAddon;
-use App\Services\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * Verified against the agency's own platform Razorpay secret
+ * (Setting::platform_razorpay_key_secret) - add-on purchases are charged to
+ * the agency's account, not any individual tenant's, so there is no
+ * per-tenant secret to check here.
+ */
 class TenantAddonWebhookController extends Controller
 {
     public function handle(Request $request): JsonResponse
@@ -17,36 +21,23 @@ class TenantAddonWebhookController extends Controller
         $payload = $request->getContent();
         $signature = $request->header('X-Razorpay-Signature');
 
-        $tenantId = $this->extractTenantId($payload);
-        if (!$tenantId) {
-            return response()->json(['error' => 'Tenant not found'], 400);
-        }
+        $secret = Setting::get('platform_razorpay_key_secret');
 
-        $paymentSetting = PaymentSetting::where('tenant_id', $tenantId)->first();
-        if (!$paymentSetting || !$paymentSetting->razorpay_key_secret) {
+        if (!$secret) {
             return response()->json(['error' => 'Payment config missing'], 400);
         }
 
-        if (!$this->verifySignature($payload, $signature, $paymentSetting->razorpay_key_secret)) {
+        if (!$this->verifySignature($payload, $signature, $secret)) {
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
         $event = json_decode($payload, true);
 
-        if ($event['event'] === 'payment.captured') {
-            $this->activateAddon($event['payload']['payment']['entity']);
+        if (($event['event'] ?? null) === 'payment.captured') {
+            $this->activateAddon($event['payload']['payment']['entity'] ?? []);
         }
 
         return response()->json(['status' => 'ok']);
-    }
-
-    private function extractTenantId(string $payload): ?int
-    {
-        $data = json_decode($payload, true);
-        if (!isset($data['payload']['payment']['entity']['notes']['tenant_id'])) {
-            return null;
-        }
-        return (int) $data['payload']['payment']['entity']['notes']['tenant_id'];
     }
 
     private function verifySignature(string $payload, ?string $signature, string $secret): bool

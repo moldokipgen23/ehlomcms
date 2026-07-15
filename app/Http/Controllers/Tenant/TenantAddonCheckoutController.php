@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
 use App\Models\AddonProduct;
-use App\Models\PaymentSetting;
+use App\Models\Setting;
 use App\Models\TenantAddon;
 use App\Services\InvoiceAutoGenerator;
 use App\Services\TenantContext;
@@ -13,40 +13,29 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
+/**
+ * Marketplace add-on purchases (paying the AGENCY, not the tenant's own
+ * customers) are charged through the agency's own Razorpay account
+ * (Setting::platform_razorpay_key_id/secret), never the tenant's own
+ * PaymentSetting - that would be circular for any tenant buying the
+ * Razorpay Gateway add-on itself, and wrong even for other add-ons since a
+ * tenant's keys are for charging THEIR customers, not for paying Ehlom.
+ */
 class TenantAddonCheckoutController extends Controller
 {
-    public function create(AddonProduct $addon): View
+    private function platformKeys(): ?array
     {
-        $tenant = app(TenantContext::class)->get();
+        $keyId = Setting::get('platform_razorpay_key_id');
+        $keySecret = Setting::get('platform_razorpay_key_secret');
 
-        $existing = TenantAddon::where('tenant_id', $tenant->id)
-            ->where('addon_key', $addon->key)
-            ->first();
-
-        if ($existing && in_array($existing->status, ['active', 'pending'], true)) {
-            return back()->with('error', 'You already have this add-on requested or active.');
+        if (!$keyId || !$keySecret) {
+            return null;
         }
 
-        $paymentSetting = PaymentSetting::where('tenant_id', $tenant->id)->first();
-
-        if (!$paymentSetting || !$paymentSetting->api_key || !$paymentSetting->api_secret) {
-            return back()->with('error', 'Payment not configured. Please contact support.');
-        }
-
-        $amount = (int) ($addon->price * 1.18 * 100);
-
-        $rzp = new \Razorpay\Api\Api($paymentSetting->api_key, $paymentSetting->api_secret);
-        $order = $rzp->order->create([
-            'amount' => $amount,
-            'currency' => 'INR',
-            'receipt' => "addon_{$addon->key}_{$tenant->id}_" . time(),
-            'payment_capture' => 1,
-        ]);
-
-        return view('tenant.addons.payment', compact('tenant', 'addon', 'paymentSetting', 'order'));
+        return [$keyId, $keySecret];
     }
 
-    public function checkout(Request $request, AddonProduct $addon): RedirectResponse
+    public function create(AddonProduct $addon): View|RedirectResponse
     {
         $tenant = app(TenantContext::class)->get();
 
@@ -55,28 +44,47 @@ class TenantAddonCheckoutController extends Controller
             ->first();
 
         if ($existing && in_array($existing->status, ['active', 'pending'], true)) {
-            return back()->with('error', 'You already have this add-on requested or active.');
+            return redirect()->route('tenant.addons')->with('error', 'You already have this add-on requested or active.');
         }
 
-        $paymentSetting = PaymentSetting::where('tenant_id', $tenant->id)->first();
+        $keys = $this->platformKeys();
 
-        if (!$paymentSetting || !$paymentSetting->api_key || !$paymentSetting->api_secret) {
-            return back()->with('error', 'Payment not configured.');
+        if (!$keys) {
+            return redirect()->route('tenant.addons')->with('error', "Add-on purchases aren't available yet. Please contact support.");
         }
 
-        $amount = (int) ($addon->price * 1.18 * 100);
+        [$keyId, $keySecret] = $keys;
 
-        $rzp = new \Razorpay\Api\Api($paymentSetting->api_key, $paymentSetting->api_secret);
-        $order = $rzp->order->create([
-            'amount' => $amount,
-            'currency' => 'INR',
-            'receipt' => "addon_{$addon->key}_{$tenant->id}_" . time(),
-            'payment_capture' => 1,
+        $amount = (int) round($addon->price * 1.18 * 100);
+
+        try {
+            $rzp = new \Razorpay\Api\Api($keyId, $keySecret);
+            $order = $rzp->order->create([
+                'amount' => $amount,
+                'currency' => 'INR',
+                'receipt' => "addon_{$addon->key}_{$tenant->id}_" . time(),
+                'payment_capture' => 1,
+                'notes' => [
+                    'tenant_id' => $tenant->id,
+                    'addon_key' => $addon->key,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Razorpay order creation failed for add-on purchase', [
+                'tenant_id' => $tenant->id,
+                'addon_key' => $addon->key,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->route('tenant.addons')->with('error', 'Could not start checkout. Please try again shortly.');
+        }
+
+        return view('tenant.addons.payment', [
+            'tenant' => $tenant,
+            'addon' => $addon,
+            'razorpayKeyId' => $keyId,
+            'order' => $order,
         ]);
-
-        return redirect()->route('tenant.addons.checkout', $addon)
-            ->with('order_id', $order->id)
-            ->with('amount', $amount);
     }
 
     public function success(Request $request): View
@@ -92,7 +100,6 @@ class TenantAddonCheckoutController extends Controller
 
         if (!$addonRecord) {
             if ($addonKey && $paymentId) {
-                $addonProduct = AddonProduct::where('key', $addonKey)->first();
                 $addonRecord = TenantAddon::create([
                     'tenant_id' => $tenant->id,
                     'addon_key' => $addonKey,
@@ -111,7 +118,6 @@ class TenantAddonCheckoutController extends Controller
 
         $addonRecord->addonMeta = AddonProduct::where('key', $addonKey)->first();
 
-        // Auto-generate invoice for the add-on purchase
         $invoice = null;
         if ($addonRecord->addonMeta) {
             try {

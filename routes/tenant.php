@@ -77,7 +77,6 @@ Route::middleware('tenant')->group(function () {
 
 // Add-on marketplace checkout (public - requires Razorpay)
     Route::get('addons/{addon}/checkout', [TenantAddonCheckoutController::class, 'create'])->name('tenant.addons.checkout');
-    Route::post('addons/{addon}/checkout', [TenantAddonCheckoutController::class, 'checkout'])->name('tenant.addons.pay');
     Route::get('addons/success', [TenantAddonCheckoutController::class, 'success'])->name('tenant.addons.success');
 
     // Domain/Hosting marketplace

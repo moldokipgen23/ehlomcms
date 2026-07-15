@@ -19,6 +19,7 @@ class SettingController extends Controller
         'email_completion_subject', 'email_completion_body',
         'smtp_host', 'smtp_port', 'smtp_username',
         'smtp_encryption', 'smtp_from_address', 'smtp_from_name',
+        'platform_razorpay_key_id',
     ];
 
     public function edit()
@@ -48,6 +49,9 @@ class SettingController extends Controller
             'brevo_api_key_set' => (bool) Setting::get('brevo_api_key'),
             'brevo_api_key_preview' => self::maskSecret(Setting::get('brevo_api_key')),
             'smtp_password_preview' => self::maskSecret(Setting::get('smtp_password')),
+            'platform_razorpay_key_id' => Setting::get('platform_razorpay_key_id'),
+            'platform_razorpay_key_secret_set' => (bool) Setting::get('platform_razorpay_key_secret'),
+            'platform_razorpay_key_secret_preview' => self::maskSecret(Setting::get('platform_razorpay_key_secret')),
         ]);
     }
 
@@ -72,6 +76,8 @@ class SettingController extends Controller
             'smtp_encryption' => 'nullable|in:tls,ssl,none',
             'smtp_from_address' => 'nullable|email|max:255',
             'smtp_from_name' => 'nullable|string|max:255',
+            'platform_razorpay_key_id' => 'nullable|string|max:255',
+            'platform_razorpay_key_secret' => 'nullable|string|max:255',
         ]);
 
         foreach (self::TEXT_KEYS as $key) {
@@ -85,6 +91,9 @@ class SettingController extends Controller
         }
         if (filled($request->input('brevo_api_key'))) {
             Setting::put('brevo_api_key', trim((string) $request->input('brevo_api_key')));
+        }
+        if (filled($request->input('platform_razorpay_key_secret'))) {
+            Setting::put('platform_razorpay_key_secret', trim((string) $request->input('platform_razorpay_key_secret')));
         }
 
         foreach (['logo' => 'company_logo', 'signature' => 'company_signature'] as $field => $key) {
