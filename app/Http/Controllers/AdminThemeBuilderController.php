@@ -24,17 +24,23 @@ class AdminThemeBuilderController extends Controller
     public function analyze(Request $request): View
     {
         $request->validate([
-            'files' => ['required', 'array', 'min:1'],
+            'files' => ['nullable', 'array'],
             'files.*' => ['file', 'mimes:html,htm,css,js,jsx,tsx,zip,png,jpg,jpeg,svg'],
-            'figma_url' => ['nullable', 'url'],
+            'design_url' => ['nullable', 'url'],
+            'paste_html' => ['nullable', 'string', 'max:200000'],
             'business_type' => ['required', 'string'],
         ]);
 
+        if (!$request->hasAny('files.0', 'design_url', 'paste_html')) {
+            return back()->withErrors(['files' => 'Upload files, paste a design URL, or paste HTML code.'])->withInput();
+        }
+
         $analyzer = app(ThemeAnalyzer::class);
         $analysis = $analyzer->analyze(
-            $request->file('files'),
-            $request->input('figma_url'),
-            $request->input('business_type')
+            $request->file('files') ?? [],
+            $request->input('design_url'),
+            $request->input('business_type'),
+            $request->input('paste_html')
         );
 
         $businessTypes = config('business_types');

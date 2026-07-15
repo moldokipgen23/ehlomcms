@@ -15,14 +15,20 @@
                 <div style="border:2px dashed var(--border);border-radius:12px;padding:40px;text-align:center;margin-bottom:20px;" id="dropZone">
                     <i class="ti ti-upload" style="font-size:40px;color:var(--accent-teal);margin-bottom:12px;display:block;"></i>
                     <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Drop files here or click to upload</div>
-                    <div style="font-size:11px;color:var(--text-dim);">HTML, CSS, JS, React (ZIP), images — or paste a Figma URL below</div>
+                    <div style="font-size:11px;color:var(--text-dim);">HTML, CSS, JS, React (ZIP), images — or paste a design URL below</div>
                     <input type="file" name="files[]" multiple accept=".html,.htm,.css,.js,.jsx,.tsx,.zip,.png,.jpg,.jpeg,.svg" style="display:none;" id="fileInput" onchange="updateFileList()">
                 </div>
                 <div id="fileList" style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;"></div>
 
                 <div class="eos-field">
-                    <label class="eos-label">Figma URL (optional)</label>
-                    <input type="url" name="figma_url" class="eos-input" placeholder="https://www.figma.com/file/...">
+                    <label class="eos-label">Design URL (optional)</label>
+                    <input type="url" name="design_url" class="eos-input" placeholder="https://example.com/template or Google Stitch URL">
+                    <div style="font-size:10px;color:var(--text-dim);margin-top:3px;">Paste a URL to an HTML template (e.g. from Google Stitch, HTML5 UP, etc.)</div>
+                </div>
+
+                <div class="eos-field">
+                    <label class="eos-label">Or Paste HTML Directly</label>
+                    <textarea name="paste_html" class="eos-input" rows="6" style="font-family:monospace;font-size:12px;" placeholder="Paste your full HTML code here..."></textarea>
                 </div>
 
                 <div class="eos-field">

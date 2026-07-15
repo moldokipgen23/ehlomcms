@@ -24,6 +24,9 @@
             </button>
         </form>
         <div style="display:flex;gap:6px;">
+            <a href="{{ route('themes.preview', $theme) }}" target="_blank" class="eos-btn" style="font-size:10px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;text-decoration:none;color:var(--text-secondary);" title="Preview theme">
+                <i class="ti ti-eye"></i>
+            </a>
             <a href="{{ route('themes.download', $theme) }}" class="eos-btn" style="font-size:10px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;text-decoration:none;color:var(--text-secondary);" title="Download as theme.zip">
                 <i class="ti ti-download"></i>
             </a>

@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\Storage;
 
 class ThemeAnalyzer
 {
-    public function analyze(array $files, ?string $figmaUrl, string $businessType): array
+    public function analyze(array $files, ?string $designUrl, string $businessType, ?string $pasteHtml = null): array
     {
-        $htmlContent = '';
+        $htmlContent = $pasteHtml ?? '';
         $cssContent = '';
         $jsContent = '';
         $images = [];
@@ -40,10 +40,22 @@ class ThemeAnalyzer
             }
         }
 
+        // Fetch HTML from design URL if provided
+        if ($designUrl && empty($htmlContent)) {
+            try {
+                $response = Http::timeout(15)->get($designUrl);
+                if ($response->successful()) {
+                    $htmlContent = $response->body();
+                }
+            } catch (\Exception $e) {
+                // URL fetch failed, continue with what we have
+            }
+        }
+
         $analysis = [
             'business_type' => $businessType,
             'sections' => $this->extractSections($htmlContent),
-            'colors' => $this->extractColors($cssContent),
+            'colors' => $this->extractColors($cssContent . $htmlContent),
             'fonts' => $this->extractFonts($cssContent, $htmlContent),
             'components' => $this->extractComponents($htmlContent),
             'layout' => $this->extractLayout($htmlContent),
@@ -52,9 +64,8 @@ class ThemeAnalyzer
             'raw_css' => substr($cssContent, 0, 5000),
         ];
 
-        if ($figmaUrl) {
-            $analysis['figma_url'] = $figmaUrl;
-            $analysis['figma_data'] = $this->analyzeFigma($figmaUrl);
+        if ($designUrl) {
+            $analysis['design_url'] = $designUrl;
         }
 
         return $analysis;
@@ -181,10 +192,5 @@ class ThemeAnalyzer
         }
 
         return array_unique($layout);
-    }
-
-    private function analyzeFigma(string $url): array
-    {
-        return ['url' => $url, 'note' => 'Figma integration requires API key configuration'];
     }
 }
