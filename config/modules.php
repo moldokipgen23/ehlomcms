@@ -13,7 +13,7 @@ return [
         'description' => 'About text, gallery images, and contact details.',
         'price' => 0,
         'free' => true,
-        'business_types' => ['info', 'shopping', 'restaurant', 'business'],
+        'business_types' => ['school', 'shopping', 'restaurant', 'business'],
     ],
     'catalog' => [
         'label' => 'Product Catalog',
@@ -95,7 +95,7 @@ return [
         'description' => 'Advanced analytics: heatmaps, funnels, cohort analysis, custom reports.',
         'price' => 1999,
         'free' => false,
-        'business_types' => ['info', 'shopping', 'restaurant', 'business'],
+        'business_types' => ['school', 'shopping', 'restaurant', 'business'],
     ],
     'whatsapp_automation' => [
         'label' => 'WhatsApp Automation',

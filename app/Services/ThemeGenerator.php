@@ -34,7 +34,7 @@ class ThemeGenerator
             'key' => $themeKey,
             'name' => $themeName,
             'description' => "AI-generated theme for {$businessType}",
-            'base_template' => 'info',
+            'base_template' => 'school',
             'custom_html' => $bladeContent,
             'default_settings' => $config['settings'],
             'industries' => [$businessType],

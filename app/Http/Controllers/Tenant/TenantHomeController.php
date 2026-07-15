@@ -80,7 +80,7 @@ class TenantHomeController extends Controller
             'shopping' => 'shop',
             'restaurant' => 'restaurant',
             'business' => 'business',
-            default => 'info',
+            default => 'school',
         };
 
         if ($theme) {
@@ -95,11 +95,11 @@ class TenantHomeController extends Controller
             );
         }
 
-        // Only 'info' is guaranteed to exist for any tenant with no theme
+        // Only 'school' is guaranteed to exist for any tenant with no theme
         // assigned at all; any other base_template must correspond to a real
         // Blade file or we'd 500 instead of showing something.
         if (!ViewFacade::exists("tenant-templates.{$baseTemplate}.index")) {
-            $baseTemplate = 'info';
+            $baseTemplate = 'school';
         }
 
         return view("tenant-templates.{$baseTemplate}.index", compact('tenant', 'products', 'services', 'testimonials', 'posts'));

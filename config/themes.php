@@ -1,29 +1,24 @@
 <?php
 
 return [
-    /*
-     * Theme Registry — organized by business type (vertical).
-     * Each top-level key is a business type folder.
-     * Inside: theme definitions with their own keys.
-     */
-    'info' => [
-        'label' => 'Info / Basic',
-        'folder' => 'info',
+    'school' => [
+        'label' => 'School',
+        'folder' => 'school',
         'themes' => [
             'classic' => [
-                'name' => 'Info Classic',
-                'description' => 'Clean information page with about text, gallery, and contact details. Perfect for churches, NGOs, and portfolio sites.',
-                'thumbnail' => 'images/themes/info/classic-preview.png',
+                'name' => 'School Classic',
+                'description' => 'Professional school website with all sections — hero, principal message, stats, academics, admissions, faculty, events, gallery, news, achievements, and contact.',
+                'thumbnail' => 'images/themes/school/classic-preview.png',
                 'public' => true,
                 'free' => true,
             ],
             'modern' => [
-                'name' => 'Info Modern',
-                'description' => 'Modern layout with hero section, feature grid, and testimonial carousel.',
-                'thumbnail' => 'images/themes/info/modern-preview.png',
+                'name' => 'School Modern',
+                'description' => 'Modern school website with animated sections, video backgrounds, and interactive campus tour.',
+                'thumbnail' => 'images/themes/school/modern-preview.png',
                 'public' => true,
                 'free' => false,
-                'price' => 999,
+                'price' => 1999,
             ],
         ],
     ],

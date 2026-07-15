@@ -113,7 +113,7 @@
                 <div class="eos-card-header" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--bg-hover);border-bottom:1px solid var(--border);">
                     <div style="display:flex;align-items:center;gap:10px;">
                         <div style="width:36px;height:36px;border-radius:8px;background:var(--accent-teal-alpha,#d1fae5);display:flex;align-items:center;justify-content:center;">
-                            <i class="ti {{ $typeKey === 'shopping' ? 'ti-shopping-cart' : ($typeKey === 'restaurant' ? 'ti-utensils' : ($typeKey === 'business' ? 'ti-briefcase-2' : 'ti-info-circle')) }}" style="font-size:16px;color:var(--accent-teal);"></i>
+                            <i class="ti {{ $typeKey === 'shopping' ? 'ti-shopping-cart' : ($typeKey === 'restaurant' ? 'ti-utensils' : ($typeKey === 'business' ? 'ti-briefcase-2' : 'ti-school')) }}" style="font-size:16px;color:var(--accent-teal);"></i>
                         </div>
                         <div>
                             <div style="font-weight:600;font-size:14px;">{{ $type['label'] }}</div>
@@ -220,7 +220,7 @@
                                 @php $industries = $theme['industries'] ?? []; @endphp
                                 <div class="theme-card" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg-card);cursor:pointer;transition:all .2s;position:relative;" onclick="selectTheme(this, '{{ $key }}')">
                                     <div style="aspect-ratio:16/10;background:var(--bg-hover);display:flex;align-items:center;justify-content:center;position:relative;">
-                                        <i class="ti {{ $industries[0] === 'shopping' ? 'ti-shopping-cart' : ($industries[0] === 'info' ? 'ti-info-circle' : 'ti-palette') }}" style="font-size:28px;color:var(--accent-teal);"></i>
+                                        <i class="ti {{ $industries[0] === 'shopping' ? 'ti-school' : ($industries[0] === 'school' ? 'ti-school' : 'ti-palette') }}" style="font-size:28px;color:var(--accent-teal);"></i>
                                         <a href="{{ route('onboarding.theme-preview', ['theme' => $key]) }}" target="_blank" onclick="event.stopPropagation();" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:4px;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;text-decoration:none;" title="Preview theme">
                                             <i class="ti ti-eye" style="font-size:11px;color:white;"></i>
                                         </a>
@@ -266,7 +266,7 @@
                         @php $industries = $theme['industries'] ?? []; @endphp
                         <div class="theme-card" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg-card);cursor:pointer;transition:all .2s;position:relative;" onclick="selectTheme(this, '{{ $key }}')">
                             <div style="aspect-ratio:16/10;background:var(--bg-hover);display:flex;align-items:center;justify-content:center;position:relative;">
-                                <i class="ti {{ $industries[0] === 'shopping' ? 'ti-shopping-cart' : ($industries[0] === 'info' ? 'ti-info-circle' : 'ti-palette') }}" style="font-size:28px;color:var(--accent-teal);"></i>
+                                <i class="ti {{ $industries[0] === 'shopping' ? 'ti-shopping-cart' : ($industries[0] === 'school' ? 'ti-school' : 'ti-palette') }}" style="font-size:28px;color:var(--accent-teal);"></i>
                                 <a href="{{ route('onboarding.theme-preview', ['theme' => $key]) }}" target="_blank" onclick="event.stopPropagation();" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:4px;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;text-decoration:none;" title="Preview theme">
                                     <i class="ti ti-eye" style="font-size:11px;color:white;"></i>
                                 </a>

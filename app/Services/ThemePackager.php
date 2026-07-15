@@ -23,7 +23,7 @@ class ThemePackager
             'description' => $theme->description,
             'version' => '1.0.0',
             'author' => 'Ehlom Theme Builder',
-            'business_type' => $theme->industries[0] ?? 'info',
+            'business_type' => $theme->industries[0] ?? 'school',
             'settings' => $theme->default_settings ?? [],
         ], JSON_PRETTY_PRINT));
 

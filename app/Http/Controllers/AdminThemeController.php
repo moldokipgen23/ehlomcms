@@ -230,7 +230,7 @@ class AdminThemeController extends Controller
         ]);
 
         $sourceTheme = Theme::where('key', $tenant->template_id)->first();
-        $baseTemplate = $sourceTheme->base_template ?? ($tenant->template_id ?: 'info');
+        $baseTemplate = $sourceTheme->base_template ?? ($tenant->template_id ?: 'school');
 
         $theme = Theme::create([
             'key' => $this->uniqueKey($data['name']),
@@ -321,7 +321,7 @@ class AdminThemeController extends Controller
         $demoTenant = new Tenant([
             'name' => 'Demo Store',
             'subdomain' => 'demo',
-            'site_type' => $theme->industries[0] ?? 'info',
+            'site_type' => $theme->industries[0] ?? 'school',
             'template_id' => $theme->key,
             'theme_settings' => $theme->default_settings ?? [],
             'about_text' => 'Welcome to our demo store. This is a preview of how your site will look with this theme.',

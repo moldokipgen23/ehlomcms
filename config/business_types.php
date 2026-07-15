@@ -1,17 +1,9 @@
 <?php
 
-/**
- * The single source of truth for the platform's business types (verticals).
- *
- * Each business type maps to: a human label, the default storefront template
- * key (a Theme->key), and the set of module keys (see config/modules.php) that
- * are enabled by default when a tenant of this type is created.
- */
-
 return [
-    'info' => [
-        'label' => 'Info / Basic',
-        'template' => 'info/classic',
+    'school' => [
+        'label' => 'School',
+        'template' => 'school/classic',
         'default_modules' => ['content'],
     ],
     'shopping' => [
