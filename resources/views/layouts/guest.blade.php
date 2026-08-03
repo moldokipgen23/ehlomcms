@@ -16,7 +16,7 @@
 <body class="antialiased">
     @php $authLogo = \App\Models\Setting::imageData('company_logo'); @endphp
 
-    <canvas id="auth-bg"></canvas>
+    <canvas id="auth-bg" aria-hidden="true"></canvas>
 
     <div class="auth-shell">
         <div class="auth-card">
@@ -41,98 +41,80 @@
     (function () {
         const canvas = document.getElementById('auth-bg');
         const ctx = canvas.getContext('2d');
-        let W, H, cx, cy;
+        let W, H;
 
         function resize() {
             W = canvas.width = window.innerWidth;
             H = canvas.height = window.innerHeight;
-            cx = W / 2; cy = H / 2;
         }
         resize();
         window.addEventListener('resize', resize);
 
         const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const N = window.innerWidth < 600 ? 200 : 380;
-        const particles = [];
-        for (let i = 0; i < N; i++) {
-            const t = i / N;
-            particles.push({
-                baseA: t * Math.PI * 13,
-                baseR: t,
-                x: 0, y: 0,
-                hue: (t * 290 + 195) % 360,
-                size: 1 + t * 2.6,
-            });
-        }
+        const particleCount = window.innerWidth < 600 ? 34 : 58;
+        const particles = Array.from({ length: particleCount }, (_, index) => ({
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            vx: (Math.random() - .5) * .15,
+            vy: (Math.random() - .5) * .15,
+            radius: 1.1 + Math.random() * 1.8,
+            hue: index % 3 === 0 ? 189 : index % 3 === 1 ? 224 : 271,
+        }));
 
-        const mouse = { x: -9999, y: -9999 };
-        window.addEventListener('pointermove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
-        window.addEventListener('pointerleave', () => { mouse.x = -9999; mouse.y = -9999; });
-
-        const rings = [];
-        window.addEventListener('pointerdown', e => {
-            rings.push({ x: e.clientX, y: e.clientY, r: 0, life: 1 });
-        });
-
-        let rot = 0;
-        function frame() {
-            rot += reduced ? 0 : 0.0017;
-
-            ctx.fillStyle = 'rgba(13,15,20,0.30)';
+        function drawAmbientGlow(time) {
+            const drift = reduced ? 0 : time * .00008;
+            const left = ctx.createRadialGradient(W * (.18 + Math.sin(drift) * .05), H * .16, 0, W * .18, H * .16, Math.max(W, H) * .58);
+            left.addColorStop(0, 'rgba(25, 164, 208, .18)');
+            left.addColorStop(1, 'rgba(25, 164, 208, 0)');
+            ctx.fillStyle = left;
             ctx.fillRect(0, 0, W, H);
 
-            const spiralR = Math.min(W, H) * 0.62;
+            const right = ctx.createRadialGradient(W * (.82 + Math.cos(drift * .8) * .04), H * .74, 0, W * .82, H * .74, Math.max(W, H) * .6);
+            right.addColorStop(0, 'rgba(125, 79, 220, .17)');
+            right.addColorStop(1, 'rgba(125, 79, 220, 0)');
+            ctx.fillStyle = right;
+            ctx.fillRect(0, 0, W, H);
+        }
 
-            for (let i = rings.length - 1; i >= 0; i--) {
-                const r = rings[i];
-                r.r += 9; r.life -= 0.018;
-                if (r.life <= 0) rings.splice(i, 1);
-            }
+        function frame() {
+            const now = performance.now();
+            ctx.fillStyle = '#0b1020';
+            ctx.fillRect(0, 0, W, H);
+            drawAmbientGlow(now);
 
             for (const p of particles) {
-                const a = p.baseA + rot;
-                let tx = cx + Math.cos(a) * p.baseR * spiralR;
-                let ty = cy + Math.sin(a) * p.baseR * spiralR;
-
-                let dx = tx - mouse.x, dy = ty - mouse.y;
-                let d2 = dx * dx + dy * dy;
-                if (d2 < 20000) {
-                    const d = Math.sqrt(d2) || 1;
-                    const f = (1 - d / 141) * 64;
-                    tx += dx / d * f; ty += dy / d * f;
+                if (!reduced) {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    if (p.x < -20 || p.x > W + 20) p.vx *= -1;
+                    if (p.y < -20 || p.y > H + 20) p.vy *= -1;
                 }
+            }
 
-                for (const r of rings) {
-                    let rx = tx - r.x, ry = ty - r.y;
-                    const rd = Math.sqrt(rx * rx + ry * ry) || 1;
-                    if (Math.abs(rd - r.r) < 64) {
-                        const f = (1 - Math.abs(rd - r.r) / 64) * 56 * r.life;
-                        tx += rx / rd * f; ty += ry / rd * f;
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+                for (let j = i + 1; j < particles.length; j++) {
+                    const q = particles[j];
+                    const dx = p.x - q.x, dy = p.y - q.y;
+                    const distance = Math.hypot(dx, dy);
+                    if (distance < 150) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(q.x, q.y);
+                        ctx.strokeStyle = `rgba(105, 165, 255, ${.12 * (1 - distance / 150)})`;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
                     }
                 }
-
-                p.x += (tx - p.x) * 0.12;
-                p.y += (ty - p.y) * 0.12;
-
-                const hue = p.hue + rot * 40;
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fillStyle = `hsla(${hue},85%,63%,0.92)`;
-                ctx.shadowBlur = 14;
-                ctx.shadowColor = `hsla(${hue},90%,60%,0.85)`;
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `hsla(${p.hue}, 90%, 70%, .9)`;
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = `hsla(${p.hue}, 90%, 62%, .8)`;
                 ctx.fill();
             }
             ctx.shadowBlur = 0;
-
-            for (const r of rings) {
-                ctx.beginPath();
-                ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
-                ctx.strokeStyle = `hsla(258,92%,72%,${r.life * 0.55})`;
-                ctx.lineWidth = 2.5;
-                ctx.stroke();
-            }
-
-            requestAnimationFrame(frame);
+            if (!reduced) requestAnimationFrame(frame);
         }
         frame();
     })();

@@ -8,15 +8,30 @@ use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\Theme;
 use App\Models\User;
+use App\Services\ClientServiceLedger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AdminTenantController extends Controller
 {
+    private function assignableThemes()
+    {
+        return Theme::orderBy('name')->get()->mapWithKeys(fn (Theme $theme) => [
+            $theme->key => [
+                'name' => $theme->name,
+                'description' => $theme->description ?? '',
+                'industries' => $theme->industries ?? [],
+                'free' => true,
+                'price' => 0,
+            ],
+        ]);
+    }
+
     public function index(): View
     {
         $tenants = Tenant::with('client', 'activeAddons', 'hostingPlan')
@@ -34,42 +49,20 @@ class AdminTenantController extends Controller
         $businessTypes = config('business_types');
         $hostingPlans = Product::where('category', 'hosting')->where('status', 'active')->orderBy('price')->get();
 
-        // Build themes from config + DB. Each theme needs 'industries' array
-        // so the form can group them by business type.
-        $dbThemes = Theme::orderBy('name')->get()->keyBy('key');
-        $themes = collect();
-        foreach (config('themes') as $typeKey => $typeGroup) {
-            foreach ($typeGroup['themes'] ?? [] as $themeKey => $themeData) {
-                $compositeKey = $typeKey . '/' . $themeKey;
-                $db = $dbThemes->get($compositeKey) ?? $dbThemes->get($themeKey);
-                $themes->put($compositeKey, [
-                    'name' => $themeData['name'] ?? ($db?->name ?? $themeKey),
-                    'description' => $themeData['description'] ?? ($db?->description ?? ''),
-                    'industries' => $db?->industries ?? [$typeKey],
-                    'free' => $themeData['free'] ?? true,
-                    'price' => $themeData['price'] ?? 0,
-                ]);
-            }
-        }
-        foreach ($dbThemes as $key => $db) {
-            if (!$themes->has($key)) {
-                $themes->put($key, [
-                    'name' => $db->name,
-                    'description' => $db->description ?? '',
-                    'industries' => $db->industries ?? [],
-                    'free' => true,
-                    'price' => 0,
-                ]);
-            }
-        }
+        // Only real installed theme records are assignable to tenants. The
+        // config file can contain planned theme ideas, but those must not
+        // appear here until they exist in the themes table.
+        $themes = $this->assignableThemes();
 
         // Free-module defaults per business type, admin-edited from the
         // Business Modules page (business_type_modules table) - used to
         // auto-tick the right checkboxes in the browser when the admin
         // picks a Site Type, without a page reload.
         $freeByType = [];
+        $moduleAssignments = [];
         foreach ($businessTypes as $typeKey => $type) {
             $freeByType[$typeKey] = BusinessTypeModule::modulesFor($typeKey);
+            $moduleAssignments[$typeKey] = BusinessTypeModule::assignmentsFor($typeKey);
         }
 
         // Reached from a client's "Create Tenant Site" button (see
@@ -81,17 +74,20 @@ class AdminTenantController extends Controller
 
         $tenant = null;
 
-        return view('tenants.form', compact('clients', 'themes', 'modules', 'businessTypes', 'freeByType', 'prefillClient', 'hostingPlans', 'tenant'));
+        return view('tenants.form', compact('clients', 'themes', 'modules', 'businessTypes', 'freeByType', 'prefillClient', 'hostingPlans', 'tenant', 'moduleAssignments'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, ClientServiceLedger $ledger): RedirectResponse
     {
         $data = $request->validate([
             'subdomain' => ['required', 'string', 'max:255', 'unique:tenants,subdomain', 'regex:/^[a-z0-9-]+$/'],
             'name' => ['required', 'string', 'max:255'],
             'site_type' => ['required', Rule::in(array_keys(config('business_types')))],
+            'site_mode' => ['required', Rule::in(['static', 'managed'])],
             'client_id' => ['nullable', 'integer', 'exists:clients,id'],
-            'template_id' => ['nullable', 'string'],
+            'custom_domain' => ['nullable', 'string', 'max:255'],
+            'domain_status' => ['nullable', Rule::in(['none', 'pending', 'verified'])],
+            'template_id' => ['nullable', 'string', Rule::exists('themes', 'key')],
             'plan' => ['nullable', 'string', 'max:255'],
             'hosting_plan_id' => ['nullable', 'integer', Rule::exists('products', 'id')->where('category', 'hosting')],
             'action_type' => ['nullable', Rule::in(['whatsapp', 'razorpay', 'stripe', 'paypal', 'offline', 'custom'])],
@@ -113,6 +109,12 @@ class AdminTenantController extends Controller
             $data['template_id'] = $businessTypes[$siteType]['template'];
         }
 
+        if ($data['site_mode'] === 'static' && (!filled($data['template_id']) || !Theme::where('key', $data['template_id'])->exists())) {
+            throw ValidationException::withMessages([
+                'template_id' => 'Static delivery requires an installed approved theme.',
+            ]);
+        }
+
         if (empty($data['modules']) && isset($businessTypes[$siteType]['default_modules'])) {
             $data['modules'] = $businessTypes[$siteType]['default_modules'];
         } else {
@@ -122,6 +124,7 @@ class AdminTenantController extends Controller
         $data['status'] = 'active';
 
         $tenant = Tenant::create($data);
+        $ledger->syncTenantHosting($tenant);
 
         $generatedPassword = Str::password(14);
 
@@ -147,48 +150,30 @@ class AdminTenantController extends Controller
         $modules = config('modules');
         $businessTypes = config('business_types');
         $hostingPlans = Product::where('category', 'hosting')->where('status', 'active')->orderBy('price')->get();
+        $moduleAssignments = [];
+        foreach ($businessTypes as $typeKey => $type) {
+            $moduleAssignments[$typeKey] = BusinessTypeModule::assignmentsFor($typeKey);
+        }
 
-        $dbThemes = Theme::orderBy('name')->get()->keyBy('key');
-        $themes = collect();
-        foreach (config('themes') as $typeKey => $typeGroup) {
-            foreach ($typeGroup['themes'] ?? [] as $themeKey => $themeData) {
-                $compositeKey = $typeKey . '/' . $themeKey;
-                $db = $dbThemes->get($compositeKey) ?? $dbThemes->get($themeKey);
-                $themes->put($compositeKey, [
-                    'name' => $themeData['name'] ?? ($db?->name ?? $themeKey),
-                    'description' => $themeData['description'] ?? ($db?->description ?? ''),
-                    'industries' => $db?->industries ?? [$typeKey],
-                    'free' => $themeData['free'] ?? true,
-                    'price' => $themeData['price'] ?? 0,
-                ]);
-            }
-        }
-        foreach ($dbThemes as $key => $db) {
-            if (!$themes->has($key)) {
-                $themes->put($key, [
-                    'name' => $db->name,
-                    'description' => $db->description ?? '',
-                    'industries' => $db->industries ?? [],
-                    'free' => true,
-                    'price' => 0,
-                ]);
-            }
-        }
+        $themes = $this->assignableThemes();
 
         $freeByType = [];
         foreach ($businessTypes as $typeKey => $type) {
             $freeByType[$typeKey] = BusinessTypeModule::modulesFor($typeKey);
         }
 
-        return view('tenants.form', compact('tenant', 'clients', 'themes', 'modules', 'businessTypes', 'freeByType', 'hostingPlans'));
+        return view('tenants.form', compact('tenant', 'clients', 'themes', 'modules', 'businessTypes', 'freeByType', 'hostingPlans', 'moduleAssignments'));
     }
 
-    public function update(Request $request, Tenant $tenant): RedirectResponse
+    public function update(Request $request, Tenant $tenant, ClientServiceLedger $ledger): RedirectResponse
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'site_type' => ['required', Rule::in(array_keys(config('business_types')))],
-            'template_id' => ['nullable', 'string'],
+            'site_mode' => ['required', Rule::in(['static', 'managed'])],
+            'custom_domain' => ['nullable', 'string', 'max:255'],
+            'domain_status' => ['nullable', Rule::in(['none', 'pending', 'verified'])],
+            'template_id' => ['nullable', 'string', Rule::exists('themes', 'key')],
             'plan' => ['nullable', 'string', 'max:255'],
             'hosting_plan_id' => ['nullable', 'integer', Rule::exists('products', 'id')->where('category', 'hosting')],
             'client_id' => ['nullable', 'integer', 'exists:clients,id'],
@@ -204,7 +189,14 @@ class AdminTenantController extends Controller
 
         $data['modules'] = $data['modules'] ?? [];
 
+        if ($data['site_mode'] === 'static' && (!filled($data['template_id']) || !Theme::where('key', $data['template_id'])->exists())) {
+            throw ValidationException::withMessages([
+                'template_id' => 'Static delivery requires an installed approved theme.',
+            ]);
+        }
+
         $tenant->update($data);
+        $ledger->syncTenantHosting($tenant);
 
         return redirect()->route('tenants.index')->with('success', 'Tenant updated.');
     }
@@ -224,16 +216,17 @@ class AdminTenantController extends Controller
     /**
      * Inline hosting-plan assignment from the Tenants list - the same
      * pattern as toggleStatus above. Plans are Product rows (category=
-     * hosting) - the same catalog managed from the Domains & Hosting >
-     * Hosting Pricing tab, not a separate list.
+     * hosting) - the same catalog managed from Hosting & Domains >
+     * Hosting Plans, not a separate list.
      */
-    public function updateHostingPlan(Request $request, Tenant $tenant): RedirectResponse
+    public function updateHostingPlan(Request $request, Tenant $tenant, ClientServiceLedger $ledger): RedirectResponse
     {
         $validated = $request->validate([
             'hosting_plan_id' => ['nullable', 'integer', Rule::exists('products', 'id')->where('category', 'hosting')],
         ]);
 
         $tenant->update(['hosting_plan_id' => $validated['hosting_plan_id'] ?? null]);
+        $ledger->syncTenantHosting($tenant);
 
         $label = $validated['hosting_plan_id']
             ? Product::find($validated['hosting_plan_id'])->name

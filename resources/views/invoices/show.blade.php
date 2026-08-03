@@ -25,6 +25,10 @@
             </form>
         @endif
     @endif
+    @if (!in_array($invoice->status, ['draft', 'paid'], true) && collect(\App\Models\Setting::billingPaymentMethods())->only(['razorpay', 'bank', 'cash'])->contains(true))
+        @php $paymentLink = \Illuminate\Support\Facades\URL::temporarySignedRoute('billing.invoices.pay', now()->addDays(30), ['portalHost' => parse_url(config('app.url'), PHP_URL_HOST) ?: 'portal.ehlom.com', 'invoice' => $invoice]); @endphp
+        <a href="{{ $paymentLink }}" target="_blank" rel="noopener" class="eos-icon-btn"><i class="ti ti-credit-card-pay"></i> Payment Link</a>
+    @endif
     <a href="{{ route('invoices.edit', $invoice) }}" class="eos-icon-btn"><i class="ti ti-pencil"></i> Edit</a>
 @endsection
 

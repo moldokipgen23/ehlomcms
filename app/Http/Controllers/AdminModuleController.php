@@ -2,13 +2,45 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BusinessTypeModule;
 use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class AdminModuleController extends Controller
 {
+    private function moduleKeysForFeature(string $businessType, string $featureKey): array
+    {
+        $features = array_merge(
+            config("modules.bundles.{$businessType}.free", []),
+            config("modules.bundles.{$businessType}.pro", []),
+            config("modules.bundles.{$businessType}.premium", []),
+        );
+
+        foreach ($features as $feature) {
+            if (($feature['key'] ?? null) === $featureKey) {
+                return $feature['keys'] ?? [$featureKey];
+            }
+        }
+
+        return [$featureKey];
+    }
+
+    private function moduleKeysForFeatures(array $features): array
+    {
+        $keys = [];
+
+        foreach ($features as $feature) {
+            foreach (($feature['keys'] ?? [$feature['key']]) as $moduleKey) {
+                $keys[] = $moduleKey;
+            }
+        }
+
+        return array_values(array_unique($keys));
+    }
+
     /**
      * Show all business type bundles with tier summary.
      */
@@ -48,7 +80,43 @@ class AdminModuleController extends Controller
             $selectedTenant = $tenants->firstWhere('id', $request->query('tenant'));
         }
 
-        return view('modules.show', compact('bundle', 'businessType', 'businessTypes', 'tenants', 'selectedTenant'));
+        $moduleAssignments = BusinessTypeModule::assignmentsFor($businessType);
+
+        return view('modules.show', compact('bundle', 'businessType', 'businessTypes', 'tenants', 'selectedTenant', 'moduleAssignments'));
+    }
+
+    public function updatePricing(Request $request, string $businessType): RedirectResponse
+    {
+        abort_unless(array_key_exists($businessType, config('business_types')), 404);
+
+        $data = $request->validate([
+            'feature_key' => ['required', 'string'],
+            'price' => ['required', 'numeric', 'min:0'],
+            'billing_cycle' => ['required', Rule::in(['one_time', 'monthly', 'quarterly', 'yearly'])],
+        ]);
+
+        $features = array_merge(
+            config("modules.bundles.{$businessType}.pro", []),
+            config("modules.bundles.{$businessType}.premium", []),
+        );
+        $feature = collect($features)->firstWhere('key', $data['feature_key']);
+
+        if (!$feature || !empty($feature['future'])) {
+            return back()->with('error', 'This feature is not available for pricing.');
+        }
+
+        foreach ($feature['keys'] ?? [$feature['key']] as $moduleKey) {
+            BusinessTypeModule::updateOrCreate(
+                ['business_type' => $businessType, 'module_key' => $moduleKey],
+                [
+                    'status' => 'paid',
+                    'price' => $data['price'],
+                    'billing_cycle' => $data['billing_cycle'],
+                ],
+            );
+        }
+
+        return redirect()->route('modules.show', $businessType)->with('success', $feature['name'] . ' pricing updated.');
     }
 
     /**
@@ -62,17 +130,19 @@ class AdminModuleController extends Controller
 
         $featureKey = $request->input('feature_key');
         $modules = $tenant->modules ?? [];
+        $moduleKeys = $this->moduleKeysForFeature($tenant->site_type, $featureKey);
+        $enabled = collect($moduleKeys)->every(fn ($key) => $tenant->hasModule($key));
 
-        if (in_array($featureKey, $modules)) {
-            $modules = array_values(array_diff($modules, [$featureKey]));
+        if ($enabled) {
+            $modules = array_values(array_diff($modules, $moduleKeys));
         } else {
-            $modules[] = $featureKey;
+            $modules = array_values(array_unique(array_merge($modules, $moduleKeys)));
         }
 
         $tenant->modules = $modules;
         $tenant->save();
 
-        $status = in_array($featureKey, $modules) ? 'enabled' : 'disabled';
+        $status = $enabled ? 'disabled' : 'enabled';
 
         return redirect()->route('modules.show', ['businessType' => $tenant->site_type, 'tenant' => $tenant->id])->with('success', 'Feature "' . str_replace('_', ' ', $featureKey) . '" ' . $status . ' for ' . $tenant->name);
     }
@@ -90,15 +160,18 @@ class AdminModuleController extends Controller
         $businessType = $request->input('business_type');
         $action = $request->input('action');
         $allFeatures = config("modules.bundles.{$businessType}.free", []);
-        $allFeatures = array_merge($allFeatures, config("modules.bundles.{$businessType}.pro", []));
+        $allFeatures = array_merge(
+            $allFeatures,
+            array_filter(config("modules.bundles.{$businessType}.pro", []), fn ($feature) => empty($feature['future'])),
+        );
+        $featureKeys = $this->moduleKeysForFeatures($allFeatures);
 
         if ($action === 'on') {
             $tenant->modules = array_unique(array_merge(
                 $tenant->modules ?? [],
-                array_column($allFeatures, 'key')
+                $featureKeys
             ));
         } else {
-            $featureKeys = array_column($allFeatures, 'key');
             $tenant->modules = array_values(array_diff($tenant->modules ?? [], $featureKeys));
         }
 

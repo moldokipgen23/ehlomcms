@@ -3,17 +3,14 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
-use App\Models\Setting;
+use App\Models\AddonProduct;
+use App\Models\PaymentSetting;
 use App\Models\TenantAddon;
+use App\Services\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
-/**
- * Verified against the agency's own platform Razorpay secret
- * (Setting::platform_razorpay_key_secret) - add-on purchases are charged to
- * the agency's account, not any individual tenant's, so there is no
- * per-tenant secret to check here.
- */
 class TenantAddonWebhookController extends Controller
 {
     public function handle(Request $request): JsonResponse
@@ -21,23 +18,36 @@ class TenantAddonWebhookController extends Controller
         $payload = $request->getContent();
         $signature = $request->header('X-Razorpay-Signature');
 
-        $secret = Setting::get('platform_razorpay_key_secret');
+        $tenantId = $this->extractTenantId($payload);
+        if (!$tenantId) {
+            return response()->json(['error' => 'Tenant not found'], 400);
+        }
 
-        if (!$secret) {
+        $paymentSetting = PaymentSetting::where('tenant_id', $tenantId)->first();
+        if (!$paymentSetting || !$paymentSetting->razorpay_key_secret) {
             return response()->json(['error' => 'Payment config missing'], 400);
         }
 
-        if (!$this->verifySignature($payload, $signature, $secret)) {
+        if (!$this->verifySignature($payload, $signature, $paymentSetting->razorpay_key_secret)) {
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
         $event = json_decode($payload, true);
 
-        if (($event['event'] ?? null) === 'payment.captured') {
-            $this->activateAddon($event['payload']['payment']['entity'] ?? []);
+        if ($event['event'] === 'payment.captured') {
+            $this->activateAddon($event['payload']['payment']['entity']);
         }
 
         return response()->json(['status' => 'ok']);
+    }
+
+    private function extractTenantId(string $payload): ?int
+    {
+        $data = json_decode($payload, true);
+        if (!isset($data['payload']['payment']['entity']['notes']['tenant_id'])) {
+            return null;
+        }
+        return (int) $data['payload']['payment']['entity']['notes']['tenant_id'];
     }
 
     private function verifySignature(string $payload, ?string $signature, string $secret): bool
@@ -62,15 +72,39 @@ class TenantAddonWebhookController extends Controller
             ->where('addon_key', $addonKey)
             ->first();
 
-        if ($existing) {
-            $existing->update(['status' => 'active', 'activated_at' => now()]);
-        } else {
-            TenantAddon::create([
+        $addonProduct = AddonProduct::where('key', $addonKey)->first();
+
+        if (! $existing) {
+            $existing = TenantAddon::create([
                 'tenant_id' => $tenantId,
                 'addon_key' => $addonKey,
-                'status' => 'active',
-                'activated_at' => now(),
             ]);
         }
+
+        $this->activateRecord($existing, $addonProduct);
+    }
+
+    private function activateRecord(TenantAddon $addon, ?AddonProduct $addonProduct): void
+    {
+        $activatedAt = now();
+        $cycle = $addonProduct?->billing_cycle ?? 'monthly';
+
+        $addon->update([
+            'status' => 'active',
+            'activated_at' => $activatedAt,
+            'expires_at' => $cycle === 'one_time' ? null : $this->expiryFromCycle($activatedAt, $cycle),
+            'renewal_amount' => $addonProduct ? (float) $addonProduct->price : null,
+            'billing_cycle' => $cycle,
+            'auto_invoice' => $cycle !== 'one_time',
+        ]);
+    }
+
+    private function expiryFromCycle(Carbon $start, string $cycle): Carbon
+    {
+        return match ($cycle) {
+            'quarterly' => $start->copy()->addMonths(3),
+            'yearly' => $start->copy()->addYear(),
+            default => $start->copy()->addMonth(),
+        };
     }
 }

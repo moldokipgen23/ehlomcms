@@ -15,7 +15,7 @@
                 <div style="border:2px dashed var(--border);border-radius:12px;padding:40px;text-align:center;margin-bottom:20px;" id="dropZone">
                     <i class="ti ti-upload" style="font-size:40px;color:var(--accent-teal);margin-bottom:12px;display:block;"></i>
                     <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Drop files here or click to upload</div>
-                    <div style="font-size:11px;color:var(--text-dim);">HTML, CSS, JS, React (ZIP), images — or paste a design URL below</div>
+                    <div style="font-size:11px;color:var(--text-dim);">HTML, CSS, JS, React, Three.js, GLB/GLTF models (ZIP), images — or paste a design URL below</div>
                     <input type="file" name="files[]" multiple accept=".html,.htm,.css,.js,.jsx,.tsx,.zip,.png,.jpg,.jpeg,.svg" style="display:none;" id="fileInput" onchange="updateFileList()">
                 </div>
                 <div id="fileList" style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;"></div>
@@ -38,6 +38,11 @@
                             <option value="{{ $key }}">{{ $type['label'] }}</option>
                         @endforeach
                     </select>
+                </div>
+
+                <div style="border:1px solid rgba(37,99,235,.35);background:rgba(37,99,235,.08);border-radius:10px;padding:12px 14px;margin-top:12px;font-size:12px;color:var(--text-secondary);line-height:1.6;">
+                    <strong style="color:var(--text-primary);"><i class="ti ti-cube-3d-sphere"></i> 3D-ready theme kits</strong><br>
+                    You can design the approved prototype in HTML, CSS, JavaScript, Three.js, or another frontend tool, then upload the complete ZIP. Keep the animation lightweight, responsive, keyboard-friendly, and provide a non-3D fallback for slower devices.
                 </div>
 
                 <div style="display:flex;justify-content:flex-end;margin-top:16px;">

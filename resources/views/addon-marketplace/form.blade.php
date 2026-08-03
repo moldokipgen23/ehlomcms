@@ -24,9 +24,18 @@
                         @error('description') <div class="eos-error">{{ $message }}</div> @enderror
                     </div>
                     <div class="eos-field">
-                        <label class="eos-label">Price (₹/month) *</label>
+                        <label class="eos-label">Price (₹) *</label>
                         <input type="number" name="price" step="0.01" min="0" value="{{ old('price', $addon->price ?? '') }}" class="eos-input" required>
                         @error('price') <div class="eos-error">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="eos-field">
+                        <label class="eos-label">Billing Cycle *</label>
+                        <select name="billing_cycle" class="eos-input">
+                            @foreach (['one_time' => 'One-time', 'monthly' => 'Monthly', 'quarterly' => 'Quarterly', 'yearly' => 'Yearly'] as $value => $label)
+                                <option value="{{ $value }}" @selected(old('billing_cycle', $addon->billing_cycle ?? 'monthly') === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('billing_cycle') <div class="eos-error">{{ $message }}</div> @enderror
                     </div>
                     <div class="eos-field">
                         <label class="eos-label">Icon (Tabler icon class)</label>

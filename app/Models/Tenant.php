@@ -21,6 +21,7 @@ class Tenant extends Model
         'domain_verified_at',
         'name',
         'site_type',
+        'site_mode',
         'template_id',
         'status',
         'plan',
@@ -79,6 +80,36 @@ class Tenant extends Model
         return $this->hasMany(TenantProduct::class);
     }
 
+    public function productCategories(): HasMany
+    {
+        return $this->hasMany(TenantProductCategory::class)->orderBy('sort_order')->orderBy('name');
+    }
+
+    public function productCollections(): HasMany
+    {
+        return $this->hasMany(TenantProductCollection::class)->orderBy('sort_order')->orderBy('name');
+    }
+
+    public function productAttributes(): HasMany
+    {
+        return $this->hasMany(TenantProductAttribute::class)->orderBy('sort_order')->orderBy('name');
+    }
+
+    public function marketingSections(): HasMany
+    {
+        return $this->hasMany(TenantMarketingSection::class)->orderBy('sort_order');
+    }
+
+    public function customPages(): HasMany
+    {
+        return $this->hasMany(TenantCustomPage::class)->orderBy('sort_order')->orderBy('title');
+    }
+
+    public function instagramPosts(): HasMany
+    {
+        return $this->hasMany(TenantInstagramPost::class)->orderBy('sort_order');
+    }
+
     public function paymentSetting(): HasOne
     {
         return $this->hasOne(PaymentSetting::class);
@@ -111,15 +142,7 @@ class Tenant extends Model
 
     public function hasModule(string $key): bool
     {
-        if (in_array($key, $this->modules ?? [], true)) {
-            return true;
-        }
-
-        // A module marked "Paid" for this tenant's business type becomes a
-        // real AddonProduct (key = "module-{key}") on the Business Modules
-        // page - buying it unlocks the module without an admin manually
-        // ticking it on the tenant record.
-        return $this->hasActiveAddon('module-' . $key);
+        return in_array($key, $this->modules ?? [], true);
     }
 
     public function backups(): HasMany

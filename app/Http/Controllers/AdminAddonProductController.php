@@ -23,8 +23,9 @@ class AdminAddonProductController extends Controller
      */
     public function index(): View
     {
-        $addons = AddonProduct::orderBy('name')->get();
+        $addons = AddonProduct::whereNull('module_key')->orderBy('name')->get();
         $requests = TenantAddon::with('tenant.client')
+            ->whereIn('addon_key', $addons->pluck('key'))
             ->orderByRaw("FIELD(status, 'pending', 'active', 'inactive')")
             ->orderByDesc('created_at')
             ->get();
@@ -90,6 +91,7 @@ class AdminAddonProductController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'price' => ['required', 'numeric', 'min:0'],
+            'billing_cycle' => ['required', Rule::in(['one_time', 'monthly', 'quarterly', 'yearly'])],
             'icon' => ['nullable', 'string', 'max:255'],
             'active' => ['nullable', 'boolean'],
             'business_types' => ['nullable', 'array'],

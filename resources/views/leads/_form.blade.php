@@ -21,6 +21,11 @@
             <input type="text" name="phone" value="{{ old('phone', $lead->phone) }}" class="eos-input">
             @error('phone') <div class="eos-error">{{ $message }}</div> @enderror
         </div>
+        <div class="eos-field full">
+            <label class="eos-label">Website</label>
+            <input type="url" name="website_url" value="{{ old('website_url', $lead->website_url) }}" class="eos-input" placeholder="https://business.example">
+            @error('website_url') <div class="eos-error">{{ $message }}</div> @enderror
+        </div>
     </div>
 </div>
 

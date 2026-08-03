@@ -10,8 +10,15 @@ class PaymentSetting extends Model
     protected $fillable = [
         'tenant_id',
         'provider',
+        'cod_enabled',
+        'whatsapp_enabled',
+        'razorpay_enabled',
+        'custom_enabled',
         'api_key',
         'api_secret',
+        'webhook_secret',
+        'custom_label',
+        'custom_instructions',
     ];
 
     protected function casts(): array
@@ -19,6 +26,11 @@ class PaymentSetting extends Model
         return [
             'api_key' => 'encrypted',
             'api_secret' => 'encrypted',
+            'webhook_secret' => 'encrypted',
+            'cod_enabled' => 'boolean',
+            'whatsapp_enabled' => 'boolean',
+            'razorpay_enabled' => 'boolean',
+            'custom_enabled' => 'boolean',
         ];
     }
 

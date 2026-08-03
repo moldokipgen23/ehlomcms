@@ -2,12 +2,16 @@
 
 namespace App\Console\Commands;
 
+use App\Mail\InvoiceMail;
 use App\Models\Invoice;
 use App\Models\Subscription;
+use App\Services\InvoicePaymentLinkService;
+use App\Services\MailConfigService;
 use App\Services\InvoiceService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class GenerateRenewalInvoices extends Command
 {
@@ -28,7 +32,7 @@ class GenerateRenewalInvoices extends Command
     /**
      * Execute the console command.
      */
-    public function handle(InvoiceService $service): int
+    public function handle(InvoiceService $service, InvoicePaymentLinkService $paymentLinks): int
     {
         $subscriptions = Subscription::dueForRenewalInvoice()
             ->with(['client', 'product'])
@@ -46,7 +50,8 @@ class GenerateRenewalInvoices extends Command
             $amount = (float) $subscription->renewal_amount;
             $productName = $subscription->product->name ?? 'Subscription';
 
-            DB::transaction(function () use ($service, $subscription, $amount, $productName) {
+            $invoice = null;
+            DB::transaction(function () use (&$invoice, $service, $subscription, $amount, $productName) {
                 $invoice = Invoice::create([
                     'invoice_number' => $service->nextInvoiceNumber(),
                     'client_id' => $subscription->client_id,
@@ -56,7 +61,7 @@ class GenerateRenewalInvoices extends Command
                     'tax' => 0,
                     'total' => $amount,
                     'due_date' => now()->addDays(7),
-                    'status' => 'draft',
+                    'status' => 'unpaid',
                     'notes' => 'Auto-generated renewal invoice for subscription #' . $subscription->id . '.',
                 ]);
 
@@ -71,7 +76,8 @@ class GenerateRenewalInvoices extends Command
             });
 
             $created++;
-            $line = "Draft invoice created for {$subscription->client?->name} — {$productName} (₹" . number_format($amount, 2) . ')';
+            $this->sendInvoiceNotification($invoice, $subscription, $paymentLinks);
+            $line = "Renewal invoice created for {$subscription->client?->name} — {$productName} (₹" . number_format($amount, 2) . ')';
             $this->line($line);
             Log::info('[invoices:generate-renewals] ' . $line);
         }
@@ -80,5 +86,30 @@ class GenerateRenewalInvoices extends Command
         Log::info("[invoices:generate-renewals] {$created} draft renewal invoice(s) created.");
 
         return self::SUCCESS;
+    }
+
+    private function sendInvoiceNotification(Invoice $invoice, Subscription $subscription, InvoicePaymentLinkService $paymentLinks): void
+    {
+        if (! $invoice->client?->email || ! MailConfigService::configured()) {
+            return;
+        }
+
+        try {
+            MailConfigService::apply();
+            Mail::to($invoice->client->email)->send(new InvoiceMail($invoice->loadMissing('client', 'items')));
+            // Prevent the separate reminder command from sending a duplicate
+            // message for the same renewal cycle.
+            $subscription->update(['last_reminder_sent_at' => now()]);
+            Log::info('[invoices:generate-renewals] Renewal invoice emailed', [
+                'invoice_id' => $invoice->id,
+                'client_id' => $invoice->client_id,
+                'payment_link' => $paymentLinks->make($invoice),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('[invoices:generate-renewals] Renewal invoice email failed', [
+                'invoice_id' => $invoice->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

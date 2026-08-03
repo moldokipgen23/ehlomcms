@@ -28,10 +28,15 @@ class TenantWebhookController extends Controller
             return response('Payment settings not configured', 400);
         }
 
+        if (!$paymentSetting->webhook_secret) {
+            Log::warning('Razorpay webhook: webhook secret is not configured', ['tenant_id' => $tenant->id]);
+            return response('Webhook secret not configured', 400);
+        }
+
         $payload = $request->getContent();
         $signature = $request->header('X-Razorpay-Signature');
 
-        $expectedSignature = hash_hmac('sha256', $payload, $paymentSetting->api_secret);
+        $expectedSignature = hash_hmac('sha256', $payload, $paymentSetting->webhook_secret);
 
         if (!hash_equals($expectedSignature, $signature)) {
             Log::warning('Razorpay webhook: invalid signature', ['tenant_id' => $tenant->id]);
@@ -44,7 +49,7 @@ class TenantWebhookController extends Controller
         if ($event === 'payment.captured' && $payloadData) {
             $payment = $payloadData['payment']['entity'] ?? [];
 
-            $orderId = $payment['id'] ?? '';
+            $paymentId = $payment['id'] ?? '';
             $amount = ($payment['amount'] ?? 0) / 100;
             $currency = $payment['currency'] ?? 'INR';
             $status = $payment['status'] ?? 'paid';
@@ -63,20 +68,22 @@ class TenantWebhookController extends Controller
                     // order to 'confirmed' so it appears correctly in that
                     // workflow instead of landing on an unrecognized status.
                     $order->update([
-                        'order_id' => $orderId,
+                        'payment_id' => $paymentId,
+                        'payment_order_id' => $payment['order_id'] ?? $order->payment_order_id,
                         'status' => $status === 'captured' ? 'confirmed' : 'failed',
+                        'payment_status' => $status === 'captured' ? 'paid' : $status,
                         'payment_method' => $method,
                         'customer_details' => array_merge($order->customer_details ?? [], [
                             'email' => $payment['email'] ?? null,
                             'contact' => $payment['contact'] ?? null,
-                            'razorpay_payment_id' => $orderId,
+                            'razorpay_payment_id' => $paymentId,
                         ]),
                     ]);
                 }
             } else {
                 // Single-product Buy Now flow (backward compatible)
                 TenantOrder::updateOrCreate(
-                    ['order_id' => $orderId],
+                    ['order_id' => $paymentId],
                     [
                         'tenant_id' => $tenant->id,
                         'tenant_product_id' => $productId,

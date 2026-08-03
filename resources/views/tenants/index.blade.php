@@ -135,8 +135,8 @@
                             <label class="eos-label" style="font-size:10px;">Add-on</label>
                             <select name="addon_key" class="eos-select" style="font-size:11px;padding:6px 8px;margin:4px 0 8px;width:100%;" required>
                                 <option value="">Select add-on…</option>
-                                @foreach (\App\Models\AddonProduct::where('active', true)->get() as $addon)
-                                    <option value="{{ $addon->key }}">{{ $addon->name }} (₹{{ number_format($addon->price, 0) }}/mo)</option>
+                                @foreach (\App\Models\AddonProduct::where('active', true)->whereNull('module_key')->orderBy('name')->get() as $addon)
+                                    <option value="{{ $addon->key }}">{{ $addon->name }} (₹{{ number_format($addon->price, 0) }}/{{ $addon->billingLabel() }})</option>
                                 @endforeach
                             </select>
                             <button type="submit" class="eos-btn eos-btn-primary" style="font-size:10px;padding:5px 10px;width:100%;">Activate Free</button>

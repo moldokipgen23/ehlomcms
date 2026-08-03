@@ -3,12 +3,10 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
-use App\Models\Theme;
 use App\Services\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class TenantSettingsController extends Controller
@@ -16,31 +14,16 @@ class TenantSettingsController extends Controller
     public function edit(): View
     {
         $tenant = app(TenantContext::class)->get();
-        // Always include the tenant's currently assigned theme even if it's
-        // private (admin-assigned custom template) - otherwise it wouldn't
-        // appear as a selectable option and saving any other setting would
-        // silently blank out template_id, since no radio in that group would
-        // be checked.
-        $themes = Theme::where('public', true)
-            ->orWhere('key', $tenant->template_id)
-            ->orderBy('name')
-            ->get()
-            ->keyBy('key');
 
-        return view('tenant.settings.index', compact('tenant', 'themes'));
+        return view('tenant.settings.index', compact('tenant'));
     }
 
     public function update(Request $request): RedirectResponse
     {
         $tenant = app(TenantContext::class)->get();
 
-        $allowedThemeKeys = Theme::where('public', true)
-            ->orWhere('key', $tenant->template_id)
-            ->pluck('key');
-
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'template_id' => ['nullable', 'string', Rule::in($allowedThemeKeys)],
             'whatsapp_number' => ['nullable', 'string', 'max:255'],
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_phone' => ['nullable', 'string', 'max:255'],
@@ -77,5 +60,25 @@ class TenantSettingsController extends Controller
         $tenant->update(['banner_image' => $path]);
 
         return redirect()->route('tenant.settings')->with('success', 'Banner image updated.');
+    }
+
+    public function uploadFavicon(Request $request): RedirectResponse
+    {
+        $tenant = app(TenantContext::class)->get();
+
+        $request->validate([
+            'favicon' => ['required', 'image', 'mimes:png,jpg,jpeg,ico,webp', 'max:1024'],
+        ]);
+
+        $settings = $tenant->theme_settings ?? [];
+        if (!empty($settings['favicon'])) {
+            Storage::disk('public')->delete($settings['favicon']);
+        }
+
+        $settings['favicon'] = $request->file('favicon')->store('tenants/' . $tenant->id . '/favicon', 'public');
+        $tenant->theme_settings = $settings;
+        $tenant->save();
+
+        return redirect()->route('tenant.settings')->with('success', 'Favicon updated.');
     }
 }

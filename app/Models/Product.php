@@ -16,6 +16,7 @@ class Product extends Model
     ];
 
     public const BILLING_LABELS = [
+        'one_time' => 'One-time',
         'monthly' => 'Monthly',
         'quarterly' => 'Quarterly',
         'yearly' => 'Yearly',
@@ -60,5 +61,10 @@ class Product extends Model
     public function isAvailableForTenant($tenant): bool
     {
         return $this->status === 'active';
+    }
+
+    public function isRecurring(): bool
+    {
+        return $this->billing_cycle !== 'one_time';
     }
 }

@@ -31,7 +31,11 @@
                 $links = [
                     'Main' => [
                         ['dashboard', 'Dashboard', 'ti-layout-dashboard', null],
+                    ],
+                    'Lead Generation' => [
                         ['leads.index', 'Leads', 'ti-user-star', \Illuminate\Support\Facades\Schema::hasTable('leads') ? \App\Models\Lead::where('status', 'new')->count() : null],
+                        ['lead-sources.index', 'Lead Sources', 'ti-world-search', null],
+                        ['prototype-catalog.index', 'Prototype Catalog', 'ti-layout-grid-add', null],
                     ],
                     'Client Management' => [
                         ['clients.index', 'Clients', 'ti-users', \App\Models\Client::count()],
@@ -47,6 +51,11 @@
                         ['addon-marketplace.index', 'Add-on Marketplace', 'ti-shopping-cart', \App\Models\TenantAddon::where('status', 'pending')->count() ?: null],
                         ['email-templates.index', 'Email Templates', 'ti-mail', null],
                         ['ai-settings.index', 'AI Settings', 'ti-sparkles', null],
+                        ['integrations.index', 'ERP Integrations', 'ti-plug-connected', null],
+                    ],
+                    'AI Workforce' => [
+                        ['ai-agents.index', 'Agent Studio', 'ti-robot', null],
+                        ['ai-workflows.index', 'Workflows', 'ti-git-branch', null],
                     ],
                     'Content' => [
                         ['media.index', 'Media Library', 'ti-photo', null],
@@ -60,8 +69,8 @@
                         ['products.index', 'Service Catalog', 'ti-box', null],
                     ],
                     'Hosting' => [
-                        ['infrastructure.index', 'Domains & Hosting', 'ti-world', \App\Models\Domain::whereDate('expiry_date', '<=', now()->addDays(30))->count() ?: null],
-                        ['domains.admin.index', 'Custom Domains', 'ti-world-www', \App\Models\Tenant::where('domain_status', 'pending')->count() ?: null],
+                        ['infrastructure.index', 'Hosting & Domains', 'ti-world', \App\Models\Domain::whereDate('expiry_date', '<=', now()->addDays(30))->count() ?: null],
+                        ['domains.admin.index', 'Domain DNS / SSL', 'ti-world-www', \App\Models\Tenant::where('domain_status', 'pending')->count() ?: null],
                     ],
                     'Support' => [
                         ['admin.tickets.index', 'Tickets', 'ti-ticket', \App\Models\TenantTicket::where('status', 'open')->count() ?: null],

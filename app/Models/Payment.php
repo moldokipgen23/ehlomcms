@@ -9,7 +9,7 @@ class Payment extends Model
 {
     protected $fillable = [
         'invoice_id', 'amount', 'payment_date',
-        'method', 'reference', 'notes',
+        'method', 'status', 'reference', 'razorpay_order_id', 'razorpay_payment_id', 'notes',
     ];
 
     protected function casts(): array

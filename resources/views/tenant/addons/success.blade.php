@@ -22,6 +22,10 @@
                 <div style="font-size:13px;color:var(--text-muted);margin-top:12px;margin-bottom:4px;">Activated</div>
                 <div>{{ $addonRecord->activated_at->format('M j, Y H:i') }}</div>
             @endif
+            @if ($addonRecord->expires_at)
+                <div style="font-size:13px;color:var(--text-muted);margin-top:12px;margin-bottom:4px;">Renews / expires</div>
+                <div>{{ $addonRecord->expires_at->format('M j, Y') }}</div>
+            @endif
         </div>
 
         <a href="{{ route('tenant.addons') }}" class="eos-btn eos-btn-primary" style="width:100%;padding:14px;font-size:16px;">

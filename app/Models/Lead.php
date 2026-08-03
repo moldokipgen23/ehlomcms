@@ -42,15 +42,19 @@ class Lead extends Model
         'facebook' => 'Facebook',
         'linkedin' => 'LinkedIn',
         'whatsapp' => 'WhatsApp',
+        'hola' => 'Hola Directory',
+        'google_places' => 'Google Places',
         'existing' => 'Existing Client',
         'other' => 'Other',
     ];
 
     protected $fillable = [
-        'name', 'email', 'phone', 'business_name',
+        'name', 'email', 'phone', 'website_url', 'business_name',
         'project_type', 'description', 'features',
         'budget_min', 'budget_max', 'timeline', 'source',
-        'status', 'notes', 'converted_client_id',
+        'status', 'notes', 'converted_client_id', 'lead_source_id',
+        'external_id', 'external_metadata', 'last_synced_at', 'lead_score',
+        'score_reasons', 'recommended_offer', 'prototype_key', 'prototype_url',
     ];
 
     protected function casts(): array
@@ -58,12 +62,21 @@ class Lead extends Model
         return [
             'budget_min' => 'decimal:2',
             'budget_max' => 'decimal:2',
+            'external_metadata' => 'array',
+            'last_synced_at' => 'datetime',
+            'lead_score' => 'integer',
+            'score_reasons' => 'array',
         ];
     }
 
     public function convertedClient(): BelongsTo
     {
         return $this->belongsTo(Client::class, 'converted_client_id');
+    }
+
+    public function leadSource(): BelongsTo
+    {
+        return $this->belongsTo(LeadSource::class);
     }
 
     public function scopeNew($q)

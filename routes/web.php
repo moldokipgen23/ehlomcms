@@ -30,7 +30,13 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\BillingRazorpayController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AdminAiAgentController;
+use App\Http\Controllers\AdminAiWorkflowController;
+use App\Http\Controllers\AdminPrototypeCatalogController;
+use App\Http\Controllers\AdminExternalIntegrationController;
+use App\Http\Controllers\AdminLeadSourceController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -43,6 +49,13 @@ use Illuminate\Support\Facades\Route;
 $portalHosts = 'portal\.' . preg_quote(config('app.tenant_domain', 'ehlom.com'), '/')
     . '|www\.' . preg_quote(config('app.tenant_domain', 'ehlom.com'), '/')
     . '|' . preg_quote(config('app.tenant_domain', 'ehlom.com'), '/');
+
+Route::domain('{portalHost}')->where(['portalHost' => $portalHosts])->group(function () {
+    Route::get('billing/invoices/{invoice}/pay', [BillingRazorpayController::class, 'pay'])->middleware('signed')->name('billing.invoices.pay');
+    Route::post('billing/invoices/{invoice}/verify', [BillingRazorpayController::class, 'verify'])->middleware('signed')->name('billing.invoices.verify');
+    Route::get('billing/invoices/{invoice}/confirmation', [BillingRazorpayController::class, 'confirm'])->middleware('signed')->name('billing.invoices.confirm');
+    Route::post('webhook/razorpay/billing', [BillingRazorpayController::class, 'webhook'])->name('billing.razorpay.webhook');
+});
 
 Route::domain('{portalHost}')->where(['portalHost' => $portalHosts])->group(function () {
     Route::get('/', function () {
@@ -71,6 +84,29 @@ Route::middleware('auth')->group(function () {
     Route::post('clients/{client}/activities', [ActivityController::class, 'store'])->name('activities.store');
     Route::delete('activities/{activity}', [ActivityController::class, 'destroy'])->name('activities.destroy');
     Route::get('revenue', [AdminRevenueController::class, 'index'])->name('revenue.index');
+
+    // External product connectors: school, restaurant, and future ERP APIs.
+    Route::get('integrations', [AdminExternalIntegrationController::class, 'index'])->name('integrations.index');
+    Route::get('integrations/create', [AdminExternalIntegrationController::class, 'create'])->name('integrations.create');
+    Route::post('integrations', [AdminExternalIntegrationController::class, 'store'])->name('integrations.store');
+    Route::get('integrations/{integration}/edit', [AdminExternalIntegrationController::class, 'edit'])->name('integrations.edit');
+    Route::put('integrations/{integration}', [AdminExternalIntegrationController::class, 'update'])->name('integrations.update');
+    Route::post('integrations/{integration}/sync', [AdminExternalIntegrationController::class, 'sync'])->name('integrations.sync');
+    Route::delete('integrations/{integration}', [AdminExternalIntegrationController::class, 'destroy'])->name('integrations.destroy');
+
+    Route::get('lead-sources', [AdminLeadSourceController::class, 'index'])->name('lead-sources.index');
+    Route::get('lead-sources/create', [AdminLeadSourceController::class, 'create'])->name('lead-sources.create');
+    Route::post('lead-sources', [AdminLeadSourceController::class, 'store'])->name('lead-sources.store');
+    Route::get('lead-sources/{source}/edit', [AdminLeadSourceController::class, 'edit'])->name('lead-sources.edit');
+    Route::put('lead-sources/{source}', [AdminLeadSourceController::class, 'update'])->name('lead-sources.update');
+    Route::post('lead-sources/{source}/sync', [AdminLeadSourceController::class, 'sync'])->name('lead-sources.sync');
+    Route::delete('lead-sources/{source}', [AdminLeadSourceController::class, 'destroy'])->name('lead-sources.destroy');
+
+    // Reusable demos used by AI lead qualification and outreach.
+    Route::resource('prototype-catalog', AdminPrototypeCatalogController::class)
+        ->except('show')
+        ->parameters(['prototype-catalog' => 'prototype']);
+    Route::post('prototype-catalog/{prototype}/toggle', [AdminPrototypeCatalogController::class, 'toggle'])->name('prototype-catalog.toggle');
 
     Route::resource('invoices', InvoiceController::class);
     Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoices.pdf');
@@ -113,6 +149,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('business-modules', [AdminModuleController::class, 'index'])->name('modules.index');
     Route::get('business-modules/{businessType}', [AdminModuleController::class, 'show'])->name('modules.show');
+    Route::post('business-modules/{businessType}/pricing', [AdminModuleController::class, 'updatePricing'])->name('modules.pricing');
     Route::post('business-modules/{tenant}/toggle', [AdminModuleController::class, 'toggle'])->name('modules.toggle');
     Route::post('business-modules/{tenant}/bulk-toggle', [AdminModuleController::class, 'bulkToggle'])->name('modules.bulk-toggle');
 
@@ -218,7 +255,25 @@ Route::middleware('auth')->group(function () {
 
     // AI Settings
     Route::get('ai-settings', [AdminAiSettingsController::class, 'index'])->name('ai-settings.index');
-    Route::post('ai-settings/{tenant}', [AdminAiSettingsController::class, 'update'])->name('ai-settings.update');
+    Route::post('ai-providers', [AdminAiSettingsController::class, 'storeProvider'])->name('ai-providers.store');
+    Route::put('ai-providers/{credential}', [AdminAiSettingsController::class, 'updateProvider'])->name('ai-providers.update');
+    Route::delete('ai-providers/{credential}', [AdminAiSettingsController::class, 'destroyProvider'])->name('ai-providers.destroy');
+    Route::post('ai-providers/{credential}/test', [AdminAiSettingsController::class, 'testProvider'])->name('ai-providers.test');
+
+    // AI Workforce — reusable agents, skills, and approval-ready workflows.
+    Route::get('ai-agents', [AdminAiAgentController::class, 'index'])->name('ai-agents.index');
+    Route::get('ai-agents/create', [AdminAiAgentController::class, 'create'])->name('ai-agents.create');
+    Route::post('ai-agents', [AdminAiAgentController::class, 'store'])->name('ai-agents.store');
+    Route::get('ai-agents/{agent}/edit', [AdminAiAgentController::class, 'edit'])->name('ai-agents.edit');
+    Route::put('ai-agents/{agent}', [AdminAiAgentController::class, 'update'])->name('ai-agents.update');
+    Route::put('ai-agents/{agent}/skills', [AdminAiAgentController::class, 'updateSkills'])->name('ai-agents.skills.update');
+    Route::post('ai-skills', [AdminAiAgentController::class, 'storeSkill'])->name('ai-skills.store');
+    Route::get('ai-workflows', [AdminAiWorkflowController::class, 'index'])->name('ai-workflows.index');
+    Route::get('ai-workflows/create', [AdminAiWorkflowController::class, 'create'])->name('ai-workflows.create');
+    Route::post('ai-workflows', [AdminAiWorkflowController::class, 'store'])->name('ai-workflows.store');
+    Route::post('ai-workflows/{workflow}/run', [AdminAiWorkflowController::class, 'run'])->name('ai-workflows.run');
+    Route::get('ai-runs/{run}', [AdminAiWorkflowController::class, 'showRun'])->name('ai-runs.show');
+    Route::post('ai-runs/{run}/approve', [AdminAiWorkflowController::class, 'approveRun'])->name('ai-runs.approve');
 
     // AI Content
     Route::get('ai-content', [AdminAiContentController::class, 'index'])->name('ai-content.index');
@@ -230,6 +285,10 @@ require __DIR__.'/auth.php';
 // Razorpay webhook (no auth — signature-verified).
 use App\Http\Controllers\Tenant\TenantWebhookController;
 Route::post('webhook/razorpay/{subdomain}', [TenantWebhookController::class, 'handleRazorpay'])
+    ->withoutMiddleware([\App\Http\Middleware\ResolveTenant::class]);
+
+// Machine-to-machine webhooks from connected ERP products.
+Route::post('api/integrations/{integration}/webhook', [AdminExternalIntegrationController::class, 'webhook'])
     ->withoutMiddleware([\App\Http\Middleware\ResolveTenant::class]);
 
 // Add-on webhook (no auth — signature-verified).

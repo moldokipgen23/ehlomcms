@@ -7,7 +7,8 @@
     @php
         $smtpKeys = ['brevo_api_key', 'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'smtp_encryption', 'smtp_from_address', 'smtp_from_name'];
         $tplKeys = ['email_invoice_subject', 'email_invoice_body', 'email_renewal_subject', 'email_renewal_body', 'email_payment_subject', 'email_payment_body', 'email_completion_subject', 'email_completion_body'];
-        $activeTab = $errors->hasAny($smtpKeys) ? 'smtp' : ($errors->hasAny($tplKeys) ? 'templates' : 'branding');
+        $billingKeys = ['billing_razorpay_key', 'billing_razorpay_secret', 'billing_razorpay_webhook_secret', 'billing_bank_label', 'billing_bank_instructions', 'billing_cash_instructions'];
+        $activeTab = $errors->hasAny($billingKeys) ? 'billing' : ($errors->hasAny($smtpKeys) ? 'smtp' : ($errors->hasAny($tplKeys) ? 'templates' : 'branding'));
     @endphp
 
     <div x-data="{ tab: '{{ $activeTab }}' }">
@@ -21,8 +22,8 @@
             <button type="button" class="eos-tab" :class="{ active: tab === 'templates' }" @click="tab = 'templates'">
                 <i class="ti ti-template"></i> Email Templates
             </button>
-            <button type="button" class="eos-tab" :class="{ active: tab === 'payments' }" @click="tab = 'payments'">
-                <i class="ti ti-credit-card"></i> Payments
+            <button type="button" class="eos-tab" :class="{ active: tab === 'billing' }" @click="tab = 'billing'">
+                <i class="ti ti-credit-card-pay"></i> Billing & Payments
             </button>
         </div>
 
@@ -218,39 +219,29 @@
                 </div>
             </div>
 
-            {{-- ── PAYMENTS ── --}}
-            <div x-show="tab === 'payments'" x-cloak>
+            {{-- ── BILLING ── --}}
+            <div x-show="tab === 'billing'" x-cloak>
                 <div class="eos-card" style="margin-bottom:14px;">
-                    <div class="eos-card-header"><div class="eos-card-title">Agency Razorpay Account</div></div>
-                    <p style="font-size:11.5px;color:var(--text-dim);margin-bottom:14px;line-height:1.7;">
-                        Your own Razorpay account — used to charge tenants for Marketplace add-on purchases
-                        (Shopping upgrades, WhatsApp Automation, AI Agent, etc). This is separate from each
-                        tenant's own Razorpay keys, which they enter themselves to accept payments from their
-                        own customers. Without this configured, no tenant can complete an add-on purchase.
-                    </p>
+                    <div class="eos-card-header"><div class="eos-card-title">Ehlom Billing Methods</div></div>
+                    <p style="font-size:11.5px;color:var(--text-dim);margin-bottom:14px;line-height:1.7;">These methods are used when clients pay Ehlom for invoices, hosting renewals, and platform services. They are separate from each client store's own checkout settings.</p>
+                    <div class="eos-form-grid" style="margin-bottom:16px;">
+                        <label class="eos-toggle-row"><input type="checkbox" name="billing_razorpay_enabled" value="1" @checked(old('billing_razorpay_enabled', $billing_methods['razorpay']))><span><strong>Razorpay</strong><small>Automatic online payment confirmation</small></span></label>
+                        <label class="eos-toggle-row"><input type="checkbox" name="billing_bank_enabled" value="1" @checked(old('billing_bank_enabled', $billing_methods['bank']))><span><strong>Bank transfer / UPI</strong><small>Manual reconciliation after a transfer</small></span></label>
+                        <label class="eos-toggle-row"><input type="checkbox" name="billing_cash_enabled" value="1" @checked(old('billing_cash_enabled', $billing_methods['cash']))><span><strong>Cash / manual payment</strong><small>Confirm only after Ehlom receives payment</small></span></label>
+                    </div>
+                    <div style="font-size:12px;font-weight:700;margin:0 0 10px;">Razorpay</div>
                     <div class="eos-form-grid">
-                        <div class="eos-field">
-                            <label class="eos-label">Key ID</label>
-                            <input type="text" name="platform_razorpay_key_id" value="{{ old('platform_razorpay_key_id', $platform_razorpay_key_id) }}" class="eos-input" placeholder="rzp_live_...">
-                            @error('platform_razorpay_key_id') <div class="eos-error">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="eos-field">
-                            <label class="eos-label">Key Secret {{ $platform_razorpay_key_secret_set ? '(saved — leave blank to keep)' : '' }}</label>
-                            <input type="password" name="platform_razorpay_key_secret" value="" class="eos-input" autocomplete="new-password" placeholder="{{ $platform_razorpay_key_secret_set ? '••••••••' : 'Enter secret key' }}">
-                            @if ($platform_razorpay_key_secret_preview)
-                                <div style="font-size:11px;margin-top:6px;color:var(--accent-teal, #10b981);font-family:ui-monospace,monospace;">
-                                    ✓ Stored in DB: <strong>{{ $platform_razorpay_key_secret_preview }}</strong>
-                                </div>
-                            @else
-                                <div style="font-size:11px;margin-top:6px;color:var(--text-dim);">Not saved in DB yet.</div>
-                            @endif
-                            @error('platform_razorpay_key_secret') <div class="eos-error">{{ $message }}</div> @enderror
-                        </div>
+                        <div class="eos-field"><label class="eos-label">Razorpay Key ID</label><input type="text" name="billing_razorpay_key" class="eos-input" value="" placeholder="rzp_live_...">@if($billing_razorpay_key_preview)<div style="font-size:11px;margin-top:6px;color:var(--accent-teal);">Saved: {{ $billing_razorpay_key_preview }}</div>@endif</div>
+                        <div class="eos-field"><label class="eos-label">Razorpay Key Secret</label><input type="password" name="billing_razorpay_secret" class="eos-input" value="" placeholder="Leave blank to keep saved secret">@if($billing_razorpay_secret_set)<div style="font-size:11px;margin-top:6px;color:var(--accent-teal);">Saved securely</div>@endif</div>
                     </div>
-                    <div class="eos-alert-bar" style="margin-top:14px;">
-                        <i class="ti ti-shield-lock"></i> Also set the webhook secret on Razorpay's dashboard to point at
-                        <code>{{ url('/webhook/razorpay/addon') }}</code> so purchases activate automatically after payment.
+                    <div class="eos-field"><label class="eos-label">Billing webhook endpoint</label><input type="text" class="eos-input" readonly value="{{ url('/webhook/razorpay/billing') }}"></div>
+                    <div class="eos-field"><label class="eos-label">Webhook secret</label><input type="password" name="billing_razorpay_webhook_secret" class="eos-input" value="" placeholder="Set the same value in Razorpay Dashboard">@if($billing_razorpay_webhook_secret_set)<div style="font-size:11px;margin-top:6px;color:var(--accent-teal);">Saved securely</div>@endif</div>
+                    <div style="font-size:12px;font-weight:700;margin:18px 0 10px;">Manual payment instructions</div>
+                    <div class="eos-form-grid">
+                        <div class="eos-field"><label class="eos-label">Bank / UPI label</label><input type="text" name="billing_bank_label" class="eos-input" value="{{ old('billing_bank_label', $billing_methods['bank_label']) }}" placeholder="Bank transfer / UPI"></div>
+                        <div class="eos-field"><label class="eos-label">Cash / manual instructions</label><textarea name="billing_cash_instructions" class="eos-textarea" rows="3" placeholder="Where and how clients should arrange cash payment">{{ old('billing_cash_instructions', $billing_methods['cash_instructions']) }}</textarea></div>
                     </div>
+                    <div class="eos-field" style="margin-bottom:0;"><label class="eos-label">Bank / UPI instructions</label><textarea name="billing_bank_instructions" class="eos-textarea" rows="4" placeholder="Account name, account number, IFSC, bank name, or UPI ID">{{ old('billing_bank_instructions', $billing_methods['bank_instructions']) }}</textarea></div>
                 </div>
             </div>
 

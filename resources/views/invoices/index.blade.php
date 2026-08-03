@@ -11,7 +11,7 @@
     <form method="GET" class="eos-filters">
         <select name="status" class="eos-select">
             <option value="">All statuses</option>
-            @foreach (['draft', 'unpaid', 'paid', 'overdue'] as $s)
+            @foreach (['draft', 'unpaid', 'partial', 'paid', 'overdue'] as $s)
                 <option value="{{ $s }}" @selected(request('status') === $s)>{{ ucfirst($s) }}</option>
             @endforeach
         </select>

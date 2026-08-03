@@ -14,6 +14,7 @@
         $accent = $s['accent_color'] ?? '#1e40af';
         $modules = $tenant->modules ?? [];
         $m = function($key) use ($modules) { return in_array($key, $modules); };
+        $schoolItems = $schoolItems ?? [];
     @endphp
     <style>
         :root { --sc-accent: {{ $accent }}; --sc-accent-light: {{ $accent }}15; }
@@ -224,17 +225,17 @@
         <div class="sc-badge" style="text-align:center;display:block;">Academics</div>
         <h2 class="sc-title">{{ $s['academics_title'] ?? 'Academic Excellence' }}</h2>
         <div class="sc-grid sc-grid-2" style="margin-top:32px;max-width:900px;margin-left:auto;margin-right:auto;">
-            @foreach (['academics_1', 'academics_2', 'academics_3', 'academics_4'] as $aKey)
-                @if ($s[$aKey . '_title'] ?? null)
-                    <div class="sc-card" style="display:flex;gap:16px;align-items:flex-start;">
-                        <i class="ti {{ $s[$aKey . '_icon'] ?? 'ti-book' }}" style="font-size:24px;color:var(--sc-accent);flex-shrink:0;margin-top:2px;"></i>
-                        <div>
-                            <div style="font-weight:700;font-size:15px;margin-bottom:4px;">{{ $s[$aKey . '_title'] }}</div>
-                            <div style="font-size:13px;color:#64748b;line-height:1.6;">{{ $s[$aKey . '_desc'] ?? '' }}</div>
-                        </div>
-                    </div>
-                @endif
-            @endforeach
+            @if (!empty($schoolItems['academic_program']))
+                @foreach ($schoolItems['academic_program'] as $item)
+                    <div class="sc-card" style="display:flex;gap:16px;align-items:flex-start;"><i class="ti ti-book" style="font-size:24px;color:var(--sc-accent);flex-shrink:0;margin-top:2px;"></i><div><div style="font-weight:700;font-size:15px;margin-bottom:4px;">{{ $item->title }}</div><div style="font-size:13px;color:#64748b;line-height:1.6;">{{ $item->body ?: $item->subtitle }}</div></div></div>
+                @endforeach
+            @else
+                @foreach (['academics_1', 'academics_2', 'academics_3', 'academics_4'] as $aKey)
+                    @if ($s[$aKey . '_title'] ?? null)
+                        <div class="sc-card" style="display:flex;gap:16px;align-items:flex-start;"><i class="ti {{ $s[$aKey . '_icon'] ?? 'ti-book' }}" style="font-size:24px;color:var(--sc-accent);flex-shrink:0;margin-top:2px;"></i><div><div style="font-weight:700;font-size:15px;margin-bottom:4px;">{{ $s[$aKey . '_title'] }}</div><div style="font-size:13px;color:#64748b;line-height:1.6;">{{ $s[$aKey . '_desc'] ?? '' }}</div></div></div>
+                    @endif
+                @endforeach
+            @endif
         </div>
         @if ($s['school_timings'] ?? null)
             <div style="margin-top:24px;text-align:center;font-size:14px;color:#475569;">
@@ -303,30 +304,29 @@
         <div class="sc-badge" style="text-align:center;display:block;">Enquiry</div>
         <h2 class="sc-title">{{ $s['enquiry_title'] ?? 'Online Enquiry Form' }}</h2>
         <p style="text-align:center;color:#64748b;font-size:14px;margin-bottom:24px;">{{ $s['enquiry_subtitle'] ?? 'Fill out the form below and we will get back to you shortly.' }}</p>
-        <form action="{{ route('tenant.content') }}" method="POST" class="sc-card" style="display:flex;flex-direction:column;gap:16px;">
+        <form action="{{ route('tenant.business.enquiry') }}" method="POST" class="sc-card" style="display:flex;flex-direction:column;gap:16px;">
             @csrf
-            <input type="hidden" name="enquiry_submitted" value="1">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                 <div>
                     <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Full Name *</label>
-                    <input type="text" name="enquiry_name" required style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;" placeholder="Enter full name">
+                    <input type="text" name="name" required style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;" placeholder="Enter full name">
                 </div>
                 <div>
                     <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Phone Number *</label>
-                    <input type="tel" name="enquiry_phone" required style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;" placeholder="Enter phone number">
+                    <input type="tel" name="phone" required style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;" placeholder="Enter phone number">
                 </div>
             </div>
             <div>
                 <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Email Address</label>
-                <input type="email" name="enquiry_email" style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;" placeholder="Enter email address">
+                <input type="email" name="email" style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;" placeholder="Enter email address">
             </div>
             <div>
                 <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Class Applying For</label>
-                <input type="text" name="enquiry_class" style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;" placeholder="e.g. Class 5, Class 8">
+                <input type="text" name="subject" style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;" placeholder="e.g. Class 5, Class 8">
             </div>
             <div>
                 <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Your Message</label>
-                <textarea name="enquiry_message" rows="4" style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;resize:vertical;" placeholder="Type your enquiry here..."></textarea>
+                <textarea name="message" rows="4" required style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;resize:vertical;" placeholder="Type your enquiry here..."></textarea>
             </div>
             <button type="submit" class="sc-btn sc-btn-primary" style="justify-content:center;">Submit Enquiry <i class="ti ti-send"></i></button>
         </form>
@@ -341,6 +341,11 @@
         <div class="sc-badge" style="text-align:center;display:block;">Our Team</div>
         <h2 class="sc-title">{{ $s['faculty_title'] ?? 'Faculty & Staff' }}</h2>
         <div class="sc-grid sc-grid-4" style="margin-top:32px;">
+            @if (!empty($schoolItems['faculty_member']))
+                @foreach ($schoolItems['faculty_member'] as $item)
+                    <div style="text-align:center;">@if($item->image)<img src="{{ Storage::url($item->image) }}" alt="{{ $item->title }}" style="width:120px;height:120px;border-radius:50%;object-fit:cover;margin-bottom:12px;border:3px solid var(--sc-accent-light);">@else<div style="width:120px;height:120px;border-radius:50%;background:var(--sc-accent-light);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;"><span style="font-size:32px;font-weight:700;color:var(--sc-accent);">{{ strtoupper(substr($item->title, 0, 1)) }}</span></div>@endif<div style="font-weight:700;font-size:14px;">{{ $item->title }}</div><div style="font-size:12px;color:var(--sc-accent);font-weight:500;">{{ $item->subtitle }}</div><div style="font-size:11px;color:#94a3b8;margin-top:2px;">{{ $item->body }}</div></div>
+                @endforeach
+            @else
             @foreach (['faculty_1', 'faculty_2', 'faculty_3', 'faculty_4', 'faculty_5', 'faculty_6', 'faculty_7', 'faculty_8'] as $fKey)
                 @if ($s[$fKey . '_name'] ?? null)
                     <div style="text-align:center;">
@@ -359,6 +364,7 @@
                     </div>
                 @endif
             @endforeach
+            @endif
         </div>
     </div>
 </section>
@@ -371,6 +377,11 @@
         <div class="sc-badge" style="text-align:center;display:block;">Student Life</div>
         <h2 class="sc-title">{{ $s['student_life_title'] ?? 'Life Beyond Classrooms' }}</h2>
         <div class="sc-grid sc-grid-3" style="margin-top:32px;">
+            @if (!empty($schoolItems['student_activity']))
+                @foreach ($schoolItems['student_activity'] as $item)
+                    <div class="sc-card" style="text-align:center;"><i class="ti ti-star" style="font-size:28px;color:var(--sc-accent);margin-bottom:12px;display:block;"></i><div style="font-weight:700;font-size:15px;margin-bottom:4px;">{{ $item->title }}</div><div style="font-size:13px;color:#64748b;line-height:1.6;">{{ $item->body ?: $item->subtitle }}</div></div>
+                @endforeach
+            @else
             @foreach (['activity_1', 'activity_2', 'activity_3', 'activity_4', 'activity_5', 'activity_6'] as $actKey)
                 @if ($s[$actKey . '_title'] ?? null)
                     <div class="sc-card" style="text-align:center;">
@@ -380,6 +391,7 @@
                     </div>
                 @endif
             @endforeach
+            @endif
         </div>
     </div>
 </section>
@@ -392,6 +404,11 @@
         <div class="sc-badge" style="text-align:center;display:block;">Infrastructure</div>
         <h2 class="sc-title">{{ $s['facilities_title'] ?? 'Our Facilities' }}</h2>
         <div class="sc-grid sc-grid-4" style="margin-top:32px;">
+            @if (!empty($schoolItems['facility']))
+                @foreach ($schoolItems['facility'] as $item)
+                    <div class="sc-card" style="text-align:center;"><i class="ti ti-building" style="font-size:28px;color:var(--sc-accent);margin-bottom:10px;display:block;"></i><div style="font-weight:700;font-size:14px;">{{ $item->title }}</div><div style="font-size:12px;color:#64748b;margin-top:4px;">{{ $item->body ?: $item->subtitle }}</div></div>
+                @endforeach
+            @else
             @foreach (['facility_1', 'facility_2', 'facility_3', 'facility_4', 'facility_5', 'facility_6', 'facility_7', 'facility_8'] as $facKey)
                 @if ($s[$facKey . '_name'] ?? null)
                     <div class="sc-card" style="text-align:center;">
@@ -400,6 +417,7 @@
                     </div>
                 @endif
             @endforeach
+            @endif
         </div>
     </div>
 </section>
@@ -431,15 +449,17 @@
             <div>
                 <div class="sc-badge">Latest News</div>
                 <h3 style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:16px;">{{ $s['news_title'] ?? 'News & Notices' }}</h3>
-                @foreach (['news_1', 'news_2', 'news_3'] as $nKey)
-                    @if ($s[$nKey . '_title'] ?? null)
-                        <div style="padding:12px 0;border-bottom:1px solid #e2e8f0;">
-                            <div style="font-size:11px;color:#94a3b8;">{{ $s[$nKey . '_date'] ?? '' }}</div>
-                            <div style="font-weight:600;font-size:14px;margin-top:2px;">{{ $s[$nKey . '_title'] }}</div>
-                            <div style="font-size:12px;color:#64748b;margin-top:2px;">{{ $s[$nKey . '_excerpt'] ?? '' }}</div>
-                        </div>
-                    @endif
-                @endforeach
+                @if (!empty($schoolItems['school_notice']))
+                    @foreach ($schoolItems['school_notice'] as $item)
+                        <div style="padding:12px 0;border-bottom:1px solid #e2e8f0;"><div style="font-size:11px;color:#94a3b8;">{{ $item->subtitle }}</div><div style="font-weight:600;font-size:14px;margin-top:2px;">{{ $item->title }}</div><div style="font-size:12px;color:#64748b;margin-top:2px;">{{ $item->body }}</div></div>
+                    @endforeach
+                @else
+                    @foreach (['news_1', 'news_2', 'news_3'] as $nKey)
+                        @if ($s[$nKey . '_title'] ?? null)
+                            <div style="padding:12px 0;border-bottom:1px solid #e2e8f0;"><div style="font-size:11px;color:#94a3b8;">{{ $s[$nKey . '_date'] ?? '' }}</div><div style="font-weight:600;font-size:14px;margin-top:2px;">{{ $s[$nKey . '_title'] }}</div><div style="font-size:12px;color:#64748b;margin-top:2px;">{{ $s[$nKey . '_excerpt'] ?? '' }}</div></div>
+                        @endif
+                    @endforeach
+                @endif
             </div>
             {{-- Upcoming Events --}}
             <div>
@@ -472,6 +492,11 @@
         <div class="sc-badge" style="text-align:center;display:block;">Achievements</div>
         <h2 class="sc-title">{{ $s['achievements_title'] ?? 'Our Achievements' }}</h2>
         <div class="sc-grid sc-grid-3" style="margin-top:32px;">
+            @if (!empty($schoolItems['achievement']))
+                @foreach ($schoolItems['achievement'] as $item)
+                    <div class="sc-card" style="text-align:center;"><i class="ti ti-trophy" style="font-size:28px;color:var(--sc-accent);margin-bottom:10px;display:block;"></i><div style="font-weight:700;font-size:14px;margin-bottom:4px;">{{ $item->title }}</div><div style="font-size:12px;color:#64748b;">{{ $item->body ?: $item->subtitle }}</div></div>
+                @endforeach
+            @else
             @foreach (['achievement_1', 'achievement_2', 'achievement_3', 'achievement_4', 'achievement_5', 'achievement_6'] as $achKey)
                 @if ($s[$achKey . '_title'] ?? null)
                     <div class="sc-card" style="text-align:center;">
@@ -481,6 +506,7 @@
                     </div>
                 @endif
             @endforeach
+            @endif
         </div>
     </div>
 </section>

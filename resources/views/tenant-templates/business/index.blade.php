@@ -1,209 +1,46 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-
-    <title>{{ $tenant->name }}</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
-    @if ($tenant->action_type === 'razorpay')
-        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    @endif
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ $tenant->theme_settings['seo_title'] ?? $tenant->name }}</title>
+    <meta name="description" content="{{ $tenant->theme_settings['seo_description'] ?? Str::limit(strip_tags($tenant->about_text ?: 'Professional services and selected work.'), 155) }}">
+    @if($tenant->theme_settings['favicon'] ?? null)<link rel="icon" href="{{ Storage::url($tenant->theme_settings['favicon']) }}">@endif
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+    @php $accent = $tenant->theme_settings['accent_color'] ?? '#0f766e'; @endphp
     <style>
-        .tp-wrap { min-height: 100vh; display: flex; flex-direction: column; }
-        .tp-hero { position: relative; height: 320px; overflow: hidden; display: flex; align-items: flex-end; }
-        .tp-hero-bg { position: absolute; inset: 0; object-fit: cover; width: 100%; height: 100%; }
-        .tp-hero-overlay { position: absolute; inset: 0; background: linear-gradient(transparent 40%, rgba(18,20,29,.92)); }
-        .tp-hero-content { position: relative; z-index: 1; padding: 24px 32px 32px; }
-        .tp-name { font-size: 32px; font-weight: 700; color: #fff; font-family: 'Syne', sans-serif; }
-        .tp-section { padding: 40px 32px; border-bottom: 1px solid var(--border); }
-        .tp-section-title { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px; }
-        .tp-about { font-size: 14px; color: var(--text-secondary); line-height: 1.7; max-width: 720px; white-space: pre-wrap; }
-        .tp-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-        .tp-gallery-img { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
-        .tp-contact { font-size: 14px; color: var(--text-secondary); line-height: 1.8; }
-        .tp-contact a { color: var(--tp-accent, var(--accent-blue)); text-decoration: none; }
-        .tp-contact a:hover { text-decoration: underline; }
-        .tp-foot { text-align: center; padding: 20px 32px; font-size: 11px; color: var(--text-dim); border-top: 1px solid var(--border); }
-
-        .tp-svc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
-        .tp-svc-card { border: 1px solid var(--border); border-radius: 10px; padding: 16px; background: var(--bg-card); }
-        .tp-svc-photo { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
-        .tp-svc-name { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-        .tp-svc-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px; }
-        .tp-svc-price { font-size: 14px; font-weight: 700; color: var(--tp-accent, var(--accent-blue)); }
-
-        .tp-test-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
-        .tp-test-card { border: 1px solid var(--border); border-radius: 10px; padding: 16px; background: var(--bg-card); }
-        .tp-test-quote { font-size: 13px; color: var(--text-secondary); line-height: 1.6; font-style: italic; margin-bottom: 12px; }
-        .tp-test-author { display: flex; align-items: center; gap: 10px; }
-        .tp-test-photo { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
-        .tp-test-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-        .tp-test-role { font-size: 11px; color: var(--text-dim); }
-        .tp-test-stars { color: var(--accent-amber); font-size: 12px; margin-bottom: 6px; }
-
-        .tp-blog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
-        .tp-blog-card { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--bg-card); }
-        .tp-blog-photo { width: 100%; height: 130px; object-fit: cover; }
-        .tp-blog-body { padding: 14px; }
-        .tp-blog-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-        .tp-blog-excerpt { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
-        .tp-blog-date { font-size: 11px; color: var(--text-dim); margin-top: 8px; }
+        :root{--ink:#17202a;--muted:#667085;--paper:#fff;--soft:#f4f7f6;--line:#dce6e2;--accent:{{ $accent }};--warm:#e9a23b;--radius:6px}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:var(--paper);font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.65}a{color:inherit}.wrap{width:min(1180px,calc(100% - 40px));margin:auto}.top{position:absolute;z-index:10;top:0;left:0;right:0;border-bottom:1px solid rgba(255,255,255,.25)}nav{height:78px;display:flex;align-items:center;gap:28px;color:white}.brand{display:flex;align-items:center;gap:12px;text-decoration:none;font:800 20px 'Manrope',sans-serif;margin-right:auto}.brand img{width:42px;height:42px;object-fit:contain;background:#fff;border-radius:4px;padding:4px}.links{display:flex;align-items:center;gap:25px}.links a{text-decoration:none;font-weight:600;font-size:14px}.nav-cta,.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border:0;border-radius:var(--radius);background:var(--accent);color:#fff;text-decoration:none;font-weight:800;cursor:pointer}.nav-cta{background:#fff;color:var(--ink)}.hero{min-height:690px;display:flex;align-items:flex-end;padding:150px 0 88px;color:white;background:linear-gradient(90deg,rgba(13,26,31,.92),rgba(13,26,31,.54)),var(--hero) center/cover no-repeat}.hero-copy{max-width:760px}.eyebrow{color:#b9e4d7;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;font-size:12px}.hero h1{font:800 clamp(42px,6vw,78px)/1.03 'Manrope',sans-serif;margin:15px 0 22px;letter-spacing:0}.hero p{max-width:650px;font-size:19px;color:#e7efec}.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}.btn.alt{background:transparent;border:1px solid rgba(255,255,255,.6)}.trust{background:#10282a;color:#d9e9e5}.trust-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px}.trust-item{padding:22px;text-align:center;border-right:1px solid rgba(255,255,255,.12);font-weight:700}.section{padding:92px 0}.section.soft{background:var(--soft)}.section-head{display:grid;grid-template-columns:.75fr 1.25fr;gap:50px;align-items:end;margin-bottom:42px}.section h2{font:800 clamp(31px,4vw,49px)/1.12 'Manrope',sans-serif;margin:8px 0}.section-intro{color:var(--muted);font-size:18px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}.card{border:1px solid var(--line);background:#fff;border-radius:var(--radius);overflow:hidden}.card-media{aspect-ratio:16/10;background:#dce6e2}.card-media img{width:100%;height:100%;object-fit:cover}.card-body{padding:24px}.card h3{font:800 21px/1.25 'Manrope',sans-serif;margin:0 0 9px}.meta{color:var(--accent);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px}.card p{color:var(--muted);margin:10px 0 0}.result{display:inline-block;margin-top:16px;padding-top:12px;border-top:1px solid var(--line);font-weight:800}.about{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}.about-image{min-height:520px;background:var(--about) center/cover;border-radius:var(--radius)}.about p{color:var(--muted);font-size:18px}.team-card{text-align:center}.team-card .card-media{aspect-ratio:4/4.4}.quote{padding:30px;border-left:4px solid var(--accent);background:#fff}.quote blockquote{margin:0;font-size:18px}.quote strong{display:block;margin-top:18px}.career{padding:24px;border:1px solid var(--line);background:#fff;margin-bottom:12px}.career-head{display:flex;justify-content:space-between;gap:20px;align-items:center}.career h3{margin:0;font:800 20px 'Manrope',sans-serif}.career details{margin-top:14px}.career form,.contact-form{display:grid;gap:12px;margin-top:20px}.career form{grid-template-columns:1fr 1fr}.career form textarea,.career form .wide{grid-column:1/-1}input,textarea,select{width:100%;border:1px solid #cad8d3;background:#fff;padding:13px 14px;border-radius:4px;font:inherit;color:var(--ink)}textarea{resize:vertical}.contact{background:#122827;color:#fff}.contact-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:70px}.contact .section-intro{color:#c6d8d3}.contact-form{grid-template-columns:1fr 1fr}.contact-form textarea,.contact-form .wide{grid-column:1/-1}.contact-form input,.contact-form textarea{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.22);color:white}.newsletter{padding:38px 0;background:var(--warm)}.newsletter-row{display:grid;grid-template-columns:1fr auto;gap:30px;align-items:center}.newsletter h3{font:800 26px 'Manrope',sans-serif;margin:0}.newsletter form{display:flex;gap:8px}.newsletter input{min-width:300px;border:0}.footer{padding:35px 0;background:#0c1919;color:#a9bfba}.footer-row{display:flex;justify-content:space-between;gap:20px;align-items:center}.footer-links{display:flex;gap:18px;flex-wrap:wrap}.notice{position:fixed;z-index:30;right:20px;bottom:20px;padding:14px 18px;background:#fff;color:var(--ink);box-shadow:0 12px 34px rgba(0,0,0,.2);border-left:4px solid var(--accent)}.mobile-toggle{display:none;background:none;border:0;color:#fff;font-size:25px}.empty-note{padding:32px;border:1px dashed var(--line);color:var(--muted)}
+        @media(max-width:800px){.wrap{width:min(100% - 28px,1180px)}.links{display:none;position:absolute;top:78px;left:0;right:0;padding:18px;background:#10282a;flex-direction:column}.links.open{display:flex}.mobile-toggle{display:block}.nav-cta{display:none}.hero{min-height:610px;padding-bottom:62px}.trust-grid,.grid{grid-template-columns:1fr}.trust-item{border-right:0;border-bottom:1px solid rgba(255,255,255,.12)}.section{padding:68px 0}.section-head,.about,.contact-grid,.newsletter-row{grid-template-columns:1fr;gap:28px}.about-image{min-height:360px}.career-head{align-items:flex-start;flex-direction:column}.career form,.contact-form{grid-template-columns:1fr}.career form textarea,.career form .wide,.contact-form textarea,.contact-form .wide{grid-column:auto}.newsletter form{flex-direction:column}.newsletter input{min-width:0}.footer-row{align-items:flex-start;flex-direction:column}}
     </style>
 </head>
-<body class="antialiased">
-    @php
-        $ts = $tenant->theme_settings ?? [];
-        $accent = $ts['accent_color'] ?? '#534ab7';
-        $showServices = $ts['show_services'] ?? true;
-        $showTestimonials = $ts['show_testimonials'] ?? true;
-        $showBlog = $ts['show_blog'] ?? true;
-        $showAbout = $ts['show_about'] ?? true;
-        $showGallery = $ts['show_gallery'] ?? true;
-        $showContact = $ts['show_contact'] ?? true;
-    @endphp
-    <div class="tp-wrap" style="--tp-accent: {{ $accent }};">
+<body>
+@php
+    $heroImage = $tenant->banner_image ? Storage::url($tenant->banner_image) : asset('images/portfolio-demo/tangpa-hero.png');
+    $aboutImage = $tenant->galleryImages->first()?->image_path ? Storage::url($tenant->galleryImages->first()->image_path) : $heroImage;
+@endphp
+<header class="top"><nav class="wrap"><a class="brand" href="#top">@if($tenant->logo)<img src="{{ Storage::url($tenant->logo) }}" alt="">@endif<span>{{ $tenant->name }}</span></a><button class="mobile-toggle" onclick="document.querySelector('.links').classList.toggle('open')" aria-label="Menu">☰</button><div class="links"><a href="#services">Services</a>@if($caseStudies->isNotEmpty())<a href="#work">Work</a>@endif @if($teamMembers->isNotEmpty())<a href="#team">Team</a>@endif @if($posts->isNotEmpty())<a href="#insights">Insights</a>@endif @if($careers->isNotEmpty())<a href="#careers">Careers</a>@endif</div><a class="nav-cta" href="#contact">Start a conversation</a></nav></header>
+<main id="top">
+<section class="hero" style="--hero:url('{{ $heroImage }}')"><div class="wrap hero-copy"><div class="eyebrow">{{ $tenant->theme_settings['hero_eyebrow'] ?? 'Strategy · Design · Delivery' }}</div><h1>{{ $tenant->theme_settings['hero_title'] ?? $tenant->name }}</h1><p>{{ $tenant->theme_settings['hero_subtitle'] ?? Str::limit($tenant->about_text ?: 'We help ambitious organisations turn clear thinking into meaningful business results.', 190) }}</p><div class="hero-actions"><a class="btn" href="#services">Explore our work</a><a class="btn alt" href="#contact">Discuss a project</a></div></div></section>
+<section class="trust"><div class="wrap trust-grid"><div class="trust-item">Clear strategy</div><div class="trust-item">Senior-led delivery</div><div class="trust-item">Measurable outcomes</div></div></section>
 
-        {{-- Hero / Banner --}}
-        <div class="tp-hero" style="background: linear-gradient(160deg, #201a2e, #0d0f17);">
-            @if ($tenant->banner_image)
-                <img class="tp-hero-bg" src="{{ Storage::url($tenant->banner_image) }}" alt="">
-            @endif
-            <div class="tp-hero-overlay"></div>
-            <div class="tp-hero-content">
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-                    @if ($tenant->logo)
-                        <img src="{{ Storage::url($tenant->logo) }}" alt="Logo" style="height:44px;border-radius:8px;">
-                    @endif
-                    <div class="tp-name">{{ $tenant->name }}</div>
-                </div>
-            </div>
-        </div>
+@if($services->isNotEmpty())<section class="section" id="services"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:var(--accent)">What we do</div><h2>Services built around your goals</h2></div><div class="section-intro">Focused expertise, practical collaboration, and work designed to create lasting value.</div></div><div class="grid">@foreach($services as $service)<article class="card">@if($service->photo)<div class="card-media"><img src="{{ Storage::url($service->photo) }}" alt="{{ $service->name }}"></div>@endif<div class="card-body"><h3>{{ $service->name }}</h3><p>{{ $service->description }}</p>@if($service->price)<span class="result">From ₹{{ number_format($service->price) }}</span>@endif</div></article>@endforeach</div></div></section>@endif
 
-        {{-- Services --}}
-        @if ($showServices && $services->count())
-            <div class="tp-section">
-                <div class="tp-section-title">Services</div>
-                <div class="tp-svc-grid">
-                    @foreach ($services as $service)
-                        <div class="tp-svc-card">
-                            @if ($service->photo)
-                                <img class="tp-svc-photo" src="{{ Storage::url($service->photo) }}" alt="{{ $service->name }}">
-                            @endif
-                            <div class="tp-svc-name">{{ $service->name }}</div>
-                            @if ($service->description)
-                                <div class="tp-svc-desc">{{ $service->description }}</div>
-                            @endif
-                            @if ($service->price !== null)
-                                <div class="tp-svc-price">₹{{ number_format($service->price, 2) }}</div>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        @endif
+@if($caseStudies->isNotEmpty())<section class="section soft" id="work"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:var(--accent)">Selected work</div><h2>Work with visible impact</h2></div><div class="section-intro">A closer look at the challenges, thinking, and results behind recent engagements.</div></div><div class="grid">@foreach($caseStudies as $item)<article class="card">@if($item->image)<div class="card-media"><img src="{{ Storage::url($item->image) }}" alt="{{ $item->title }}"></div>@endif<div class="card-body"><div class="meta">{{ $item->subtitle }}</div><h3>{{ $item->title }}</h3><p>{{ Str::limit($item->body, 150) }}</p>@if($item->meta['result'] ?? null)<span class="result">{{ $item->meta['result'] }}</span>@endif</div></article>@endforeach</div></div></section>@endif
 
-        {{-- Testimonials --}}
-        @if ($showTestimonials && $testimonials->count())
-            <div class="tp-section">
-                <div class="tp-section-title">What Clients Say</div>
-                <div class="tp-test-grid">
-                    @foreach ($testimonials as $t)
-                        <div class="tp-test-card">
-                            @if ($t->rating)
-                                <div class="tp-test-stars">{{ str_repeat('★', $t->rating) }}{{ str_repeat('☆', 5 - $t->rating) }}</div>
-                            @endif
-                            <div class="tp-test-quote">&ldquo;{{ $t->content }}&rdquo;</div>
-                            <div class="tp-test-author">
-                                @if ($t->photo)
-                                    <img class="tp-test-photo" src="{{ Storage::url($t->photo) }}" alt="{{ $t->author_name }}">
-                                @endif
-                                <div>
-                                    <div class="tp-test-name">{{ $t->author_name }}</div>
-                                    @if ($t->author_role)
-                                        <div class="tp-test-role">{{ $t->author_role }}</div>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        @endif
+<section class="section"><div class="wrap about"><div class="about-image" style="--about:url('{{ $aboutImage }}')"></div><div><div class="eyebrow" style="color:var(--accent)">About us</div><h2>Thoughtful work, built together</h2><p>{{ $tenant->about_text ?: 'We combine strategic clarity, specialist craft, and dependable delivery to help clients move forward with confidence.' }}</p><a class="btn" href="#contact">Work with us</a></div></div></section>
 
-        {{-- Blog --}}
-        @if ($showBlog && $posts->count())
-            <div class="tp-section">
-                <div class="tp-section-title">Latest Posts</div>
-                <div class="tp-blog-grid">
-                    @foreach ($posts as $post)
-                        <div class="tp-blog-card">
-                            @if ($post->cover_photo)
-                                <img class="tp-blog-photo" src="{{ Storage::url($post->cover_photo) }}" alt="{{ $post->title }}">
-                            @endif
-                            <div class="tp-blog-body">
-                                <div class="tp-blog-title">{{ $post->title }}</div>
-                                @if ($post->excerpt)
-                                    <div class="tp-blog-excerpt">{{ $post->excerpt }}</div>
-                                @endif
-                                <div class="tp-blog-date">{{ $post->published_at?->format('M j, Y') }}</div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        @endif
+@if($teamMembers->isNotEmpty())<section class="section soft" id="team"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:var(--accent)">Our people</div><h2>Meet the team</h2></div><div class="section-intro">Experienced specialists who stay close to the work from first conversation to final delivery.</div></div><div class="grid">@foreach($teamMembers as $item)<article class="card team-card">@if($item->image)<div class="card-media"><img src="{{ Storage::url($item->image) }}" alt="{{ $item->title }}"></div>@endif<div class="card-body"><h3>{{ $item->title }}</h3><div class="meta">{{ $item->subtitle }}</div><p>{{ Str::limit($item->body, 120) }}</p></div></article>@endforeach</div></div></section>@endif
 
-        {{-- About --}}
-        @if ($showAbout && $tenant->about_text)
-            <div class="tp-section">
-                <div class="tp-section-title">About</div>
-                <div class="tp-about">{{ $tenant->about_text }}</div>
-            </div>
-        @endif
+@if($testimonials->isNotEmpty())<section class="section"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:var(--accent)">Client perspective</div><h2>Trusted partnerships</h2></div></div><div class="grid">@foreach($testimonials->take(6) as $testimonial)<article class="quote"><blockquote>“{{ $testimonial->content }}”</blockquote><strong>{{ $testimonial->author_name }}</strong><span>{{ $testimonial->author_role }}</span></article>@endforeach</div></div></section>@endif
 
-        {{-- Gallery --}}
-        @if ($showGallery && $tenant->galleryImages->count())
-            <div class="tp-section">
-                <div class="tp-section-title">Gallery</div>
-                <div class="tp-gallery-grid">
-                    @foreach ($tenant->galleryImages as $image)
-                        <img class="tp-gallery-img" src="{{ Storage::url($image->image_path) }}" alt="{{ $image->caption ?? '' }}" loading="lazy">
-                    @endforeach
-                </div>
-            </div>
-        @endif
+@if($posts->isNotEmpty())<section class="section soft" id="insights"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:var(--accent)">Insights</div><h2>Ideas from our team</h2></div></div><div class="grid">@foreach($posts as $post)<article class="card">@if($post->cover_photo)<div class="card-media"><img src="{{ Storage::url($post->cover_photo) }}" alt=""></div>@endif<div class="card-body"><div class="meta">{{ $post->published_at?->format('d M Y') }}</div><h3>{{ $post->title }}</h3><p>{{ Str::limit(strip_tags($post->content), 140) }}</p></div></article>@endforeach</div></div></section>@endif
 
-        {{-- Contact --}}
-        @if ($showContact)
-            <div class="tp-section">
-                <div class="tp-section-title">Contact</div>
-                <div class="tp-contact">
-                    @if ($tenant->contact_address)
-                        <div><i class="ti ti-map-pin" style="width:18px;"></i> {{ $tenant->contact_address }}</div>
-                    @endif
-                    @if ($tenant->contact_phone)
-                        <div><i class="ti ti-phone" style="width:18px;"></i> <a href="tel:{{ $tenant->contact_phone }}">{{ $tenant->contact_phone }}</a></div>
-                    @endif
-                    @if ($tenant->contact_email)
-                        <div><i class="ti ti-mail" style="width:18px;"></i> <a href="mailto:{{ $tenant->contact_email }}">{{ $tenant->contact_email }}</a></div>
-                    @endif
-                    @if ($tenant->contact_hours)
-                        <div><i class="ti ti-clock" style="width:18px;"></i> {{ $tenant->contact_hours }}</div>
-                    @endif
-                </div>
-            </div>
-        @endif
+@if($careers->isNotEmpty())<section class="section" id="careers"><div class="wrap"><div class="section-head"><div><div class="eyebrow" style="color:var(--accent)">Join us</div><h2>Open roles</h2></div><div class="section-intro">Bring your perspective, experience, and curiosity to a team that values excellent work.</div></div>@foreach($careers as $career)<article class="career"><div class="career-head"><div><h3>{{ $career->title }}</h3><div class="meta">{{ $career->subtitle }}</div></div><button class="btn" onclick="this.closest('.career').querySelector('details').open=true">Apply</button></div><p>{{ $career->body }}</p><details><summary>Application form</summary><form method="POST" enctype="multipart/form-data" action="{{ route('tenant.business.career.apply', $career->id) }}">@csrf<input name="name" placeholder="Full name" required><input name="email" type="email" placeholder="Email" required><input name="phone" placeholder="Phone"><input name="resume" type="file" accept=".pdf,.doc,.docx"><textarea class="wide" name="message" rows="4" placeholder="Tell us why you are interested" required></textarea><button class="btn wide">Submit application</button></form></details></article>@endforeach</div></section>@endif
 
-        <div class="tp-foot">{{ $tenant->name }} &middot; Powered by Ehlom OS</div>
-    </div>
-    @include('tenant-templates.partials.ai-assistant')
-</body>
-</html>
+<section class="section contact" id="contact"><div class="wrap contact-grid"><div><div class="eyebrow">Start a conversation</div><h2>Tell us what you are working on</h2><p class="section-intro">Share a little about your goals and we will respond with a clear next step.</p>@if($tenant->contact_email)<p><strong>Email</strong><br>{{ $tenant->contact_email }}</p>@endif @if($tenant->contact_phone)<p><strong>Phone</strong><br>{{ $tenant->contact_phone }}</p>@endif @if($tenant->contact_address)<p><strong>Office</strong><br>{{ $tenant->contact_address }}</p>@endif</div>@if($tenant->hasModule('enquiries'))<form class="contact-form" method="POST" action="{{ route('tenant.business.enquiry') }}">@csrf<input name="name" placeholder="Your name" required><input name="email" type="email" placeholder="Work email" required><input name="phone" placeholder="Phone"><input name="subject" placeholder="What can we help with?"><textarea class="wide" name="message" rows="6" placeholder="Tell us about the project" required></textarea><button class="btn wide">Send enquiry</button></form>@endif</div></section>
+
+@if($tenant->hasModule('newsletter'))<section class="newsletter"><div class="wrap newsletter-row"><div><h3>Useful ideas, occasionally delivered</h3><span>Join our newsletter for practical insights and company updates.</span></div><form method="POST" action="{{ route('tenant.business.newsletter') }}">@csrf<input type="email" name="email" placeholder="Email address" required><button class="btn">Subscribe</button></form></div></section>@endif
+</main>
+<footer class="footer"><div class="wrap footer-row"><strong>{{ $tenant->name }}</strong><div class="footer-links">@foreach($customPages as $page)<a href="{{ route('tenant.custom-page.show', $page->slug) }}">{{ $page->title }}</a>@endforeach @foreach(['privacy'=>'Privacy','terms'=>'Terms'] as $slug=>$label)<a href="{{ route('tenant.policy', $slug) }}">{{ $label }}</a>@endforeach</div><span>© {{ date('Y') }}</span></div></footer>
+@if(session('success'))<div class="notice">{{ session('success') }}</div><script>setTimeout(()=>document.querySelector('.notice')?.remove(),5000)</script>@endif
+</body></html>

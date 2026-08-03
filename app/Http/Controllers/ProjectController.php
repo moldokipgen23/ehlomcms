@@ -170,10 +170,8 @@ class ProjectController extends Controller
         $project->update($update);
 
         // On the first transition to completed, auto-create subscriptions for
-        // any domain/hosting product included in this project. We deliberately
-        // skip "custom" products (those are one-off project work, not
-        // recurring) and skip products where a subscription for this project
-        // already exists, so re-saving completion is idempotent and safe.
+        // any recurring product included in this project. One-time products
+        // are intentionally kept as delivered/purchased project items only.
         $created = 0;
         if ($justCompleted) {
             $created = $this->autoCreateRecurringSubscriptions($project);
@@ -191,23 +189,20 @@ class ProjectController extends Controller
     }
 
     /**
-     * For each domain/hosting product on the project that isn't already on a
+     * For each recurring product on the project that isn't already on a
      * subscription tied to this project, create one starting today with an
-     * expiry derived from the product's billing_cycle (monthly/quarterly/
-     * yearly, defaulting to yearly when unset). Returns the count created so
-     * the caller can surface it in the flash message.
+     * expiry derived from the product's billing_cycle. Returns the count
+     * created so the caller can surface it in the flash message.
      */
     private function autoCreateRecurringSubscriptions(Project $project): int
     {
         $project->loadMissing('products', 'subscriptions');
 
         $alreadyLinked = $project->subscriptions->pluck('product_id')->all();
-        $recurringCategories = ['domain', 'hosting'];
-
         $created = 0;
 
         foreach ($project->products as $product) {
-            if (! in_array($product->category, $recurringCategories, true)) {
+            if (! $product->isRecurring()) {
                 continue;
             }
             if (in_array($product->id, $alreadyLinked, true)) {

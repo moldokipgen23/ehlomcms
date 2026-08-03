@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Tenant;
 use App\Models\Theme;
+use App\Services\ThemeKitImporter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -147,70 +148,26 @@ class AdminThemeController extends Controller
     }
 
     /**
-     * Reads a theme.zip (the same format downloadAsZip() produces) and
-     * creates a theme from it. Deliberately does NOT extract the zip's
-     * files to disk or execute anything from it - only two specific,
-     * known-by-name entries are ever read, and only into plain string/JSON
-     * values (ZipArchive::getFromName() reads in-memory, no filesystem
-     * write). theme.json's HTML ends up as custom_html, rendered through
-     * the existing CustomThemeRenderer's {{token}} substitution - the same
-     * safe path as pasting HTML by hand, never interpreted as PHP/Blade.
-     * This is the actual security boundary: an uploaded zip can only ever
-     * become inert template text, never code that runs on this server.
+     * Imports either the older simple theme.zip format (theme.json +
+     * custom.html) or a full Theme Kit containing views/, assets/, and
+     * optional demo-data.json. The importer validates paths and Blade
+     * syntax before writing anything to disk.
      */
     private function storeFromZip(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $request->validate([
             'theme_zip' => ['required', 'file', 'mimes:zip', 'max:10240'],
             'public' => ['nullable', 'boolean'],
         ]);
 
-        $zip = new ZipArchive;
-        $path = $validated['theme_zip']->getRealPath();
-
-        if ($zip->open($path) !== true) {
-            return back()->withInput()->with('error', 'Could not read that zip file.');
+        try {
+            $theme = app(ThemeKitImporter::class)->import(
+                $request->file('theme_zip'),
+                $request->boolean('public')
+            );
+        } catch (\RuntimeException $exception) {
+            return back()->withInput()->with('error', $exception->getMessage());
         }
-
-        $manifestJson = $zip->getFromName('theme.json');
-        if ($manifestJson === false) {
-            $zip->close();
-            return back()->withInput()->with('error', 'theme.zip must contain a theme.json file at its root (see the format used by an exported theme).');
-        }
-
-        $manifest = json_decode($manifestJson, true);
-        if (!is_array($manifest) || empty($manifest['name'])) {
-            $zip->close();
-            return back()->withInput()->with('error', 'theme.json is not valid - it needs at least a "name" field.');
-        }
-
-        $customHtml = $zip->getFromName('custom.html') ?: null;
-        $baseTemplate = $manifest['base_template'] ?? null;
-        $zip->close();
-
-        // A zip must supply usable content one way or another - either real
-        // HTML to render, or a base_template key that actually exists on
-        // disk. Otherwise this would create a theme that 500s the moment a
-        // tenant is assigned to it.
-        if (!$customHtml && (!$baseTemplate || !array_key_exists($baseTemplate, $this->availableBaseTemplates()))) {
-            return back()->withInput()->with('error', 'This zip has no custom.html and no valid base_template - nothing to render. Include one or the other.');
-        }
-
-        $industries = array_values(array_intersect(
-            (array) ($manifest['industries'] ?? []),
-            array_keys(config('business_types'))
-        ));
-
-        $theme = Theme::create([
-            'key' => $this->uniqueKey($manifest['name']),
-            'name' => $manifest['name'],
-            'description' => $manifest['description'] ?? null,
-            'base_template' => $customHtml ? null : $baseTemplate,
-            'custom_html' => $customHtml,
-            'industries' => $industries,
-            'default_settings' => $manifest['default_settings'] ?? null,
-            'public' => (bool) ($request->boolean('public')),
-        ]);
 
         return redirect()->route('themes.index')->with('success', "\"{$theme->name}\" imported from zip.");
     }
@@ -287,27 +244,47 @@ class AdminThemeController extends Controller
         ];
         $zip->addFromString('theme.json', json_encode($manifest, JSON_PRETTY_PRINT));
 
-        // preview image placeholder
-        $zip->addFromString('preview.jpg', 'Replace this file with an actual 1200x900 preview image.');
-        $zip->addFromString('preview.png', 'Replace this file with an actual 1200x900 preview image.');
-
         // README
         $readme = "# {$theme->name}\n\n{$theme->description}\n\n"
+            . "## Theme Kit Structure\n\n"
+            . "- theme.json\n"
+            . "- views/index.blade.php\n"
+            . "- views/product.blade.php, cart.blade.php, checkout.blade.php, confirm.blade.php (optional ecommerce overrides)\n"
+            . "- assets/ for CSS, JS, images, fonts\n"
+            . "- demo-data.json (optional seed content for an approved client demo)\n\n"
             . "## Template Tokens\n\n"
             . "Use {{tenant.name}}, {{tenant.logo}}, {{tenant.banner}} in your HTML.\n"
             . "Wrap product listings in {{#products}}...{{/products}}.\n"
             . "Use {{item.name}}, {{item.price}}, {{item.photo}}, {{item.buy_button}} per product.\n";
         $zip->addFromString('README.md', $readme);
 
-        // Base template hint
         if ($theme->base_template) {
-            $zip->addFromString('views/README.txt', "This theme is based on the '{$theme->base_template}' layout.\n"
-                . "Place custom Blade files in views/ to override the base template.\n");
+            $viewDir = resource_path("views/tenant-templates/{$theme->base_template}");
+            if (File::isDirectory($viewDir)) {
+                foreach (File::allFiles($viewDir) as $file) {
+                    if ($file->getExtension() === 'php' && Str::endsWith($file->getFilename(), '.blade.php')) {
+                        $relative = ltrim(str_replace($viewDir, '', $file->getPathname()), DIRECTORY_SEPARATOR);
+                        $zip->addFromString('views/' . str_replace(DIRECTORY_SEPARATOR, '/', $relative), File::get($file->getPathname()));
+                    }
+                }
+            }
         }
 
-        // Custom HTML if it exists
         if ($theme->custom_html) {
             $zip->addFromString('custom.html', $theme->custom_html);
+        }
+
+        $assetDir = public_path("theme-assets/{$theme->key}");
+        if (File::isDirectory($assetDir)) {
+            foreach (File::allFiles($assetDir) as $file) {
+                $relative = ltrim(str_replace($assetDir, '', $file->getPathname()), DIRECTORY_SEPARATOR);
+                $zip->addFromString(str_replace(DIRECTORY_SEPARATOR, '/', $relative), File::get($file->getPathname()));
+            }
+        }
+
+        $demoDataPath = resource_path("theme-kits/{$theme->base_template}/demo-data.json");
+        if ($theme->base_template && File::exists($demoDataPath)) {
+            $zip->addFromString('demo-data.json', File::get($demoDataPath));
         }
 
         $zip->close();

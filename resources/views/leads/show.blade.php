@@ -8,6 +8,13 @@
 @endsection
 
 @section('content')
+@php
+    $whatsappDraft = 'Hi ' . ($lead->name ?: 'there') . ', I am reaching out from Ehlom Digital. We help businesses build professional websites and digital systems. Would you be open to a quick conversation about what could help ' . ($lead->business_name ?: 'your business') . '?';
+    if (!empty($prototype['preview_url'])) {
+        $whatsappDraft .= "\n\nHere is a relevant demo: {$prototype['preview_url']}";
+    }
+    $whatsappLink = \App\Helpers\WhatsAppHelper::link($lead->phone, $whatsappDraft);
+@endphp
 <div class="eos-row">
     <div class="eos-card">
         <div class="eos-card-header"><div class="eos-card-title">Contact Info</div></div>
@@ -17,6 +24,7 @@
                 'Business' => $lead->business_name ?: '—',
                 'Email' => $lead->email ?: '—',
                 'Phone' => $lead->phone ?: '—',
+                'Website' => $lead->website_url ?: '—',
             ] as $label => $value)
                 <div>
                     <div class="eos-label">{{ $label }}</div>
@@ -43,6 +51,29 @@
                 </div>
             @endforeach
         </div>
+    </div>
+</div>
+
+<div class="eos-card" style="margin-bottom:14px;border-color:var(--accent-blue);">
+    <div class="eos-card-header">
+        <div>
+            <div class="eos-card-title"><i class="ti ti-sparkles"></i> Recommended demo match</div>
+            <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">One reusable prototype is selected for this business type. The AI does not build a new site for every lead.</div>
+        </div>
+        @if ($lead->lead_score !== null)
+            <span class="eos-badge badge-qualified">Score {{ $lead->lead_score }}/100</span>
+        @endif
+    </div>
+    <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;">
+        <div>
+            <strong style="color:var(--text-primary);">{{ $prototype['label'] ?? 'Business Website Demo' }}</strong>
+            <div style="font-size:12px;color:var(--text-dim);margin-top:4px;">{{ $lead->recommended_offer ?: ($prototype['offer_label'] ?? 'Website offer') }}</div>
+        </div>
+        @if (!empty($prototype['preview_url']))
+            <a href="{{ $prototype['preview_url'] }}" target="_blank" rel="noopener" class="eos-btn eos-btn-secondary"><i class="ti ti-external-link"></i> Preview demo</a>
+        @else
+            <span style="font-size:12px;color:var(--text-dim);">Demo link will appear when this category has a published demo.</span>
+        @endif
     </div>
 </div>
 
@@ -114,9 +145,9 @@
             </a>
         @endif
 
-        @if ($lead->phone)
-            <a href="https://wa.me/{{ preg_replace('/\D/', '', $lead->phone) }}" target="_blank" rel="noopener" class="eos-btn eos-btn-secondary">
-                <i class="ti ti-brand-whatsapp"></i> WhatsApp
+        @if ($whatsappLink)
+            <a href="{{ $whatsappLink }}" target="_blank" rel="noopener" class="eos-btn eos-btn-secondary">
+                <i class="ti ti-brand-whatsapp"></i> Open WhatsApp Draft
             </a>
         @endif
 

@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Invoice;
 use App\Models\Setting;
+use App\Services\InvoicePaymentLinkService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -32,7 +33,7 @@ class InvoiceMail extends Mailable
 
         return new Content(
             view: 'emails.generic',
-            with: ['body' => Setting::renderTemplate($bodyTpl, $this->data())],
+            with: ['body' => $this->renderBody($bodyTpl)],
         );
     }
 
@@ -69,6 +70,22 @@ class InvoiceMail extends Mailable
             'amount' => number_format((float) $inv->total, 2),
             'due_date' => $inv->due_date?->format('M j, Y') ?? 'On receipt',
             'items' => $items !== '' ? $items : '(see attached PDF)',
+            'payment_link' => in_array($inv->status, ['unpaid', 'partial', 'overdue'], true)
+                ? app(InvoicePaymentLinkService::class)->make($inv)
+                : '',
         ];
+    }
+
+    private function renderBody(string $template): string
+    {
+        $data = $this->data();
+        $body = Setting::renderTemplate($template, $data);
+        $paymentLink = $data['payment_link'];
+
+        if ($paymentLink && ! str_contains($body, $paymentLink)) {
+            $body .= "\n\nPay securely online: {$paymentLink}";
+        }
+
+        return $body;
     }
 }

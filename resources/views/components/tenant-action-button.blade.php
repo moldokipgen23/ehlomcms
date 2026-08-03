@@ -1,12 +1,15 @@
 @php
     $tenant = app(\App\Services\TenantContext::class)->get();
     if (!$tenant) return;
+    $number = preg_replace('/[^0-9]/', '', $tenant->whatsapp_number ?? '');
+    $paymentSetting = $tenant->action_type === 'razorpay'
+        ? \App\Models\PaymentSetting::where('tenant_id', $tenant->id)->first()
+        : null;
 @endphp
 
-@if ($tenant->action_type === 'whatsapp')
+@if ($tenant->action_type === 'whatsapp' || ($tenant->action_type === 'razorpay' && !$paymentSetting && $number))
     @php
-        $number = preg_replace('/[^0-9]/', '', $tenant->whatsapp_number ?? '');
-        $message = urlencode($message ?? ($product->name ?? '') . ' — I\'m interested');
+        $message = rawurlencode($message ?? ($product->name ?? '') . ' - I\'m interested');
         $href = $number ? "https://wa.me/{$number}?text={$message}" : '#';
     @endphp
     @if ($number)
@@ -20,9 +23,6 @@
         </span>
     @endif
 @elseif ($tenant->action_type === 'razorpay')
-    @php
-        $paymentSetting = \App\Models\PaymentSetting::where('tenant_id', $tenant->id)->first();
-    @endphp
     @if ($paymentSetting && isset($product))
         <button type="button"
                 class="eos-btn eos-btn-primary razorpay-btn"

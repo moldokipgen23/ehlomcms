@@ -4,19 +4,23 @@ namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
 use App\Models\TenantBlogPost;
+use App\Models\TenantBusinessItem;
+use App\Models\TenantCustomPage;
 use App\Models\TenantPageView;
+use App\Models\TenantProduct;
 use App\Models\TenantService;
 use App\Models\TenantTestimonial;
 use App\Models\Theme;
 use App\Services\CustomThemeRenderer;
 use App\Services\TenantContext;
 use Illuminate\Http\Response;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View as ViewFacade;
 use Illuminate\View\View;
 
 class TenantHomeController extends Controller
 {
-    public function index(CustomThemeRenderer $renderer): View|Response
+    public function index(CustomThemeRenderer $renderer, Request $request): View|Response
     {
         $tenant = app(TenantContext::class)->get();
 
@@ -33,11 +37,36 @@ class TenantHomeController extends Controller
 
         $theme = Theme::where('key', $tenant->template_id)->first();
 
+        if ($tenant->site_mode === 'static' && !$theme) {
+            return response()->view('tenant.static-unavailable', compact('tenant'), 503);
+        }
+
         // Pass the catalog whenever the tenant has the catalog module
         // enabled, regardless of which layout renders it.
-        $products = $tenant->hasModule('catalog')
-            ? $tenant->products()->orderBy('name')->get()
-            : collect();
+        $products = collect();
+        $categories = collect();
+        $collections = collect();
+
+        if ($tenant->hasModule('catalog')) {
+            $query = $tenant->products()
+                ->with(['productCategory', 'collections', 'images', 'colors', 'sizes', 'variants.color', 'variants.size'])
+                ->where('is_active', true);
+
+            if ($tenant->hasModule('search_filters')) {
+                $query->when($request->filled('q'), fn ($q) => $q->where(function ($inner) use ($request) {
+                    $term = '%' . $request->query('q') . '%';
+                    $inner->where('name', 'like', $term)
+                        ->orWhere('description', 'like', $term)
+                        ->orWhere('sku', 'like', $term);
+                }));
+                $query->when($request->filled('category'), fn ($q) => $q->whereHas('productCategory', fn ($cat) => $cat->where('slug', $request->query('category'))));
+                $query->when($request->filled('collection'), fn ($q) => $q->whereHas('collections', fn ($collection) => $collection->where('slug', $request->query('collection'))));
+            }
+
+            $products = $query->orderBy('sort_order')->orderBy('name')->get();
+            $categories = $tenant->productCategories()->where('is_active', true)->get();
+            $collections = $tenant->productCollections()->where('is_active', true)->get();
+        }
 
         // Portfolio/Business tenant data - only queried when the relevant
         // module is enabled, same pattern as $products above.
@@ -52,6 +81,30 @@ class TenantHomeController extends Controller
         $posts = $tenant->hasModule('blog')
             ? TenantBlogPost::where('tenant_id', $tenant->id)->where('status', 'published')->orderByDesc('published_at')->limit(6)->get()
             : collect();
+
+        $businessItems = fn (string $module, string $type) => $tenant->hasModule($module)
+            ? TenantBusinessItem::where('tenant_id', $tenant->id)->where('type', $type)->where('is_active', true)->orderBy('sort_order')->orderBy('title')->get()
+            : collect();
+        $caseStudies = $businessItems('case_studies', 'case_study');
+        $teamMembers = $businessItems('team', 'team_member');
+        $careers = $businessItems('careers', 'career');
+
+        $schoolItems = [];
+        if ($tenant->site_type === 'school') {
+            foreach (['academic_program', 'faculty_member', 'facility', 'student_activity', 'achievement', 'school_notice'] as $schoolType) {
+                $schoolItems[$schoolType] = TenantBusinessItem::where('tenant_id', $tenant->id)
+                    ->where('type', $schoolType)
+                    ->where('is_active', true)
+                    ->orderBy('sort_order')->orderBy('title')->get();
+            }
+        }
+
+        $customPages = TenantCustomPage::where('tenant_id', $tenant->id)
+            ->where('is_published', true)
+            ->orderBy('sort_order')
+            ->orderBy('title')
+            ->limit(5)
+            ->get();
 
         $tenant->load('galleryImages');
 
@@ -102,6 +155,61 @@ class TenantHomeController extends Controller
             $baseTemplate = 'school';
         }
 
-        return view("tenant-templates.{$baseTemplate}.index", compact('tenant', 'products', 'services', 'testimonials', 'posts'));
+        return view("tenant-templates.{$baseTemplate}.index", compact('tenant', 'products', 'categories', 'collections', 'services', 'testimonials', 'posts', 'customPages', 'caseStudies', 'teamMembers', 'careers', 'schoolItems'));
+    }
+
+    public function showProduct(string $slug): View
+    {
+        $tenant = app(TenantContext::class)->get();
+        abort_if(!$tenant->hasModule('catalog'), 404);
+
+        $theme = Theme::where('key', $tenant->template_id)->first();
+        $baseTemplate = $theme->base_template ?? match ($tenant->site_type) {
+            'shopping' => 'shop',
+            'restaurant' => 'restaurant',
+            'business' => 'business',
+            default => 'school',
+        };
+
+        if ($theme) {
+            $tenant->theme_settings = array_merge(
+                $theme->default_settings ?? [],
+                $tenant->theme_settings ?? [],
+            );
+        }
+
+        $product = TenantProduct::where('tenant_id', $tenant->id)
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->with([
+                'productCategory',
+                'collections',
+                'images',
+                'colors.images',
+                'sizes',
+                'variants.color',
+                'variants.size',
+                'videos',
+            ])
+            ->firstOrFail();
+
+        $relatedProducts = TenantProduct::where('tenant_id', $tenant->id)
+            ->where('id', '!=', $product->id)
+            ->where('is_active', true)
+            ->with(['productCategory', 'images', 'colors'])
+            ->orderByDesc('is_featured')
+            ->orderBy('sort_order')
+            ->limit(4)
+            ->get();
+
+        if (!ViewFacade::exists("tenant-templates.{$baseTemplate}.product") && ViewFacade::exists('tenant-templates.shop.product')) {
+            $baseTemplate = 'shop';
+        }
+
+        if (!ViewFacade::exists("tenant-templates.{$baseTemplate}.product")) {
+            abort(404);
+        }
+
+        return view("tenant-templates.{$baseTemplate}.product", compact('tenant', 'product', 'relatedProducts'));
     }
 }

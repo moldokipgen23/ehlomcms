@@ -7,6 +7,10 @@
 @endpush
 
 @section('content')
+@php
+    $suffix = ($addon->billing_cycle ?? 'monthly') === 'one_time' ? 'once' : '/' . $addon->billingLabel();
+    $cycleLabel = ($addon->billing_cycle ?? 'monthly') === 'one_time' ? 'One-time price' : ucfirst($addon->billing_cycle ?? 'monthly') . ' price';
+@endphp
 <div class="eos-row" style="max-width:500px;margin:0 auto;">
     <div class="eos-card">
         <div class="eos-card-header">
@@ -17,13 +21,13 @@
                 <i class="ti {{ $addon->icon }}" style="font-size:32px;color:var(--accent-teal);"></i>
                 <div>
                     <div style="font-size:16px;font-weight:600;">{{ $addon->name }}</div>
-                    <div style="font-size:13px;color:var(--text-muted);">₹{{ number_format($addon->price, 0) }} one-time + GST</div>
+                    <div style="font-size:13px;color:var(--text-muted);">₹{{ number_format($addon->price, 0) }} {{ $suffix }} + GST</div>
                 </div>
             </div>
 
             <div style="background:var(--bg-hover);border-radius:8px;padding:16px;margin-bottom:20px;">
                 <div style="display:flex;justify-content:space-between;font-size:14px;">
-                    <span style="color:var(--text-muted);">Price</span>
+                    <span style="color:var(--text-muted);">{{ $cycleLabel }}</span>
                     <span style="font-weight:600;">₹{{ number_format($addon->price, 0) }}</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;font-size:14px;margin-top:8px;">
@@ -31,7 +35,7 @@
                     <span style="font-weight:600;">₹{{ number_format($addon->price * 0.18, 0) }}</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;font-size:16px;margin-top:12px;font-weight:700;border-top:1px solid var(--border);padding-top:12px;">
-                    <span>Total (one-time)</span>
+                    <span>{{ ($addon->billing_cycle ?? 'monthly') === 'one_time' ? 'Total' : 'Total (first cycle)' }}</span>
                     <span>₹{{ number_format($addon->price * 1.18, 0) }}</span>
                 </div>
             </div>
@@ -41,7 +45,7 @@
             </button>
 
             <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:16px;">
-                Secured by Razorpay. One-time payment. Disable anytime from Marketplace (no refund).
+                Secured by Razorpay. {{ ($addon->billing_cycle ?? 'monthly') === 'one_time' ? 'This is a one-time add-on.' : 'Renewal is tracked in Services & Billing. Cancel anytime from Marketplace.' }}
             </p>
         </div>
     </div>
@@ -49,17 +53,24 @@
 
 <script>
 var options = {
-    key: "{{ $razorpayKeyId }}",
-    amount: {{ (int) round($addon->price * 1.18 * 100) }},
+    key: "{{ $paymentSetting->razorpay_key_id }}",
+    amount: {{ (int) ($addon->price * 1.18 * 100) }},
     currency: "INR",
     name: "{{ $tenant->name }}",
-    description: "{{ $addon->name }}",
-    order_id: "{{ $order->id }}",
+    description: "{{ $addon->name }} Subscription",
+    order_id: "{{ $order['id'] }}",
     handler: function (response) {
         document.getElementById('rzp-btn').disabled = true;
         document.getElementById('rzp-btn').innerHTML = '<i class="ti ti-loader"></i> Verifying...';
 
-        window.location.href = '{{ route("tenant.addons.success") }}?addon_key={{ $addon->key }}&payment_id=' + response.razorpay_payment_id;
+        fetch('{{ route("tenant.addons.success") }}?addon_key={{ $addon->key }}&payment_id=' + response.razorpay_payment_id + '&order_id=' + response.razorpay_order_id + '&signature=' + response.razorpay_signature, {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function(res) {
+            window.location.href = '{{ route("tenant.addons.success") }}?addon_key={{ $addon->key }}';
+        }).catch(function() {
+            window.location.href = '{{ route("tenant.addons.success") }}?addon_key={{ $addon->key }}';
+        });
     },
     prefill: {
         name: "{{ $tenant->name }}",

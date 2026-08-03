@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Crypt;
 
 class Setting extends Model
 {
@@ -25,14 +26,55 @@ class Setting extends Model
         static::updateOrCreate(['key' => $key], ['value' => $value]);
     }
 
+    public static function getEncrypted(string $key): ?string
+    {
+        $value = static::get($key);
+
+        if (!filled($value)) {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($value);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    public static function putEncrypted(string $key, string $value): void
+    {
+        static::put($key, Crypt::encryptString($value));
+    }
+
+    /**
+     * Global payment methods used when a client pays Ehlom for invoices,
+     * hosting, and platform services. These are intentionally separate from
+     * the payment methods configured inside an individual client store.
+     */
+    public static function billingPaymentMethods(): array
+    {
+        $hasRazorpayCredentials = filled(static::getEncrypted('billing_razorpay_key'))
+            && filled(static::getEncrypted('billing_razorpay_secret'));
+
+        return [
+            'razorpay' => static::get('billing_razorpay_enabled', $hasRazorpayCredentials ? '1' : '0') === '1'
+                && $hasRazorpayCredentials,
+            'bank' => static::get('billing_bank_enabled', '0') === '1',
+            'cash' => static::get('billing_cash_enabled', '0') === '1',
+            'bank_label' => static::get('billing_bank_label', 'Bank transfer / UPI'),
+            'bank_instructions' => static::get('billing_bank_instructions'),
+            'cash_instructions' => static::get('billing_cash_instructions'),
+        ];
+    }
+
     /**
      * Hardcoded default values for email templates.
      */
     public const TEMPLATE_DEFAULTS = [
         'email_invoice_subject' => 'Invoice {invoice_number} from Ehlom Digital',
-        'email_invoice_body' => "Dear {client_name},\n\nPlease find your invoice {invoice_number} attached.\n\nCharges:\n{items}\n\nAmount Due: ₹{amount}\nDue Date: {due_date}\n\nThe full breakdown is in the attached PDF. Thank you for your business.\n\nEhlom Digital",
+        'email_invoice_body' => "Dear {client_name},\n\nPlease find your invoice {invoice_number} attached.\n\nCharges:\n{items}\n\nAmount Due: ₹{amount}\nDue Date: {due_date}\n\nPay securely online: {payment_link}\n\nThe full breakdown is in the attached PDF. Thank you for your business.\n\nEhlom Digital",
         'email_renewal_subject' => 'Renewal Reminder — {product_name}',
-        'email_renewal_body' => "Dear {client_name},\n\nYour {product_name} is due for renewal on {expiry_date}.\n\nRenewal Amount: ₹{renewal_amount}\n\nPlease contact us to proceed.\n\nEhlom Digital",
+        'email_renewal_body' => "Dear {client_name},\n\nYour {product_name} is due for renewal on {expiry_date}.\n\nRenewal Amount: ₹{renewal_amount}\n\nPay securely online: {payment_link}\n\nEhlom Digital",
         'email_payment_subject' => 'Payment Received — Invoice {invoice_number}',
         'email_payment_body' => "Dear {client_name},\n\nWe have received your payment for invoice {invoice_number}. Your account is now settled.\n\nAmount Paid: ₹{amount}\nPayment Date: {payment_date}\n\nThank you for your business.\n\nEhlom Digital",
         'email_completion_subject' => 'Project Completed — {project_title}',

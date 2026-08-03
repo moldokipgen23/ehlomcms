@@ -26,7 +26,9 @@
                         <i class="ti {{ $addon->icon }}" style="font-size:18px;color:var(--text-muted);flex:none;"></i>
                         <div style="font-weight:600;color:var(--text-primary);font-size:14px;">{{ $addon->name }}</div>
                     </div>
-                    <div style="font-size:12px;color:var(--text-dim);white-space:nowrap;">₹{{ number_format($addon->price, 0) }}/mo</div>
+                    <div style="font-size:12px;color:var(--text-dim);white-space:nowrap;">
+                        ₹{{ number_format($addon->price, 0) }}{{ ($addon->billing_cycle ?? 'monthly') === 'one_time' ? ' once' : '/' . $addon->billingLabel() }}
+                    </div>
                 </div>
 
                 @if ($addon->description)
@@ -100,7 +102,12 @@
                     @endif
                 </td>
                 <td>{{ $addon->name ?? $req->addon_key }}</td>
-                <td>₹{{ number_format($addon->price ?? 0, 0) }}/mo</td>
+                <td>
+                    ₹{{ number_format($addon->price ?? 0, 0) }}{{ (($addon?->billing_cycle ?? 'monthly') === 'one_time') ? ' once' : '/' . ($addon?->billingLabel() ?? 'month') }}
+                    @if ($req->expires_at)
+                        <div style="font-size:10px;color:var(--text-dim);">Expires {{ $req->expires_at->format('M j, Y') }}</div>
+                    @endif
+                </td>
                 <td>
                     <span class="eos-badge {{ $req->status === 'active' ? 'badge-active' : ($req->status === 'pending' ? 'badge-pending' : 'badge-draft') }}">
                         {{ ucfirst($req->status) }}

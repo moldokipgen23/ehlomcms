@@ -51,8 +51,69 @@
             </div>
 
             <div class="eos-field">
+                <label class="eos-label">Site Delivery Mode <span class="text-red-500">*</span></label>
+                <select name="site_mode" class="eos-input">
+                    <option value="managed" @selected(old('site_mode', $tenant->site_mode ?? 'managed') === 'managed')>Managed content dashboard</option>
+                    <option value="static" @selected(old('site_mode', $tenant->site_mode ?? 'managed') === 'static')>Static approved theme only</option>
+                </select>
+                <div style="font-size:10px;color:var(--text-dim);margin-top:4px;">Managed clients edit website content. Static clients use an admin-assigned approved HTML theme and receive only account, billing, domain, and support tools.</div>
+            </div>
+
+            <div class="eos-field">
                 <label class="eos-label">Plan</label>
                 <input type="text" name="plan" value="{{ old('plan', $tenant->plan ?? '') }}" class="eos-input" placeholder="e.g. Pro, Enterprise">
+            </div>
+
+            <div class="eos-field" style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px;">
+                <label class="eos-label">Assigned Storefront Theme</label>
+                <select name="template_id" class="eos-input">
+                    <option value="">Auto default for business type</option>
+                    @foreach ($themes as $themeKey => $theme)
+                        <option value="{{ $themeKey }}" {{ old('template_id', $tenant->template_id ?? '') === $themeKey ? 'selected' : '' }}>
+                            {{ $theme['name'] ?? $themeKey }}
+                            @if (!empty($theme['industries']))
+                                — {{ collect($theme['industries'])->map(fn($type) => $businessTypes[$type]['label'] ?? $type)->join(', ') }}
+                            @endif
+                        </option>
+                    @endforeach
+                </select>
+                <div style="font-size:10px;color:var(--text-dim);margin-top:4px;">Static delivery requires a real installed theme created from pasted HTML or an uploaded Theme Kit. Managed delivery can use any compatible installed theme.</div>
+            </div>
+
+            <div class="eos-field">
+                <label class="eos-label">Hosting Product</label>
+                <select name="hosting_plan_id" class="eos-input">
+                    <option value="">No hosting product assigned</option>
+                    @foreach ($hostingPlans as $hostingPlan)
+                        <option value="{{ $hostingPlan->id }}" {{ (string) old('hosting_plan_id', $tenant->hosting_plan_id ?? '') === (string) $hostingPlan->id ? 'selected' : '' }}>
+                            {{ $hostingPlan->name }} — ₹{{ number_format($hostingPlan->price, 0) }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="eos-field">
+                <label class="eos-label">Custom Domain</label>
+                <input type="text" name="custom_domain" value="{{ old('custom_domain', $tenant->custom_domain ?? '') }}" class="eos-input" placeholder="www.clientdomain.com">
+                <div style="font-size:10px;color:var(--text-dim);margin-top:4px;">Leave empty if this tenant only uses the Ehlom subdomain.</div>
+            </div>
+
+            <div class="eos-field">
+                <label class="eos-label">Domain Status</label>
+                <select name="domain_status" class="eos-input">
+                    @foreach (['none' => 'No custom domain', 'pending' => 'Pending verification', 'verified' => 'Verified / Live'] as $statusKey => $statusLabel)
+                        <option value="{{ $statusKey }}" {{ old('domain_status', $tenant->domain_status ?? 'none') === $statusKey ? 'selected' : '' }}>{{ $statusLabel }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="eos-field">
+                <label class="eos-label">Default Checkout Action</label>
+                <select name="action_type" class="eos-input">
+                    @foreach (['whatsapp' => 'WhatsApp Order', 'offline' => 'Cash on Delivery / Offline', 'razorpay' => 'Razorpay', 'stripe' => 'Stripe', 'paypal' => 'PayPal', 'custom' => 'Custom Gateway'] as $actionKey => $actionLabel)
+                        <option value="{{ $actionKey }}" {{ old('action_type', $tenant->action_type ?? 'whatsapp') === $actionKey ? 'selected' : '' }}>{{ $actionLabel }}</option>
+                    @endforeach
+                </select>
             </div>
 
             @if (!$tenant)
@@ -109,6 +170,63 @@
                 </label>
             @endforeach
         </div>
+
+        <div class="eos-card" style="margin-top:16px;">
+            <div class="eos-card-header">
+                <div>
+                    <div class="eos-card-title">Assigned Client Features</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">These toggles control what appears inside the client dashboard and storefront for this tenant.</div>
+                </div>
+            </div>
+            <div class="eos-card-body" style="padding:14px;">
+                @php
+                    $selectedModules = old('modules', $tenant->modules ?? []);
+                    $priceLabel = function ($moduleKey, $module, $typeKey) use ($moduleAssignments) {
+                        $assignment = $moduleAssignments[$typeKey][$moduleKey] ?? null;
+
+                        if (($assignment['status'] ?? null) !== 'paid' && !empty($module['free'])) {
+                            return 'Free';
+                        }
+
+                        $price = $assignment['price'] ?? $module['price'] ?? 0;
+                        $cycle = $assignment['billing_cycle'] ?? 'one_time';
+                        $suffix = $cycle === 'one_time' ? 'once' : '/' . ['monthly' => 'month', 'quarterly' => 'quarter', 'yearly' => 'year'][$cycle];
+
+                        return '₹' . number_format((float) $price, 0) . ' ' . $suffix;
+                    };
+                    $moduleGroups = collect($modules)
+                        ->reject(fn($module, $key) => $key === 'bundles' || !is_array($module) || empty($module['business_types']))
+                        ->groupBy(fn($module) => $module['business_types'][0] ?? 'other');
+                @endphp
+                @foreach ($businessTypes as $typeKey => $type)
+                    @php $typeModules = $moduleGroups->get($typeKey, collect()); @endphp
+                    @if ($typeModules->count())
+                        <div class="tenant-module-group" data-module-type="{{ $typeKey }}" style="margin-bottom:14px;">
+                            <div style="font-size:11px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">{{ $type['label'] }}</div>
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;">
+                                @foreach ($typeModules as $moduleKey => $module)
+                                    @php
+                                        $isChecked = in_array($moduleKey, $selectedModules ?? [], true) || ($tenant && $tenant->hasModule($moduleKey));
+                                        $assignment = $moduleAssignments[$typeKey][$moduleKey] ?? null;
+                                        $isPaid = ($assignment['status'] ?? null) === 'paid' || (((float) ($module['price'] ?? 0)) > 0 && empty($module['free']));
+                                    @endphp
+                                    <label style="display:flex;align-items:flex-start;gap:8px;border:1px solid var(--border);border-radius:9px;padding:9px;background:var(--bg-card);cursor:pointer;">
+                                        <input type="checkbox" name="modules[]" value="{{ $moduleKey }}" {{ $isChecked ? 'checked' : '' }} style="margin-top:2px;accent-color:var(--accent-blue);">
+                                        <span style="min-width:0;">
+                                            <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;font-weight:800;color:var(--text-primary);">
+                                                {{ $module['label'] ?? $moduleKey }}
+                                                <span style="font-size:9px;padding:1px 6px;border-radius:999px;background:{{ $isPaid ? '#fffbeb' : '#ecfdf5' }};color:{{ $isPaid ? '#d97706' : '#059669' }};font-weight:800;">{{ $priceLabel($moduleKey, $module, $typeKey) }}</span>
+                                            </span>
+                                            <span style="display:block;font-size:10px;color:var(--text-dim);line-height:1.4;">{{ $module['description'] ?? '' }}</span>
+                                        </span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                @endforeach
+            </div>
+        </div>
     </div>
 </div>
 
@@ -150,6 +268,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 card.style.borderColor = 'var(--border)';
                 card.style.background = 'var(--bg-card)';
             }
+        });
+
+        document.querySelectorAll('.tenant-module-group').forEach(group => {
+            const active = group.dataset.moduleType === selectedType;
+            group.style.display = active ? 'block' : 'none';
+            group.querySelectorAll('input[type=checkbox]').forEach(input => {
+                input.disabled = !active;
+            });
         });
     }
 

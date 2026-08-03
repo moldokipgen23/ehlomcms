@@ -27,10 +27,11 @@
         <div class="eos-field">
             <label class="eos-label">Billing Cycle *</label>
             <select name="billing_cycle" class="eos-select">
-                @foreach (['monthly' => 'Monthly', 'quarterly' => 'Quarterly', 'yearly' => 'Yearly'] as $val => $label)
+                @foreach (\App\Models\Product::BILLING_LABELS as $val => $label)
                     <option value="{{ $val }}" @selected(old('billing_cycle', $product->billing_cycle ?? 'yearly') === $val)>{{ $label }}</option>
                 @endforeach
             </select>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">One-time products do not create renewal subscriptions. Monthly/quarterly/yearly products can have expiry and renewal invoices.</div>
             @error('billing_cycle') <div class="eos-error">{{ $message }}</div> @enderror
         </div>
         <div class="eos-field">

@@ -10,7 +10,7 @@
 @section('content')
     <p style="font-size:11.5px;color:var(--text-dim);margin-bottom:12px;">
         Your own custom add-on products &amp; services — Web Design, Mobile App, and the like.
-        Hosting plans and domain pricing live under <a href="{{ route('infrastructure.index') }}">Domains &amp; Hosting</a>.
+        Hosting plans and domain extension prices live under <a href="{{ route('infrastructure.index') }}">Hosting &amp; Domains</a>.
     </p>
 
     <form method="GET" class="eos-filters">

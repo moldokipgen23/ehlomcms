@@ -259,7 +259,7 @@ class InvoiceController extends Controller
             'due_date' => 'nullable|date',
             'apply_gst' => 'nullable|boolean',
             'tax_rate' => 'nullable|numeric|min:0|max:100',
-            'status' => 'nullable|in:draft,unpaid,paid,overdue',
+            'status' => 'nullable|in:draft,unpaid,partial,paid,overdue',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.description' => 'required_with:items.*.unit_price|nullable|string|max:255',

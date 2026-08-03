@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\Lead;
+use App\Services\PrototypeMatcher;
 use Illuminate\Http\Request;
 
 class LeadController extends Controller
@@ -33,12 +34,13 @@ class LeadController extends Controller
         return view('leads.create', ['lead' => new Lead]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, PrototypeMatcher $matcher)
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:30',
+            'website_url' => 'nullable|url|max:255',
             'business_name' => 'nullable|string|max:255',
             'project_type' => 'nullable|string|in:' . implode(',', array_keys(Lead::PROJECT_TYPES)),
             'description' => 'nullable|string',
@@ -50,6 +52,7 @@ class LeadController extends Controller
         ]);
 
         $lead = Lead::create($data);
+        $matcher->assign($lead);
 
         if (request()->expectsJson()) {
             return response()->json(['success' => true, 'message' => 'Thank you! We will get back to you soon.']);
@@ -58,9 +61,9 @@ class LeadController extends Controller
         return redirect()->route('leads.thankyou');
     }
 
-    public function show(Lead $lead)
+    public function show(Lead $lead, PrototypeMatcher $matcher)
     {
-        return view('leads.show', compact('lead'));
+        return view('leads.show', ['lead' => $lead, 'prototype' => $matcher->match($lead)]);
     }
 
     public function edit(Lead $lead)
@@ -70,12 +73,13 @@ class LeadController extends Controller
         return view('leads.edit', compact('lead', 'clients'));
     }
 
-    public function update(Request $request, Lead $lead)
+    public function update(Request $request, Lead $lead, PrototypeMatcher $matcher)
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:30',
+            'website_url' => 'nullable|url|max:255',
             'business_name' => 'nullable|string|max:255',
             'project_type' => 'nullable|string|in:' . implode(',', array_keys(Lead::PROJECT_TYPES)),
             'description' => 'nullable|string',
@@ -90,6 +94,7 @@ class LeadController extends Controller
         ]);
 
         $lead->update($data);
+        $matcher->assign($lead);
 
         return redirect()->route('leads.show', $lead)->with('success', 'Lead updated.');
     }
@@ -108,13 +113,39 @@ class LeadController extends Controller
 
     public function convert(Lead $lead)
     {
+        if ($lead->converted_client_id) {
+            return redirect()
+                ->route('clients.show', $lead->converted_client_id)
+                ->with('success', 'This lead was already converted to a client.');
+        }
+
+        $qualification = [];
+        if ($lead->lead_score !== null) {
+            $qualification[] = 'AI lead score: ' . $lead->lead_score . '/100';
+        }
+        if ($lead->recommended_offer) {
+            $qualification[] = 'Recommended offer: ' . $lead->recommended_offer;
+        }
+        if ($lead->prototype_url) {
+            $qualification[] = 'Matched demo: ' . $lead->prototype_url;
+        }
+        if ($lead->score_reasons) {
+            $reasons = is_array($lead->score_reasons) ? $lead->score_reasons : [$lead->score_reasons];
+            $qualification[] = 'Qualification reasons: ' . implode('; ', array_filter(array_map('strval', $reasons)));
+        }
+
+        $notes = 'Converted from lead.' . ($lead->description ? "\n\nRequirements:\n" . $lead->description : '');
+        if ($qualification) {
+            $notes .= "\n\nAI handoff:\n" . implode("\n", $qualification);
+        }
+
         $client = Client::create([
             'name' => $lead->name,
             'email' => $lead->email,
             'phone' => $lead->phone ?: '0000000000',
             'business_name' => $lead->business_name,
             'whatsapp' => $lead->phone,
-            'notes' => 'Converted from lead.' . ($lead->description ? "\n\nRequirements:\n" . $lead->description : ''),
+            'notes' => $notes,
             'status' => 'active',
             'project_type' => $lead->project_type,
             'budget_min' => $lead->budget_min,

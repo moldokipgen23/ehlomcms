@@ -28,8 +28,8 @@
                     <label style="flex:1;min-width:160px;padding:12px;border:2px solid var(--border-card);border-radius:9px;cursor:pointer;text-align:center;"
                            x-bind:style="mode === 'upload_zip' ? 'border-color:var(--accent-blue);' : ''">
                         <input type="radio" x-model="mode" value="upload_zip" style="display:none;">
-                        <div style="font-size:13px;font-weight:600;color:var(--text-primary);">Upload a theme.zip</div>
-                        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Same format as the Download button produces</div>
+                        <div style="font-size:13px;font-weight:600;color:var(--text-primary);">Upload Theme Kit</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Approved client design with views, assets, demo data</div>
                     </label>
                 </div>
 
@@ -76,13 +76,20 @@
                     </div>
 
                     <div class="eos-field full" x-show="mode === 'upload_zip'">
-                        <label class="eos-label">theme.zip *</label>
+                        <label class="eos-label">Theme Kit ZIP *</label>
                         <div style="background:var(--bg-hover);border-radius:8px;padding:12px;margin-bottom:8px;font-size:11.5px;color:var(--text-secondary);line-height:1.7;">
-                            Must contain a <code>theme.json</code> at the root (name, description, industries,
-                            base_template) and/or a <code>custom.html</code> using the same
-                            <code>{{ $tokenDocs['tenant'][0] }}</code>-style tags as the paste-HTML mode. This is exactly
-                            the format the <strong>Download</strong> button on any existing theme produces — download
-                            one, edit it, re-upload it.
+                            Production theme kits can install a full storefront theme, not just a single HTML page.
+                            Use this for the workflow: HTML prototype approved by client, converted to Blade, then
+                            uploaded and assigned to that tenant.
+                            <div style="margin-top:8px;display:grid;gap:4px;font-family:monospace;color:var(--text-primary);">
+                                <span>theme.json</span>
+                                <span>views/index.blade.php</span>
+                                <span>views/product.blade.php, cart.blade.php, checkout.blade.php, confirm.blade.php</span>
+                                <span>assets/images, assets/css, assets/js</span>
+                                <span>demo-data.json optional</span>
+                            </div>
+                            Simple zips with <code>custom.html</code> and
+                            <code>{{ $tokenDocs['tenant'][0] }}</code>-style tags still work for lightweight pages.
                         </div>
                         <input type="file" name="theme_zip" accept=".zip" class="eos-input">
                         @error('theme_zip') <div class="eos-error">{{ $message }}</div> @enderror

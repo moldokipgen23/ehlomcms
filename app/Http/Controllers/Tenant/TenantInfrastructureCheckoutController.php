@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
-use App\Models\PaymentSetting;
+use App\Models\Invoice;
 use App\Models\Product;
+use App\Models\Subscription;
+use App\Models\TenantAddon;
 use App\Services\InvoiceAutoGenerator;
+use App\Services\InvoicePaymentLinkService;
 use App\Services\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class TenantInfrastructureCheckoutController extends Controller
@@ -19,11 +23,49 @@ class TenantInfrastructureCheckoutController extends Controller
 
         $domains = Product::where('category', 'domain')->where('status', 'active')->orderBy('price')->get();
         $hosting = Product::where('category', 'hosting')->where('status', 'active')->orderBy('price')->get();
+        $tenant->loadMissing('hostingPlan', 'client');
 
-        return view('tenant.infrastructure.index', compact('tenant', 'domains', 'hosting'));
+        $client = $tenant->client;
+        $addons = TenantAddon::with('addonMeta')
+            ->where('tenant_id', $tenant->id)
+            ->whereHas('addonMeta', fn ($query) => $query->whereNull('module_key'))
+            ->orderByRaw("status = 'active' desc")
+            ->latest('activated_at')
+            ->get();
+
+        $clientProducts = collect();
+        $subscriptions = collect();
+        $invoices = collect();
+
+        if ($client) {
+            $clientProducts = $client->products()
+                ->orderBy('category')
+                ->orderBy('name')
+                ->get();
+
+            $subscriptions = Subscription::with('product')
+                ->where('client_id', $client->id)
+                ->orderByRaw("status = 'active' desc")
+                ->orderBy('expiry_date')
+                ->get();
+
+            $invoices = Invoice::with('items')
+                ->where('client_id', $client->id)
+                ->latest()
+                ->limit(10)
+                ->get();
+        }
+
+        $invoicePaymentLinks = $invoices
+            ->filter(fn (Invoice $invoice) => in_array($invoice->status, ['unpaid', 'partial', 'overdue'], true))
+            ->mapWithKeys(fn (Invoice $invoice) => [
+                $invoice->id => app(InvoicePaymentLinkService::class)->make($invoice),
+            ]);
+
+        return view('tenant.infrastructure.index', compact('tenant', 'domains', 'hosting', 'addons', 'clientProducts', 'subscriptions', 'invoices', 'invoicePaymentLinks'));
     }
 
-    public function create(Product $product): View|RedirectResponse
+    public function create(Product $product, InvoiceAutoGenerator $invoiceGenerator, InvoicePaymentLinkService $paymentLinks): RedirectResponse
     {
         if (!in_array($product->category, ['domain', 'hosting'])) {
             abort(404);
@@ -31,23 +73,66 @@ class TenantInfrastructureCheckoutController extends Controller
 
         $tenant = app(TenantContext::class)->get();
 
-        $paymentSetting = PaymentSetting::where('tenant_id', $tenant->id)->first();
-
-        if (!$paymentSetting || !$paymentSetting->api_key || !$paymentSetting->api_secret) {
-            return back()->with('error', 'Payment not configured. Please contact support.');
+        if (! $tenant->client) {
+            return back()->with('error', 'This store is not linked to a client billing account yet. Please contact support.');
         }
 
-        $amount = (int) ($product->price * 1.18 * 100);
+        $reference = "tenant:{$tenant->id};product:{$product->id}";
+        $invoice = Invoice::where('client_id', $tenant->client_id)
+            ->whereIn('status', ['unpaid', 'partial', 'overdue'])
+            ->where('notes', 'like', '%' . $reference . '%')
+            ->latest('id')
+            ->first();
 
-        $rzp = new \Razorpay\Api\Api($paymentSetting->api_key, $paymentSetting->api_secret);
-        $order = $rzp->order->create([
-            'amount' => $amount,
-            'currency' => 'INR',
-            'receipt' => "infra_{$product->category}_{$product->id}_{$tenant->id}_" . time(),
-            'payment_capture' => 1,
+        if (! $invoice) {
+            // InvoiceAutoGenerator applies GST to the base product price.
+            $invoice = $invoiceGenerator->forInfrastructure(
+                $tenant,
+                $product->name,
+                (float) $product->price,
+                $product->category,
+                $reference,
+            );
+        }
+
+        if (! $invoice) {
+            return back()->with('error', 'We could not create the Ehlom invoice. Please contact support.');
+        }
+
+        return redirect()->to($paymentLinks->make($invoice));
+    }
+
+    public function requestCustomDomain(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'custom_domain' => ['required', 'string', 'max:255'],
         ]);
 
-        return view('tenant.infrastructure.payment', compact('tenant', 'product', 'paymentSetting', 'order'));
+        $domain = Str::of($data['custom_domain'])
+            ->lower()
+            ->replaceMatches('/^https?:\/\//', '')
+            ->replaceMatches('/\/.*$/', '')
+            ->replaceMatches('/:\d+$/', '')
+            ->trim()
+            ->value();
+
+        $domain = ltrim($domain, '.');
+
+        if (! preg_match('/^(?!-)(?:[a-z0-9-]{1,63}\.)+[a-z]{2,}$/', $domain)) {
+            return back()
+                ->withInput()
+                ->with('error', 'Enter a valid domain name, for example jemdesign.com or shop.jemdesign.com.');
+        }
+
+        $tenant = app(TenantContext::class)->get();
+
+        $tenant->update([
+            'custom_domain' => $domain,
+            'domain_status' => 'pending',
+            'domain_verified_at' => null,
+        ]);
+
+        return back()->with('success', 'Custom domain request saved. Add the DNS record shown below, then Ehlom can verify and issue SSL.');
     }
 
     public function checkout(Request $request, Product $product): RedirectResponse
@@ -57,54 +142,12 @@ class TenantInfrastructureCheckoutController extends Controller
         }
 
         $tenant = app(TenantContext::class)->get();
-        $paymentSetting = PaymentSetting::where('tenant_id', $tenant->id)->first();
-
-        if (!$paymentSetting || !$paymentSetting->api_key || !$paymentSetting->api_secret) {
-            return back()->with('error', 'Payment not configured.');
-        }
-
-        $amount = (int) ($product->price * 1.18 * 100);
-
-        $rzp = new \Razorpay\Api\Api($paymentSetting->api_key, $paymentSetting->api_secret);
-        $order = $rzp->order->create([
-            'amount' => $amount,
-            'currency' => 'INR',
-            'receipt' => "infra_{$product->category}_{$product->id}_{$tenant->id}_" . time(),
-            'payment_capture' => 1,
-        ]);
-
-        return redirect()->route('tenant.infrastructure.checkout', $product)
-            ->with('order_id', $order->id)
-            ->with('amount', $amount);
+        return $this->create($product, app(InvoiceAutoGenerator::class), app(InvoicePaymentLinkService::class));
     }
 
-    public function success(Request $request): View
+    public function success(): RedirectResponse
     {
-        $tenant = app(TenantContext::class)->get();
-        $productId = $request->query('product_id');
-        $type = $request->query('type');
-
-        $product = Product::find($productId);
-
-        // Auto-generate invoice for the purchase
-        $invoice = null;
-        if ($product) {
-            try {
-                $invoice = app(InvoiceAutoGenerator::class)->forInfrastructure(
-                    $tenant,
-                    $product->name,
-                    (float) $product->price * 1.18,
-                    $product->category
-                );
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Auto invoice failed for infrastructure', [
-                    'tenant_id' => $tenant->id,
-                    'product_id' => $product->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
-
-        return view('tenant.infrastructure.success', compact('product', 'type', 'invoice'));
+        // Legacy callback route: never grant a product from query-string data.
+        return redirect()->route('tenant.infrastructure')->with('error', 'Please use the Ehlom invoice payment link to complete this purchase.');
     }
 }

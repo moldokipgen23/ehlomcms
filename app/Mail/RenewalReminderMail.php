@@ -3,7 +3,9 @@
 namespace App\Mail;
 
 use App\Models\Setting;
+use App\Models\Invoice;
 use App\Models\Subscription;
+use App\Services\InvoicePaymentLinkService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -31,7 +33,7 @@ class RenewalReminderMail extends Mailable
 
         return new Content(
             view: 'emails.generic',
-            with: ['body' => Setting::renderTemplate($bodyTpl, $this->data())],
+            with: ['body' => $this->renderBody($bodyTpl)],
         );
     }
 
@@ -47,6 +49,31 @@ class RenewalReminderMail extends Mailable
             'product_name' => $sub->product->name ?? 'your service',
             'expiry_date' => $sub->expiry_date?->format('M j, Y') ?? '',
             'renewal_amount' => number_format((float) $sub->renewal_amount, 2),
+            'payment_link' => $this->invoicePaymentLink(),
         ];
+    }
+
+    private function invoicePaymentLink(): string
+    {
+        $invoice = Invoice::where('client_id', $this->subscription->client_id)
+            ->whereIn('status', ['unpaid', 'partial', 'overdue'])
+            ->where('notes', 'like', '%subscription #' . $this->subscription->id . '%')
+            ->latest('id')
+            ->first();
+
+        return $invoice ? app(InvoicePaymentLinkService::class)->make($invoice) : '';
+    }
+
+    private function renderBody(string $template): string
+    {
+        $data = $this->data();
+        $body = Setting::renderTemplate($template, $data);
+        $paymentLink = $data['payment_link'];
+
+        if ($paymentLink && ! str_contains($body, $paymentLink)) {
+            $body .= "\n\nPay securely online: {$paymentLink}";
+        }
+
+        return $body;
     }
 }

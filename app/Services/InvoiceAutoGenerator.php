@@ -19,7 +19,7 @@ class InvoiceAutoGenerator
     /**
      * Auto-generate an invoice for a domain/hosting purchase.
      */
-    public function forInfrastructure(Tenant $tenant, string $productName, float $price, string $category): ?Invoice
+    public function forInfrastructure(Tenant $tenant, string $productName, float $price, string $category, ?string $reference = null): ?Invoice
     {
         $client = $tenant->client;
         if (!$client) {
@@ -33,7 +33,7 @@ class InvoiceAutoGenerator
                 'quantity' => 1,
                 'unit_price' => $price,
             ],
-        ], $category);
+        ], $category, $reference);
     }
 
     /**
@@ -56,7 +56,7 @@ class InvoiceAutoGenerator
         ], 'addon');
     }
 
-    private function createInvoice(Client $client, array $lineItems, string $category): Invoice
+    private function createInvoice(Client $client, array $lineItems, string $category, ?string $reference = null): Invoice
     {
         $taxRate = 18; // GST
 
@@ -72,7 +72,7 @@ class InvoiceAutoGenerator
             'total' => $built['total'],
             'due_date' => now()->addDays(7),
             'status' => 'unpaid',
-            'notes' => 'Auto-generated for ' . $category . ' purchase',
+            'notes' => 'Auto-generated for ' . $category . ' purchase' . ($reference ? ' [' . $reference . ']' : ''),
         ]);
 
         $invoice->items()->createMany($built['items']);

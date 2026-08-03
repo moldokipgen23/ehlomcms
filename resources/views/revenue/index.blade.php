@@ -30,6 +30,62 @@
     </div>
 </div>
 
+<div class="eos-card" style="margin-bottom:14px;">
+    <div class="eos-card-header">
+        <div>
+            <div class="eos-card-title">External ERP billing</div>
+            <div class="eos-row-type" style="margin-top:3px;">Imported from connected products such as Eiho School ERP</div>
+        </div>
+        <a class="eos-card-link" href="{{ route('integrations.index') }}">Manage integrations</a>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;padding:0 14px 14px;">
+        <div class="eos-stat"><div class="eos-stat-label">External MRR</div><div class="eos-stat-value">₹{{ number_format($externalMrr, 0) }}</div><div class="eos-row-type">ARR ₹{{ number_format($externalArr, 0) }}</div></div>
+        <div class="eos-stat"><div class="eos-stat-label">Active ERP subscriptions</div><div class="eos-stat-value">{{ $externalSubCount }}</div></div>
+        <div class="eos-stat"><div class="eos-stat-label">External collected</div><div class="eos-stat-value" style="color:var(--accent-green);">₹{{ number_format($externalCollected, 0) }}</div></div>
+        <div class="eos-stat"><div class="eos-stat-label">External outstanding</div><div class="eos-stat-value" style="color:{{ $externalOutstanding > 0 ? 'var(--accent-amber)' : 'var(--text-primary)' }};">₹{{ number_format($externalOutstanding, 0) }}</div></div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(260px,1fr);gap:14px;margin-bottom:14px;">
+    <div class="eos-card">
+        <div class="eos-card-header">
+            <div class="eos-card-title">Imported ERP invoices</div>
+            <span class="eos-card-link">{{ $externalInvoices->count() }} shown</span>
+        </div>
+        @forelse ($externalInvoices as $invoice)
+            <div class="eos-list-item">
+                <div style="flex:1;min-width:0;">
+                    <div class="eos-row-name">{{ $invoice->invoice_number ?: 'External invoice' }}</div>
+                    <div class="eos-row-type">{{ $invoice->integration->name ?? 'External ERP' }} · {{ $invoice->account->name ?? 'Unlinked account' }}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div class="eos-amt">₹{{ number_format((float) $invoice->amount, 0) }}</div>
+                    <div class="eos-row-type">{{ ucfirst($invoice->status) }}</div>
+                </div>
+            </div>
+        @empty
+            <div class="eos-empty" style="padding:24px 16px;">No external ERP invoices have been imported yet.</div>
+        @endforelse
+    </div>
+    <div class="eos-card">
+        <div class="eos-card-header">
+            <div class="eos-card-title">External renewals due</div>
+            <span class="eos-card-link">Next 30 days</span>
+        </div>
+        @forelse ($externalRenewalsDue as $subscription)
+            <div class="eos-list-item">
+                <div style="flex:1;min-width:0;">
+                    <div class="eos-row-name">{{ $subscription->product_name ?: 'ERP subscription' }}</div>
+                    <div class="eos-row-type">{{ $subscription->account->name ?? 'Unlinked account' }} · {{ $subscription->renews_at->format('M j, Y') }}</div>
+                </div>
+                <div class="eos-amt">₹{{ number_format((float) $subscription->amount, 0) }}</div>
+            </div>
+        @empty
+            <div class="eos-empty" style="padding:24px 16px;">No external renewals due in the next 30 days.</div>
+        @endforelse
+    </div>
+</div>
+
 <div class="eos-card">
     <div class="eos-card-header">
         <div class="eos-card-title">Renewals due — next 30 days</div>

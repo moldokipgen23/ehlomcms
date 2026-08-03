@@ -13,6 +13,7 @@ use Illuminate\View\View;
 class TenantThemeController extends Controller
 {
     private const PRESET_COLORS = [
+        '#2563eb' => 'Commerce Blue',
         '#4f8ef7' => 'Blue',
         '#1db884' => 'Teal',
         '#8b6ff7' => 'Purple',
@@ -46,7 +47,17 @@ class TenantThemeController extends Controller
         $newSettings = $request->except(['_token', 'accent_color']);
 
         // Handle file uploads
-        $fileFields = ['principal_photo'];
+        $fileFields = [
+            'principal_photo',
+            'jem_hero_image',
+            'jem_story_image',
+            'jem_founder_image',
+            'jem_detail_image',
+            'jem_accent_image',
+            'hero_image',
+            'about_image',
+            'learning_image',
+        ];
         for ($i = 1; $i <= 8; $i++) {
             $fileFields[] = "faculty_{$i}_photo";
         }
@@ -73,6 +84,11 @@ class TenantThemeController extends Controller
         foreach ($newSettings as $key => $value) {
             $existing[$key] = $value;
         }
+
+        if ($tenant->site_type === 'shopping' && !$tenant->hasModule('jem_preloader')) {
+            $existing['jem_preloader_enabled'] = null;
+        }
+
         $existing['accent_color'] = $data['accent_color'];
 
         // Clean up empty string values to null

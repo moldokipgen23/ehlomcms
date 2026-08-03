@@ -12,8 +12,15 @@ use Illuminate\View\View;
 
 class TenantContentController extends Controller
 {
+    private function requireModule(): void
+    {
+        $tenant = app(TenantContext::class)->get();
+        abort_if(!$tenant || !$tenant->hasModule('content'), 404);
+    }
+
     public function index(): View
     {
+        $this->requireModule();
         $tenant = app(TenantContext::class)->get();
         $images = TenantGalleryImage::where('tenant_id', $tenant->id)
             ->orderBy('sort_order')
@@ -24,6 +31,7 @@ class TenantContentController extends Controller
 
     public function updateAbout(Request $request): RedirectResponse
     {
+        $this->requireModule();
         $tenant = app(TenantContext::class)->get();
 
         $data = $request->validate([
@@ -37,6 +45,7 @@ class TenantContentController extends Controller
 
     public function updateContact(Request $request): RedirectResponse
     {
+        $this->requireModule();
         $tenant = app(TenantContext::class)->get();
 
         $data = $request->validate([
@@ -51,6 +60,7 @@ class TenantContentController extends Controller
 
     public function storeGalleryImage(Request $request): RedirectResponse
     {
+        $this->requireModule();
         $tenant = app(TenantContext::class)->get();
 
         $request->validate([
@@ -72,8 +82,9 @@ class TenantContentController extends Controller
         return redirect()->route('tenant.content')->with('success', 'Image added to gallery.');
     }
 
-    public function destroyGalleryImage(string $subdomain, int $id): RedirectResponse
+    public function destroyGalleryImage(int $id): RedirectResponse
     {
+        $this->requireModule();
         $tenant = app(TenantContext::class)->get();
 
         $image = TenantGalleryImage::where('tenant_id', $tenant->id)->findOrFail($id);

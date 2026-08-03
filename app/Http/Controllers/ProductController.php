@@ -62,7 +62,7 @@ class ProductController extends Controller
             'name' => 'required|string|max:255',
             'category' => 'required|in:' . implode(',', array_keys(Product::CATEGORIES)),
             'price' => 'required|numeric|min:0',
-            'billing_cycle' => 'required|in:monthly,quarterly,yearly',
+            'billing_cycle' => 'required|in:one_time,monthly,quarterly,yearly',
             'description' => 'nullable|string',
             'status' => 'required|in:active,inactive',
         ]);
@@ -70,7 +70,7 @@ class ProductController extends Controller
 
     /**
      * Custom products live under Products & Services; hosting and domain
-     * catalog items live under the Domains & Hosting hub.
+     * catalog items live under the Hosting & Domains hub.
      */
     private function redirectFor(Product $product)
     {

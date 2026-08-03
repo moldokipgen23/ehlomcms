@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Models\Tenant;
 use App\Models\TenantAddon;
 use App\Services\InvoiceService;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -24,10 +25,9 @@ class AdminTenantAddonController extends Controller
      */
     public function activate(TenantAddon $addon, InvoiceService $invoiceService): RedirectResponse
     {
-        $addon->update(['status' => 'active', 'activated_at' => now()]);
-
         $tenant = $addon->tenant;
         $addonMeta = AddonProduct::where('key', $addon->addon_key)->first();
+        $this->activateRecord($addon, $addonMeta);
 
         if ($tenant?->client_id && $addonMeta) {
             $price = (float) $addonMeta['price'];
@@ -75,11 +75,36 @@ class AdminTenantAddonController extends Controller
 
         $addonMeta = AddonProduct::where('key', $request->addon_key)->where('active', true)->firstOrFail();
 
-        TenantAddon::updateOrCreate(
+        $addon = TenantAddon::updateOrCreate(
             ['tenant_id' => $tenant->id, 'addon_key' => $request->addon_key],
             ['status' => 'active', 'activated_at' => now()],
         );
+        $this->activateRecord($addon, $addonMeta);
 
         return back()->with('success', $addonMeta->name . ' granted to ' . $tenant->name . ' (manual, no charge).');
+    }
+
+    private function activateRecord(TenantAddon $addon, ?AddonProduct $addonMeta): void
+    {
+        $activatedAt = now();
+        $cycle = $addonMeta?->billing_cycle ?? 'monthly';
+
+        $addon->update([
+            'status' => 'active',
+            'activated_at' => $activatedAt,
+            'expires_at' => $cycle === 'one_time' ? null : $this->expiryFromCycle($activatedAt, $cycle),
+            'renewal_amount' => $addonMeta ? (float) $addonMeta->price : null,
+            'billing_cycle' => $cycle,
+            'auto_invoice' => $cycle !== 'one_time',
+        ]);
+    }
+
+    private function expiryFromCycle(Carbon $start, string $cycle): Carbon
+    {
+        return match ($cycle) {
+            'quarterly' => $start->copy()->addMonths(3),
+            'yearly' => $start->copy()->addYear(),
+            default => $start->copy()->addMonth(),
+        };
     }
 }

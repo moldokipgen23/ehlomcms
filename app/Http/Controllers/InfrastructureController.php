@@ -10,8 +10,8 @@ use Illuminate\Http\Request;
 class InfrastructureController extends Controller
 {
     /**
-     * The Domains & Hosting hub: hosting plans + domain pricing catalogs,
-     * plus the per-client registered-domain tracker and subscriber overview.
+     * Hosting & Domains hub: sellable catalog items plus client renewal
+     * tracking. Custom-domain DNS/SSL verification lives in AdminDomainController.
      */
     public function index(Request $request)
     {
@@ -26,11 +26,18 @@ class InfrastructureController extends Controller
             ->orderBy('expiry_date')
             ->get();
 
-        // Subscribers: clients who have purchased domains or have active tenants
+        // Client services: clients who have purchased/assigned services,
+        // registered domains, subscriptions, or active tenant sites.
         $subscribers = Client::whereHas('domains', fn ($q) => $q->where('status', 'active'))
             ->orWhereHas('tenant', fn ($q) => $q->where('status', 'active'))
-            ->with(['domains', 'tenant'])
-            ->withCount(['domains as domains_count'])
+            ->orWhereHas('products')
+            ->orWhereHas('subscriptions')
+            ->with(['domains', 'tenant.hostingPlan', 'products', 'subscriptions.product'])
+            ->withCount([
+                'domains as domains_count',
+                'products as products_count',
+                'subscriptions as subscriptions_count',
+            ])
             ->orderBy('name')
             ->get();
 

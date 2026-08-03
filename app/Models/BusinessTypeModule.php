@@ -11,6 +11,7 @@ class BusinessTypeModule extends Model
         'module_key',
         'status',
         'price',
+        'billing_cycle',
     ];
 
     protected function casts(): array
@@ -30,7 +31,11 @@ class BusinessTypeModule extends Model
         return static::where('business_type', $businessType)
             ->get()
             ->keyBy('module_key')
-            ->map(fn ($row) => ['status' => $row->status, 'price' => $row->price])
+            ->map(fn ($row) => [
+                'status' => $row->status,
+                'price' => $row->price,
+                'billing_cycle' => $row->billing_cycle ?? 'one_time',
+            ])
             ->all();
     }
 
@@ -67,6 +72,7 @@ class BusinessTypeModule extends Model
                 'module_key' => $moduleKey,
                 'status' => $status,
                 'price' => $status === 'paid' ? ($assignment['price'] ?? null) : null,
+                'billing_cycle' => $status === 'paid' ? ($assignment['billing_cycle'] ?? 'one_time') : 'one_time',
                 'created_at' => $now,
                 'updated_at' => $now,
             ];

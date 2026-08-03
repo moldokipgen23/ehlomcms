@@ -1,0 +1,141 @@
+{
+  "store": {
+    "name": "ModeHaus",
+    "type": "Fashion & Accessories",
+    "about": "A modern fashion and accessories demo store for lead presentations. It includes men, women, accessories, categories, collections, product pages, cart, checkout, WhatsApp order flow, and customer-ready trust sections.",
+    "accent_color": "#b45309"
+  },
+  "categories": [
+    {
+      "slug": "men",
+      "name": "Men",
+      "description": "T-shirts, shirts, coats, and everyday staples."
+    },
+    {
+      "slug": "women",
+      "name": "Women",
+      "description": "Dresses, layers, and modern silhouettes."
+    },
+    {
+      "slug": "accessories",
+      "name": "Accessories",
+      "description": "Wallets, sunglasses, bags, and finishing pieces."
+    }
+  ],
+  "collections": [
+    {
+      "slug": "new-arrivals",
+      "name": "New Arrivals",
+      "description": "Fresh products for a modern fashion launch."
+    },
+    {
+      "slug": "office-edit",
+      "name": "Office Edit",
+      "description": "Clean apparel and accessories for workdays."
+    },
+    {
+      "slug": "weekend-accessories",
+      "name": "Weekend Accessories",
+      "description": "Wallets, sunglasses, and bags for daily carry."
+    }
+  ],
+  "products": [
+    {
+      "slug": "essential-oversized-t-shirt",
+      "name": "Essential Oversized T-Shirt",
+      "category": "men",
+      "collections": ["new-arrivals"],
+      "price": 1299,
+      "stock": 64,
+      "description": "A heavyweight cotton T-shirt with relaxed fit, clean neckline, and everyday styling.",
+      "material": "240 GSM cotton jersey",
+      "featured": true
+    },
+    {
+      "slug": "linen-midi-dress",
+      "name": "Linen Midi Dress",
+      "category": "women",
+      "collections": ["new-arrivals", "office-edit"],
+      "price": 3499,
+      "stock": 28,
+      "description": "A breathable midi dress designed for day-to-evening wear with a flattering easy silhouette.",
+      "material": "Linen blend",
+      "featured": true
+    },
+    {
+      "slug": "classic-leather-wallet",
+      "name": "Classic Leather Wallet",
+      "category": "accessories",
+      "collections": ["weekend-accessories"],
+      "price": 1899,
+      "stock": 45,
+      "description": "A slim leather wallet with card slots, cash pocket, and clean stitched finish.",
+      "material": "Full-grain leather",
+      "featured": true
+    },
+    {
+      "slug": "acetate-sunglasses",
+      "name": "Acetate Sunglasses",
+      "category": "accessories",
+      "collections": ["new-arrivals", "weekend-accessories"],
+      "price": 1499,
+      "stock": 38,
+      "description": "Lightweight acetate sunglasses with UV-protective lenses and everyday styling.",
+      "material": "Acetate frame, UV lenses",
+      "featured": true
+    },
+    {
+      "slug": "tailored-wool-coat",
+      "name": "Tailored Wool Coat",
+      "category": "men",
+      "collections": ["office-edit"],
+      "price": 6999,
+      "stock": 14,
+      "description": "A structured coat for smart layering, designed with clean lines and polished finishing.",
+      "material": "Wool blend",
+      "featured": false
+    },
+    {
+      "slug": "everyday-crossbody-bag",
+      "name": "Everyday Crossbody Bag",
+      "category": "accessories",
+      "collections": ["weekend-accessories", "office-edit"],
+      "price": 2799,
+      "stock": 23,
+      "description": "A compact crossbody bag with adjustable strap, organized pockets, and premium finish.",
+      "material": "Vegan leather",
+      "featured": false
+    },
+    {
+      "slug": "crisp-oxford-shirt",
+      "name": "Crisp Oxford Shirt",
+      "category": "men",
+      "collections": ["office-edit"],
+      "price": 2199,
+      "stock": 40,
+      "description": "A versatile button-down shirt for office, casual, and weekend styling.",
+      "material": "Cotton oxford",
+      "featured": true
+    }
+  ],
+  "marketing_sections": [
+    {
+      "title": "New Season Picks",
+      "type": "products",
+      "display_style": "grid",
+      "filter_type": "featured"
+    },
+    {
+      "title": "Shop by Style",
+      "type": "collections",
+      "display_style": "grid",
+      "filter_type": "collection"
+    }
+  ],
+  "policies": [
+    "Privacy Policy",
+    "Terms & Conditions",
+    "Refund Policy",
+    "Shipping Policy"
+  ]
+}

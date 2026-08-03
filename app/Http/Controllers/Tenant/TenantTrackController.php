@@ -13,6 +13,7 @@ class TenantTrackController extends Controller
     public function show(): View
     {
         $tenant = app(TenantContext::class)->get();
+        abort_if(!$tenant->hasModule('orders'), 404);
 
         return view('tenant-templates.shop.track', compact('tenant'));
     }
@@ -20,6 +21,7 @@ class TenantTrackController extends Controller
     public function lookup(Request $request): View
     {
         $tenant = app(TenantContext::class)->get();
+        abort_if(!$tenant->hasModule('orders'), 404);
 
         $validated = $request->validate([
             'order_id' => 'required|string|max:255',

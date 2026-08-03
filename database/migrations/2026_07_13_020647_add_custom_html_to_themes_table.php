@@ -23,7 +23,9 @@ return new class extends Migration
 
         // base_template was required because every theme used to point at a
         // real Blade folder. A custom-HTML theme doesn't need one.
-        DB::statement('ALTER TABLE themes MODIFY base_template VARCHAR(255) NULL');
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE themes MODIFY base_template VARCHAR(255) NULL');
+        }
     }
 
     public function down(): void
@@ -32,6 +34,8 @@ return new class extends Migration
             $table->dropColumn('custom_html');
         });
 
-        DB::statement('ALTER TABLE themes MODIFY base_template VARCHAR(255) NOT NULL');
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE themes MODIFY base_template VARCHAR(255) NOT NULL');
+        }
     }
 };

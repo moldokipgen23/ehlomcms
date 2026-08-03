@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Services\EhlomBillingFulfillmentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -14,7 +15,7 @@ class AdminPaymentController extends Controller
     public function index(): View
     {
         $payments = Payment::with('invoice.client')->orderByDesc('payment_date')->get();
-        $total = $payments->sum('amount');
+        $total = $payments->where('status', 'paid')->sum('amount');
         return view('payments.index', compact('payments', 'total'));
     }
 
@@ -39,12 +40,14 @@ class AdminPaymentController extends Controller
 
         if ($payment->invoice_id) {
             $invoice = $payment->invoice;
-            $paidTotal = Payment::where('invoice_id', $invoice->id)->sum('amount');
+            $paidTotal = Payment::where('invoice_id', $invoice->id)->where('status', 'paid')->sum('amount');
             if ($paidTotal >= $invoice->total) {
                 $invoice->update(['status' => 'paid']);
             } elseif ($paidTotal > 0) {
                 $invoice->update(['status' => 'partial']);
             }
+
+            app(EhlomBillingFulfillmentService::class)->fulfillInvoice($invoice->fresh());
         }
 
         AuditLog::log('payment_created', "Payment of ₹{$validated['amount']} recorded", 'payment', $payment->id, $validated);

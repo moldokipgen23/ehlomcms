@@ -12,8 +12,13 @@ class TenantOrderItem extends Model
     protected $fillable = [
         'tenant_order_id',
         'tenant_product_id',
+        'tenant_product_variant_id',
+        'product_name',
+        'color_name',
+        'size_label',
         'quantity',
         'unit_price',
+        'total_price',
     ];
 
     protected function casts(): array
@@ -21,6 +26,7 @@ class TenantOrderItem extends Model
         return [
             'quantity' => 'integer',
             'unit_price' => 'decimal:2',
+            'total_price' => 'decimal:2',
         ];
     }
 
@@ -32,5 +38,10 @@ class TenantOrderItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(TenantProduct::class, 'tenant_product_id');
+    }
+
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(TenantProductVariant::class, 'tenant_product_variant_id');
     }
 }

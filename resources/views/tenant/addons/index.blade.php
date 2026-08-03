@@ -1,141 +1,197 @@
 @extends('tenant.layouts.dashboard')
 
-@section('title', 'Marketplace')
-
+@section('title', 'Add-on Shop')
+@section('subtitle', 'Upgrade this store with ecommerce tools')
 
 @section('content')
+    @php
+        $activeCount = $addons->filter(function ($addon, $key) use ($records, $tenant) {
+            return ($records->get($key)->status ?? null) === 'active';
+        })->count();
+        $formatPrice = fn ($price) => '₹' . number_format((float) $price, 0);
+        $billingSuffix = fn ($addon) => ($addon->billing_cycle ?? 'monthly') === 'one_time' ? 'once' : '/' . $addon->billingLabel();
+    @endphp
 
-{{-- ═══════════════ SHOPPING / VERTICAL FEATURES ═══════════════ --}}
-@if ($freeBundle->count() || $verticalAddons->count())
-<div class="eos-row" style="margin-bottom:18px;">
-    <div class="eos-card" style="flex:1;">
-        <div class="eos-card-header">
-            <div class="eos-card-title">{{ ucfirst($tenant->site_type) }} Features</div>
-            <span class="eos-card-link">included in your plan + optional upgrades</span>
-        </div>
-        <div class="eos-card-body">
+    <style>
+        .addon-shop { display: grid; gap: 18px; }
+        .addon-shop-hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 20px;
+            background: linear-gradient(140deg, rgba(29,34,54,.98), rgba(16,20,32,.98));
+        }
+        .addon-shop-title { color: var(--text-primary); font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; }
+        .addon-shop-copy { color: var(--text-muted); font-size: 13px; line-height: 1.6; margin-top: 6px; max-width: 720px; }
+        .addon-shop-metrics { display: flex; gap: 10px; flex-wrap: wrap; }
+        .addon-shop-metric {
+            min-width: 118px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255,255,255,.03);
+        }
+        .addon-shop-metric strong { display: block; color: var(--text-primary); font-size: 20px; line-height: 1; }
+        .addon-shop-metric span { display: block; color: var(--text-muted); font-size: 10.5px; margin-top: 6px; }
+        .addon-shop-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+        .addon-card {
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 250px;
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            background: linear-gradient(160deg, rgba(28,33,53,.98), rgba(19,23,37,.98));
+        }
+        .addon-card.active { border-color: rgba(29,184,132,.78); }
+        .addon-card.pending { border-color: rgba(232,169,48,.74); }
+        .addon-card::before {
+            content: '';
+            position: absolute;
+            inset: 0 0 auto;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-amber), var(--accent-blue));
+        }
+        .addon-card.active::before { background: var(--accent-teal); }
+        .addon-card.pending::before { background: var(--accent-amber); }
+        .addon-card-body { display: flex; flex-direction: column; flex: 1; padding: 16px; }
+        .addon-card-top { display: flex; align-items: flex-start; gap: 12px; }
+        .addon-card-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 21px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            flex-shrink: 0;
+        }
+        .addon-card.active .addon-card-icon { background: var(--accent-teal); }
+        .addon-card.pending .addon-card-icon { background: var(--accent-amber); }
+        .addon-card-name { color: var(--text-primary); font-size: 15px; font-weight: 800; line-height: 1.25; }
+        .addon-card-desc { color: var(--text-muted); font-size: 12px; line-height: 1.55; margin-top: 12px; flex: 1; }
+        .addon-card-foot { display: grid; gap: 12px; margin-top: 16px; }
+        .addon-card-price { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .addon-price-main { color: var(--text-primary); font-size: 18px; font-weight: 900; }
+        .addon-price-sub { color: var(--text-dim); font-size: 10px; margin-top: 2px; }
+        .addon-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            white-space: nowrap;
+        }
+        .addon-status.active { color: var(--accent-teal); background: rgba(29,184,132,.12); }
+        .addon-status.pending { color: var(--accent-amber); background: rgba(232,169,48,.13); }
+        .addon-status.inactive { color: var(--text-muted); background: rgba(139,148,184,.1); }
+        .addon-cta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            min-height: 39px;
+            border: 0;
+            border-radius: 9px;
+            color: #fff;
+            background: var(--accent-teal);
+            font-size: 12.5px;
+            font-weight: 900;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .addon-cta.secondary { color: var(--text-secondary); background: rgba(255,255,255,.06); border: 1px solid var(--border); }
+        .addon-cta.danger { background: #b93b3b; }
+        @media (max-width: 1180px) {
+            .addon-shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .addon-shop-hero { align-items: flex-start; flex-direction: column; }
+        }
+        @media (max-width: 680px) {
+            .addon-shop-grid { grid-template-columns: 1fr; }
+            .addon-shop-title { font-size: 22px; }
+            .addon-shop-metrics { width: 100%; }
+            .addon-shop-metric { flex: 1; min-width: 0; }
+        }
+    </style>
 
-            @if ($freeBundle->count())
-            <div style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#16a34a;margin-bottom:10px;">Included Free</div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:20px;">
-                @foreach ($freeBundle as $feat)
-                    <div class="eos-addon-card" style="border:1px solid {{ $feat['active'] ? 'var(--accent-teal)' : 'var(--border-card)' }};background:var(--bg-card);border-radius:11px;padding:14px 16px;display:flex;align-items:center;gap:10px;">
-                        <i class="ti {{ $feat['icon'] ?? 'ti-check' }}" style="font-size:18px;color:{{ $feat['active'] ? 'var(--accent-teal)' : 'var(--text-muted)' }};"></i>
-                        <div style="flex:1;min-width:0;">
-                            <div style="font-size:13px;font-weight:600;color:var(--text-primary);">{{ $feat['name'] }}</div>
-                        </div>
-                        <span class="eos-badge {{ $feat['active'] ? 'badge-active' : '' }}" style="font-size:10px;">{{ $feat['active'] ? 'Included' : 'Off' }}</span>
-                    </div>
-                @endforeach
+    <div class="addon-shop">
+        <section class="addon-shop-hero">
+            <div>
+                <div class="addon-shop-title">Store add-on shop</div>
+                <div class="addon-shop-copy">
+                    Request standalone Ehlom services such as WhatsApp API, AI Agent, automation, and other platform add-ons. Business-module features are managed separately by Ehlom admin.
+                </div>
             </div>
-            @endif
+            <div class="addon-shop-metrics">
+                <div class="addon-shop-metric">
+                    <strong>{{ $activeCount }}</strong>
+                    <span>Active upgrades</span>
+                </div>
+                <div class="addon-shop-metric">
+                    <strong>{{ count($addons) }}</strong>
+                    <span>Available add-ons</span>
+                </div>
+            </div>
+        </section>
 
-            @if ($verticalAddons->count())
-            <div style="font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#d97706;margin-bottom:10px;">Optional Upgrades</div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;">
-                @foreach ($verticalAddons as $key => $addon)
-                    @php $status = $records->get($key)->status ?? 'inactive'; @endphp
-                    <div class="eos-addon-card" style="border:1px solid {{ $status === 'active' ? 'var(--accent-teal)' : ($status === 'pending' ? 'var(--accent-amber)' : 'var(--border-card)') }};background:var(--bg-card);border-radius:11px;overflow:hidden;">
-                        <div style="padding:16px;">
-                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                                <i class="ti {{ $addon->icon }}" style="font-size:22px;color:{{ $status === 'active' ? 'var(--accent-teal)' : ($status === 'pending' ? 'var(--accent-amber)' : 'var(--text-muted)') }};"></i>
-                                <div>
-                                    <div style="font-size:14px;font-weight:600;color:var(--text-primary);">{{ $addon->name }}</div>
-                                    <div style="font-size:12px;color:var(--text-muted);">₹{{ number_format($addon->price, 0) }} one-time</div>
+        <section class="addon-shop-grid">
+            @foreach ($addons as $key => $addon)
+                @php
+                    $record = $records->get($key);
+                    $status = $record->status ?? 'inactive';
+                    $priceWithTax = $addon->price * 1.18;
+                    $suffix = $billingSuffix($addon);
+                @endphp
+                <article class="addon-card {{ $status }}">
+                    <div class="addon-card-body">
+                        <div class="addon-card-top">
+                            <div class="addon-card-icon"><i class="ti {{ $addon->icon }}"></i></div>
+                            <div style="flex:1;min-width:0;">
+                                <div class="addon-card-name">{{ $addon->name }}</div>
+                                <div class="addon-card-price" style="margin-top:10px;">
+                                    <div>
+                                        <div class="addon-price-main">{{ $formatPrice($addon->price) }} {{ $suffix }}</div>
+                                        <div class="addon-price-sub">{{ $formatPrice($priceWithTax) }} {{ $suffix }} incl. GST</div>
+                                    </div>
+                                    <span class="addon-status {{ $status }}">
+                                        <i class="ti {{ $status === 'active' ? 'ti-check' : ($status === 'pending' ? 'ti-clock' : 'ti-plus') }}"></i>
+                                        {{ $status === 'active' ? 'Active' : ($status === 'pending' ? 'Pending' : 'Upgrade') }}
+                                    </span>
                                 </div>
-                                @if ($status === 'active')
-                                    <span class="eos-badge badge-active" style="margin-left:auto;">Active</span>
-                                @elseif ($status === 'pending')
-                                    <span class="eos-badge badge-pending" style="margin-left:auto;">Pending</span>
-                                @endif
                             </div>
-                            <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px;">{{ $addon->description }}</div>
+                        </div>
 
+                        <div class="addon-card-desc">{{ $addon->description }}</div>
+
+                        <div class="addon-card-foot">
                             @if ($status === 'active')
                                 <form action="{{ route('tenant.addons.toggle', $key) }}" method="POST">
                                     @csrf
-                                    <button type="submit" class="eos-btn eos-btn-danger" style="width:100%;padding:8px 16px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:#ef4444;color:#fff;">
-                                        <i class="ti ti-toggle-left"></i> Disable
-                                    </button>
+                                    <button type="submit" class="addon-cta danger"><i class="ti ti-toggle-left"></i> Disable Add-on</button>
                                 </form>
                             @elseif ($status === 'pending')
                                 <form action="{{ route('tenant.addons.toggle', $key) }}" method="POST">
                                     @csrf
-                                    <button type="submit" class="eos-btn eos-btn-secondary" style="width:100%;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">
-                                        <i class="ti ti-clock"></i> Cancel Request
-                                    </button>
+                                    <button type="submit" class="addon-cta secondary"><i class="ti ti-clock-cancel"></i> Cancel Request</button>
                                 </form>
                             @else
-                                <a href="{{ route('tenant.addons.checkout', $key) }}" class="eos-btn eos-btn-primary" style="display:block;width:100%;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-align:center;text-decoration:none;background:var(--accent-teal);color:#fff;">
-                                    <i class="ti ti-credit-card"></i> Buy Now — ₹{{ number_format($addon->price * 1.18, 0) }}
-                                </a>
+                                <a href="{{ route('tenant.addons.checkout', $key) }}" class="addon-cta"><i class="ti ti-credit-card"></i> Subscribe</a>
                             @endif
                         </div>
                     </div>
-                @endforeach
-            </div>
-            @endif
-
-        </div>
+                </article>
+            @endforeach
+        </section>
     </div>
-</div>
-@endif
-
-{{-- ═══════════════ PLATFORM ADD-ON MARKETPLACE ═══════════════ --}}
-<div class="eos-row">
-    <div class="eos-card" style="flex:1;">
-        <div class="eos-card-header">
-            <div class="eos-card-title">Add-on Marketplace</div>
-            <span class="eos-card-link">{{ count($platformAddons) }} available</span>
-        </div>
-        <div class="eos-card-body">
-            <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6;">
-                Platform-wide add-ons — work the same way regardless of business type. One-time payment, processed securely via Razorpay using your own account.
-            </div>
-
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;">
-                @foreach ($platformAddons as $key => $addon)
-                    @php $status = $records->get($key)->status ?? 'inactive'; @endphp
-                    <div class="eos-addon-card" style="border:1px solid {{ $status === 'active' ? 'var(--accent-teal)' : ($status === 'pending' ? 'var(--accent-amber)' : 'var(--border-card)') }};background:var(--bg-card);border-radius:11px;overflow:hidden;">
-                        <div style="padding:16px;">
-                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                                <i class="ti {{ $addon->icon }}" style="font-size:22px;color:{{ $status === 'active' ? 'var(--accent-teal)' : ($status === 'pending' ? 'var(--accent-amber)' : 'var(--text-muted)') }};"></i>
-                                <div>
-                                    <div style="font-size:14px;font-weight:600;color:var(--text-primary);">{{ $addon->name }}</div>
-                                    <div style="font-size:12px;color:var(--text-muted);">₹{{ number_format($addon->price, 0) }} one-time</div>
-                                </div>
-                                @if ($status === 'active')
-                                    <span class="eos-badge badge-active" style="margin-left:auto;">Active</span>
-                                @elseif ($status === 'pending')
-                                    <span class="eos-badge badge-pending" style="margin-left:auto;">Pending</span>
-                                @endif
-                            </div>
-                            <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px;">{{ $addon->description }}</div>
-
-                            @if ($status === 'active')
-                                <form action="{{ route('tenant.addons.toggle', $key) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="eos-btn eos-btn-danger" style="width:100%;padding:8px 16px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:#ef4444;color:#fff;">
-                                        <i class="ti ti-toggle-left"></i> Disable
-                                    </button>
-                                </form>
-                            @elseif ($status === 'pending')
-                                <form action="{{ route('tenant.addons.toggle', $key) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="eos-btn eos-btn-secondary" style="width:100%;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">
-                                        <i class="ti ti-clock"></i> Cancel Request
-                                    </button>
-                                </form>
-                            @else
-                                <a href="{{ route('tenant.addons.checkout', $key) }}" class="eos-btn eos-btn-primary" style="display:block;width:100%;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;text-align:center;text-decoration:none;background:var(--accent-teal);color:#fff;">
-                                    <i class="ti ti-credit-card"></i> Buy Now — ₹{{ number_format($addon->price * 1.18, 0) }}
-                                </a>
-                            @endif
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    </div>
-</div>
 @endsection

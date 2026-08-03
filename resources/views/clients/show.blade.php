@@ -335,14 +335,23 @@
                         <div class="eos-card-title" style="font-size:12px;"><i class="ti ti-puzzle"></i> Add-on Subscriptions</div>
                     </div>
                     <table class="eos-table">
-                        <thead><tr><th>Add-on</th><th>Status</th><th>Activated</th><th>Price</th></tr></thead>
+                        <thead><tr><th>Add-on</th><th>Status</th><th>Activated</th><th>Expires</th><th>Renewal</th></tr></thead>
                         <tbody>
                             @foreach ($tenantAddons as $addon)
                                 <tr>
                                     <td style="font-weight:600;">{{ $addon->addonMeta->name ?? $addon->addon_key }}</td>
                                     <td><span class="eos-badge badge-{{ $addon->status }}">{{ strtoupper($addon->status) }}</span></td>
                                     <td>{{ $addon->activated_at?->format('M j, Y') ?? '—' }}</td>
-                                    <td>{{ $addon->addonMeta->price ? '₹' . number_format($addon->addonMeta->price, 0) . '/mo' : '—' }}</td>
+                                    <td>{{ $addon->expires_at?->format('M j, Y') ?? (($addon->billing_cycle ?? null) === 'one_time' ? 'One-time' : '—') }}</td>
+                                    <td>
+                                        @if ($addon->renewal_amount !== null)
+                                            ₹{{ number_format($addon->renewal_amount, 0) }}{{ ($addon->billing_cycle ?? 'monthly') === 'one_time' ? ' once' : '/' . str_replace('ly', '', $addon->billing_cycle ?? 'monthly') }}
+                                        @elseif ($addon->addonMeta?->price)
+                                            ₹{{ number_format($addon->addonMeta->price, 0) }}/mo
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>

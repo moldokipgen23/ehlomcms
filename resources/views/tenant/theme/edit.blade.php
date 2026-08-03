@@ -1,10 +1,340 @@
 @extends('tenant.layouts.dashboard')
 
-@section('title', 'Customise Theme')
-@section('subtitle', 'Edit your school website content')
+@section('title', $tenant->site_type === 'shopping' ? 'Storefront Editor' : 'Customise Theme')
+@section('subtitle', $tenant->site_type === 'shopping' ? 'Manage public shop content, checkout copy, and brand styling' : 'Edit your school website content')
 
 @section('content')
 
+@if ($tenant->site_type === 'shopping')
+<style>
+    .storefront-editor {
+        display: grid;
+        gap: 18px;
+    }
+    .storefront-editor-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px;
+        border: 1px solid var(--border-card);
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 14px 34px rgba(15,23,42,.06);
+    }
+    .storefront-editor-kicker {
+        color: var(--accent-blue);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+    }
+    .storefront-editor-title {
+        margin-top: 6px;
+        color: var(--text-primary);
+        font-family: 'Syne', sans-serif;
+        font-size: 24px;
+        font-weight: 800;
+    }
+    .storefront-editor-copy {
+        max-width: 760px;
+        margin-top: 6px;
+        color: var(--text-muted);
+        font-size: 12.5px;
+        line-height: 1.6;
+    }
+    .storefront-tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 8px;
+        border: 1px solid var(--border-card);
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 10px 26px rgba(15,23,42,.05);
+    }
+    .storefront-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 36px;
+        padding: 8px 12px;
+        border: 1px solid transparent;
+        border-radius: 9px;
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+    }
+    .storefront-tab:hover {
+        background: #eef4ff;
+        color: #1d4ed8;
+    }
+    .storefront-tab.is-active {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #fff;
+        box-shadow: 0 10px 22px rgba(37,99,235,.18);
+    }
+    .storefront-panel {
+        padding: 22px;
+    }
+    .storefront-panel-title {
+        color: var(--text-primary);
+        font-family: 'Syne', sans-serif;
+        font-size: 18px;
+        font-weight: 800;
+        margin-bottom: 4px;
+    }
+    .storefront-panel-sub {
+        color: var(--text-muted);
+        font-size: 12px;
+        margin-bottom: 18px;
+    }
+    .storefront-grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+    .storefront-grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+    }
+    .storefront-help {
+        margin-top: 12px;
+        padding: 13px 14px;
+        border: 1px solid #dbeafe;
+        border-radius: 10px;
+        background: #eff6ff;
+        color: #475569;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+    .storefront-save-bar {
+        position: sticky;
+        bottom: 18px;
+        z-index: 12;
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 4px;
+    }
+    @media (max-width: 760px) {
+        .storefront-editor-head { flex-direction: column; }
+        .storefront-tabs { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 10px; }
+        .storefront-tab { white-space: nowrap; }
+        .storefront-grid-2,
+        .storefront-grid-3 { grid-template-columns: 1fr; }
+        .storefront-panel { padding: 16px; }
+        .storefront-save-bar { bottom: 86px; }
+    }
+</style>
+
+<form method="POST" action="{{ route('tenant.theme.update') }}" x-data="{ activeTab: new URLSearchParams(window.location.search).get('tab') || window.location.hash.replace('#', '') || 'hero' }" enctype="multipart/form-data" class="storefront-editor">
+    @csrf
+
+    <section class="storefront-editor-head">
+        <div>
+            <div class="storefront-editor-kicker">Public Storefront</div>
+            <div class="storefront-editor-title">Storefront Editor</div>
+            <div class="storefront-editor-copy">These controls update the customer-facing shopping website: hero copy, catalog labels, trust messages, checkout wording, social links, footer, and brand color.</div>
+        </div>
+        <a href="{{ url('/') }}" class="eos-btn eos-btn-secondary" target="_blank" rel="noopener"><i class="ti ti-external-link"></i> Preview Store</a>
+    </section>
+
+    <div class="storefront-tabs">
+        @foreach ([
+            'hero' => ['ti-home-star', 'Hero'],
+            'story' => ['ti-book-2', 'Brand Story'],
+            'catalog' => ['ti-layout-grid', 'Catalog'],
+            'trust' => ['ti-shield-check', 'Trust'],
+            'checkout' => ['ti-brand-whatsapp', 'Checkout'],
+            'policies' => ['ti-file-description', 'Policies'],
+            'social' => ['ti-share', 'Social & Footer'],
+            'style' => ['ti-palette', 'Style'],
+            'premium' => ['ti-sparkles', 'Premium FX'],
+        ] as $tabKey => [$tabIcon, $tabLabel])
+            <button type="button" @click="activeTab = '{{ $tabKey }}'"
+                class="storefront-tab"
+                :class="{ 'is-active': activeTab === '{{ $tabKey }}' }">
+                <i class="ti {{ $tabIcon }}"></i> {{ $tabLabel }}
+            </button>
+        @endforeach
+    </div>
+
+    <div x-show="activeTab === 'hero'" x-cloak class="store-panel-clean storefront-panel">
+        <div class="storefront-panel-title">Hero</div>
+        <div class="storefront-panel-sub">Main first-screen copy on the public shop.</div>
+        <div class="storefront-grid-2">
+            <div class="eos-field">
+                <label class="eos-label">Hero Eyebrow</label>
+                <input type="text" name="store_hero_eyebrow" value="{{ $settings['store_hero_eyebrow'] ?? '' }}" class="eos-input" placeholder="Handmade premium collections">
+            </div>
+            <div class="eos-field">
+                <label class="eos-label">Hero Headline</label>
+                <input type="text" name="store_hero_title" value="{{ $settings['store_hero_title'] ?? '' }}" class="eos-input" placeholder="Jem Designs">
+            </div>
+            <div class="eos-field" style="grid-column:1/-1;">
+                <label class="eos-label">Hero Subtitle</label>
+                <textarea name="store_hero_subtitle" class="eos-input" rows="3" placeholder="Short premium store intro...">{{ $settings['store_hero_subtitle'] ?? '' }}</textarea>
+            </div>
+            <div class="eos-field">
+                <label class="eos-label">Primary CTA Text</label>
+                <input type="text" name="store_primary_cta" value="{{ $settings['store_primary_cta'] ?? 'Shop Now' }}" class="eos-input" placeholder="Shop Now">
+            </div>
+            <div class="eos-field">
+                <label class="eos-label">Secondary CTA Text</label>
+                <input type="text" name="store_secondary_cta" value="{{ $settings['store_secondary_cta'] ?? 'View Collections' }}" class="eos-input" placeholder="View Collections">
+            </div>
+            <div class="eos-field" style="grid-column:1/-1;">
+                <label class="eos-label">Hero Image</label>
+                <input type="file" name="jem_hero_image_file" accept="image/*" class="eos-input">
+                @if (!empty($settings['jem_hero_image']))
+                    <div class="eos-row-type" style="margin-top:8px;">Current image is uploaded. Upload a new file to replace it.</div>
+                @else
+                    <div class="eos-row-type" style="margin-top:8px;">If empty, the approved Jem demo hero image is used.</div>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <div x-show="activeTab === 'story'" x-cloak class="store-panel-clean storefront-panel">
+        <div class="storefront-panel-title">Brand Story</div>
+        <div class="storefront-panel-sub">Controls the About section and brand highlights.</div>
+        <div class="eos-field">
+            <label class="eos-label">About / Brand Story Title</label>
+            <input type="text" name="about_title" value="{{ $settings['about_title'] ?? '' }}" class="eos-input" placeholder="About Jem Designs">
+        </div>
+        <div class="eos-field">
+            <label class="eos-label">Store About Text</label>
+            <textarea name="about_text_raw" class="eos-input" rows="5" placeholder="Tell customers about the brand, craft, products, and promise...">{{ $settings['about_text'] ?? $tenant->about_text ?? '' }}</textarea>
+            <input type="hidden" name="about_text_target" value="tenant">
+        </div>
+        <div class="storefront-grid-3">
+            <div class="eos-field"><label class="eos-label">Highlight 1</label><input name="store_highlight_1" value="{{ $settings['store_highlight_1'] ?? '' }}" class="eos-input" placeholder="Handcrafted"></div>
+            <div class="eos-field"><label class="eos-label">Highlight 2</label><input name="store_highlight_2" value="{{ $settings['store_highlight_2'] ?? '' }}" class="eos-input" placeholder="Premium quality"></div>
+            <div class="eos-field"><label class="eos-label">Highlight 3</label><input name="store_highlight_3" value="{{ $settings['store_highlight_3'] ?? '' }}" class="eos-input" placeholder="Made in India"></div>
+        </div>
+        <div class="storefront-grid-2" style="margin-top:16px;">
+            <div class="eos-field">
+                <label class="eos-label">Story Image</label>
+                <input type="file" name="jem_story_image_file" accept="image/*" class="eos-input">
+            </div>
+            <div class="eos-field">
+                <label class="eos-label">Founder Main Image</label>
+                <input type="file" name="jem_founder_image_file" accept="image/*" class="eos-input">
+            </div>
+            <div class="eos-field">
+                <label class="eos-label">Founder Detail Image</label>
+                <input type="file" name="jem_detail_image_file" accept="image/*" class="eos-input">
+            </div>
+            <div class="eos-field">
+                <label class="eos-label">Founder Accent Image</label>
+                <input type="file" name="jem_accent_image_file" accept="image/*" class="eos-input">
+            </div>
+        </div>
+    </div>
+
+    <div x-show="activeTab === 'catalog'" x-cloak class="store-panel-clean storefront-panel">
+        <div class="storefront-panel-title">Catalog Labels</div>
+        <div class="storefront-panel-sub">Names for product sections. Product data is managed under Products.</div>
+        <div class="storefront-grid-2">
+            <div class="eos-field"><label class="eos-label">Featured Products Title</label><input name="featured_products_title" value="{{ $settings['featured_products_title'] ?? '' }}" class="eos-input" placeholder="Featured Products"></div>
+            <div class="eos-field"><label class="eos-label">New Arrivals Title</label><input name="new_arrivals_title" value="{{ $settings['new_arrivals_title'] ?? '' }}" class="eos-input" placeholder="New Arrivals"></div>
+            <div class="eos-field"><label class="eos-label">Collections Title</label><input name="collections_title" value="{{ $settings['collections_title'] ?? '' }}" class="eos-input" placeholder="Shop by Collection"></div>
+            <div class="eos-field"><label class="eos-label">Top Sellers Title</label><input name="top_sellers_title" value="{{ $settings['top_sellers_title'] ?? '' }}" class="eos-input" placeholder="Best Sellers"></div>
+        </div>
+        <div class="storefront-help">
+            Product cards, collections, variants, inventory, and marketing sections are managed from their own Store menu pages.
+        </div>
+    </div>
+
+    <div x-show="activeTab === 'trust'" x-cloak class="store-panel-clean storefront-panel">
+        <div class="storefront-panel-title">Trust Messages</div>
+        <div class="storefront-panel-sub">Shown as a compact trust strip below the hero when filled.</div>
+        <div class="storefront-grid-2">
+            <div class="eos-field"><label class="eos-label">Shipping Promise</label><input name="shipping_promise" value="{{ $settings['shipping_promise'] ?? '' }}" class="eos-input" placeholder="Ships in 2-4 business days"></div>
+            <div class="eos-field"><label class="eos-label">Return Policy</label><input name="return_policy" value="{{ $settings['return_policy'] ?? '' }}" class="eos-input" placeholder="Easy 7-day returns"></div>
+            <div class="eos-field"><label class="eos-label">Quality Promise</label><input name="quality_promise" value="{{ $settings['quality_promise'] ?? '' }}" class="eos-input" placeholder="Premium inspected products"></div>
+            <div class="eos-field"><label class="eos-label">Support Promise</label><input name="support_promise" value="{{ $settings['support_promise'] ?? '' }}" class="eos-input" placeholder="WhatsApp support available"></div>
+        </div>
+    </div>
+
+    <div x-show="activeTab === 'checkout'" x-cloak class="store-panel-clean storefront-panel">
+        <div class="storefront-panel-title">Checkout Copy</div>
+        <div class="storefront-panel-sub">Customer-facing labels used on checkout and WhatsApp order flow.</div>
+        <div class="storefront-grid-2">
+            <div class="eos-field"><label class="eos-label">WhatsApp Order Button Text</label><input name="whatsapp_order_text" value="{{ $settings['whatsapp_order_text'] ?? 'Order on WhatsApp' }}" class="eos-input" placeholder="Order on WhatsApp"></div>
+            <div class="eos-field"><label class="eos-label">Checkout Button Text</label><input name="checkout_button_text" value="{{ $settings['checkout_button_text'] ?? 'Checkout' }}" class="eos-input" placeholder="Checkout"></div>
+            <div class="eos-field" style="grid-column:1/-1;"><label class="eos-label">Checkout Note</label><textarea name="checkout_note" class="eos-input" rows="3" placeholder="Any customer-facing checkout note...">{{ $settings['checkout_note'] ?? '' }}</textarea></div>
+        </div>
+    </div>
+
+    <div x-show="activeTab === 'policies'" x-cloak class="store-panel-clean storefront-panel">
+        <div class="storefront-panel-title">Store Policies</div>
+        <div class="storefront-panel-sub">Published as public ecommerce policy pages and linked from the storefront footer.</div>
+        <div class="eos-field"><label class="eos-label">Privacy Policy</label><textarea name="privacy_policy" class="eos-input" rows="6" placeholder="Explain how customer data is collected, used, and protected...">{{ $settings['privacy_policy'] ?? '' }}</textarea></div>
+        <div class="eos-field"><label class="eos-label">Terms & Conditions</label><textarea name="terms_conditions" class="eos-input" rows="6" placeholder="Store terms, order conditions, product information, and customer responsibilities...">{{ $settings['terms_conditions'] ?? '' }}</textarea></div>
+        <div class="eos-field"><label class="eos-label">Refund Policy</label><textarea name="refund_policy" class="eos-input" rows="6" placeholder="Return eligibility, refund timelines, exchange process...">{{ $settings['refund_policy'] ?? '' }}</textarea></div>
+        <div class="eos-field"><label class="eos-label">Shipping Policy</label><textarea name="shipping_policy" class="eos-input" rows="6" placeholder="Shipping timelines, delivery areas, charges, delays...">{{ $settings['shipping_policy'] ?? '' }}</textarea></div>
+    </div>
+
+    <div x-show="activeTab === 'social'" x-cloak class="store-panel-clean storefront-panel">
+        <div class="storefront-panel-title">Social & Footer</div>
+        <div class="storefront-panel-sub">Shown in the public shop footer.</div>
+        <div class="storefront-grid-2">
+            <div class="eos-field"><label class="eos-label">Instagram URL</label><input type="url" name="instagram_url" value="{{ $settings['instagram_url'] ?? '' }}" class="eos-input" placeholder="https://instagram.com/..."></div>
+            <div class="eos-field"><label class="eos-label">Facebook URL</label><input type="url" name="facebook_url" value="{{ $settings['facebook_url'] ?? '' }}" class="eos-input" placeholder="https://facebook.com/..."></div>
+            <div class="eos-field"><label class="eos-label">YouTube URL</label><input type="url" name="youtube_url" value="{{ $settings['youtube_url'] ?? '' }}" class="eos-input" placeholder="https://youtube.com/..."></div>
+            <div class="eos-field"><label class="eos-label">Footer Tagline</label><input name="footer_tagline" value="{{ $settings['footer_tagline'] ?? '' }}" class="eos-input" placeholder="Premium designs for everyday moments"></div>
+            <div class="eos-field" style="grid-column:1/-1;"><label class="eos-label">Footer About Text</label><textarea name="footer_about" class="eos-input" rows="3" placeholder="Brief store footer intro...">{{ $settings['footer_about'] ?? '' }}</textarea></div>
+        </div>
+    </div>
+
+    <div x-show="activeTab === 'style'" x-cloak class="store-panel-clean storefront-panel">
+        <div class="storefront-panel-title">Colors & Style</div>
+        <div class="storefront-panel-sub">Brand accent color used across the public store and checkout.</div>
+        <div class="eos-field">
+            <label class="eos-label">Accent Color</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                @foreach ($colors as $hex => $label)
+                    <label style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:8px 6px;border-radius:8px;border:2px solid {{ ($settings['accent_color'] ?? '#2563eb') === $hex ? 'var(--accent-blue)' : 'transparent' }};min-width:56px;">
+                        <input type="radio" name="accent_color" value="{{ $hex }}" {{ ($settings['accent_color'] ?? '#2563eb') === $hex ? 'checked' : '' }} style="display:none;">
+                        <span style="display:block;width:32px;height:32px;border-radius:50%;background:{{ $hex }};border:2px solid var(--border);"></span>
+                        <span style="font-size:9px;color:var(--text-muted);">{{ $label }}</span>
+                    </label>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
+    <div x-show="activeTab === 'premium'" x-cloak class="store-panel-clean storefront-panel">
+        <div class="storefront-panel-title">Premium Store Effects</div>
+        <div class="storefront-panel-sub">Advanced visual effects for premium/custom storefront themes.</div>
+        @if ($tenant->hasModule('jem_preloader'))
+            <label class="eos-field" style="display:flex;align-items:center;gap:12px;cursor:pointer;">
+                <input type="hidden" name="jem_preloader_enabled" value="0">
+                <input type="checkbox" name="jem_preloader_enabled" value="1" {{ ($settings['jem_preloader_enabled'] ?? '1') !== '0' ? 'checked' : '' }} style="width:18px;height:18px;accent-color:#2563eb;">
+                <span>
+                    <span style="display:block;font-size:13px;font-weight:900;color:var(--text-primary);">Enable Jem animated preloader</span>
+                    <span style="display:block;font-size:11px;color:var(--text-muted);margin-top:3px;">Shows the luxury animated logo intro before the public store loads.</span>
+                </span>
+            </label>
+        @else
+            <div class="storefront-help" style="border-color:#fde68a;background:#fffbeb;color:#92400e;">
+                Premium Store Preloader is a paid add-on. It is visible here for tracking, but the client can only enable it after admin activates the <strong>Premium Store Preloader</strong> feature for this tenant.
+            </div>
+        @endif
+    </div>
+
+    <div class="storefront-save-bar">
+        <button type="submit" class="eos-btn eos-btn-primary" style="padding:12px 32px;font-size:14px;">
+            <i class="ti ti-check"></i> Save Store Theme
+        </button>
+    </div>
+</form>
+@else
 <form method="POST" action="{{ route('tenant.theme.update') }}" x-data="{ activeTab: 'hero' }" enctype="multipart/form-data">
     @csrf
 
@@ -54,6 +384,14 @@
             <div class="eos-field">
                 <label class="eos-label">Apply Now URL</label>
                 <input type="url" name="admission_cta_url" value="{{ $settings['admission_cta_url'] ?? '' }}" class="eos-input" placeholder="https://...">
+            </div>
+            <div class="eos-field" style="grid-column:1/-1;">
+                <label class="eos-label">Hero Image</label>
+                @if ($settings['hero_image'] ?? null)
+                    <div style="margin-bottom:8px;"><img src="{{ str_starts_with($settings['hero_image'], 'http') ? $settings['hero_image'] : Storage::url($settings['hero_image']) }}" alt="Current hero" style="width:180px;height:90px;border-radius:8px;object-fit:cover;border:1px solid var(--border-card);"></div>
+                @endif
+                <input type="file" name="hero_image_file" accept="image/*" class="eos-input" style="padding:8px;">
+                <div style="margin-top:6px;color:var(--text-muted);font-size:11px;">Used by the assigned school theme. Upload a new image to replace the current one.</div>
             </div>
         </div>
     </div>
@@ -110,6 +448,13 @@
                 <textarea name="principal_message" class="eos-input" rows="4" placeholder="Dear parents and students...">{{ $settings['principal_message'] ?? '' }}</textarea>
             </div>
         </div>
+        <div class="eos-field" style="margin-top:16px;">
+            <label class="eos-label">About Section Image</label>
+            @if ($settings['about_image'] ?? null)
+                <div style="margin-bottom:8px;"><img src="{{ str_starts_with($settings['about_image'], 'http') ? $settings['about_image'] : Storage::url($settings['about_image']) }}" alt="Current about image" style="width:180px;height:100px;border-radius:8px;object-fit:cover;border:1px solid var(--border-card);"></div>
+            @endif
+            <input type="file" name="about_image_file" accept="image/*" class="eos-input" style="padding:8px;">
+        </div>
     </div>
 
     {{-- ═══════ ACADEMICS ═══════ --}}
@@ -139,6 +484,13 @@
                 </div>
             </div>
         @endfor
+        <div class="eos-field" style="margin-top:16px;">
+            <label class="eos-label">Learning Approach Image</label>
+            @if ($settings['learning_image'] ?? null)
+                <div style="margin-bottom:8px;"><img src="{{ str_starts_with($settings['learning_image'], 'http') ? $settings['learning_image'] : Storage::url($settings['learning_image']) }}" alt="Current learning image" style="width:180px;height:100px;border-radius:8px;object-fit:cover;border:1px solid var(--border-card);"></div>
+            @endif
+            <input type="file" name="learning_image_file" accept="image/*" class="eos-input" style="padding:8px;">
+        </div>
     </div>
 
     {{-- ═══════ ADMISSIONS ═══════ --}}
@@ -546,4 +898,5 @@
     </div>
 </form>
 
+@endif
 @endsection
